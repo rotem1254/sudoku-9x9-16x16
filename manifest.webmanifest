@@ -1,0 +1,28 @@
+{
+  "name": "סודוקו · 9×9 ו-16×16",
+  "short_name": "סודוקו",
+  "description": "סודוקו 9x9 ו-16x16 עם פאזלים אקראיים בעלי פתרון יחיד, פתקים, רמזים וטיימר. עובד גם בלי אינטרנט.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f8",
+  "theme_color": "#4f6ef7",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

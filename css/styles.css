@@ -1,0 +1,946 @@
+/* =============================================================================
+ * styles.css — סודוקו 9x9 / 16x16
+ * -----------------------------------------------------------------------------
+ * Mobile first. ללא ספריות עיצוב. CSS Grid + Flexbox בלבד.
+ * גודל הלוח מוזרק כמשתנה --n (9 או 16) ולכן כל הגדלים מחושבים גנרית.
+ * =========================================================================== */
+
+/* ------------------------------- ערכות נושא ------------------------------ */
+
+:root {
+  --bg: #eef1f8;
+  --bg-grad: radial-gradient(1200px 600px at 50% -10%, #dfe6fb 0%, #eef1f8 60%);
+  --surface: #ffffff;
+  --surface-2: #f5f7fc;
+  --surface-3: #eaeefa;
+  --text: #1b2033;
+  --text-2: #5b6480;
+  --muted: #8b93ad;
+  --line: #dbe1f0;
+  --line-strong: #9aa4c4;
+  /* צבעי רשת הלוח — נפרדים מקווי הממשק, בשלוש דרגות היררכיה:
+     קו דק בין תאים < קו מפריד בין תיבות < מסגרת חיצונית */
+  --grid-line: #c2cbe1;
+  --grid-box: #56618c;
+  --grid-edge: #56618c;
+  --accent: #4f6ef7;
+  --accent-text: #ffffff;
+  --accent-soft: #e2e8ff;
+  --accent-soft-2: #eef1ff;
+  --given: #1b2033;
+  --entered: #4f6ef7;
+  --hint: #d9861f;
+  --hint-soft: #fdf0dc;
+  --error: #e14b52;
+  --error-soft: #fde4e5;
+  --success: #23996b;
+  --success-soft: #dff5ea;
+  --shadow-sm: 0 1px 2px rgba(27, 32, 51, .06), 0 1px 3px rgba(27, 32, 51, .05);
+  --shadow-md: 0 4px 14px rgba(27, 32, 51, .09);
+  --shadow-lg: 0 18px 50px rgba(27, 32, 51, .18);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --ease: cubic-bezier(.2, .8, .3, 1);
+}
+
+:root[data-theme="dark"] {
+  --bg: #0e111a;
+  --bg-grad: radial-gradient(1200px 600px at 50% -10%, #1a2035 0%, #0e111a 60%);
+  --surface: #171c2a;
+  --surface-2: #1d2334;
+  --surface-3: #252c40;
+  --text: #e8ebf7;
+  --text-2: #a3abc6;
+  --muted: #79819c;
+  --line: #2b3247;
+  --line-strong: #5d6789;
+  /* במצב כהה הניגודיות היא הבעיה: הקווים מוארים משמעותית מרקע התאים,
+     וקווי התיבות בהירים בהרבה מהקווים הדקים כדי שהמבנה יזדקר */
+  --grid-line: #454f70;
+  --grid-box: #9aa8d6;
+  --grid-edge: #9aa8d6;
+  --accent: #6d8bff;
+  --accent-text: #0e111a;
+  --accent-soft: #26304f;
+  --accent-soft-2: #1e2438;
+  --given: #e8ebf7;
+  --entered: #7f9bff;
+  --hint: #e9a94e;
+  --hint-soft: #3a2f1c;
+  --error: #ff6b71;
+  --error-soft: #3d2126;
+  --success: #4ad297;
+  --success-soft: #16362a;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, .45);
+  --shadow-lg: 0 18px 50px rgba(0, 0, 0, .6);
+}
+
+/* --------------------------------- בסיס -------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { height: 100%; }
+
+body {
+  min-height: 100%;
+  /* dvh מתעדכן כשסרגל הכתובת במובייל נכנס/יוצא — עם vh הפריסה
+     "קופצת" בזמן גלילה ותחתית הדף נחתכת */
+  min-height: 100dvh;
+  margin: 0;
+  background: var(--bg);
+  background-image: var(--bg-grad);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: "Segoe UI", "Rubik", "Assistant", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+button { font: inherit; color: inherit; }
+
+svg {
+  width: 1.25em;
+  height: 1.25em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app {
+  --app-pad: 12px;
+  --gap: 10px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: max(10px, env(safe-area-inset-top)) var(--app-pad) calc(14px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-height: 100%;
+  min-height: 100dvh;
+}
+
+/*
+ * מגע במובייל: מבטלים את תפריט ההקשר של לחיצה ארוכה ואת בחירת הטקסט.
+ * בלי זה, לחיצה ארוכה על תא בסודוקו פותחת "העתק/שתף" באמצע המשחק.
+ */
+.cell, .num, .tool, .pill, .tab, .btn, .icon-btn, .link-btn {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* הכללים הרספונסיביים מרוכזים בסוף הקובץ (ראה "התאמות רספונסיביות") */
+
+/* ------------------------------ סרגל עליון ----------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.logo-mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: var(--accent);
+  position: relative;
+  box-shadow: var(--shadow-sm);
+}
+.logo-mark::before,
+.logo-mark::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to right, transparent 32%, rgba(255,255,255,.85) 32%, rgba(255,255,255,.85) 38%, transparent 38%, transparent 62%, rgba(255,255,255,.85) 62%, rgba(255,255,255,.85) 68%, transparent 68%),
+    linear-gradient(to bottom, transparent 32%, rgba(255,255,255,.85) 32%, rgba(255,255,255,.85) 38%, transparent 38%, transparent 62%, rgba(255,255,255,.85) 62%, rgba(255,255,255,.85) 68%, transparent 68%);
+  border-radius: inherit;
+}
+
+.topbar-actions { display: flex; gap: 6px; }
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  color: var(--text-2);
+  box-shadow: var(--shadow-sm);
+  transition: transform .12s var(--ease), background .16s, color .16s, border-color .16s;
+}
+.icon-btn:active { transform: scale(.94); }
+@media (hover: hover) {
+  .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+}
+
+/* אייקון השמש/ירח מתחלף לפי ערכת הנושא */
+.icon-moon { display: none; }
+:root[data-theme="dark"] .icon-sun { display: none; }
+:root[data-theme="dark"] .icon-moon { display: block; }
+
+/* -------------------------------- טאבים -------------------------------- */
+
+.tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.tab {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 9px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--text-2);
+  transition: color .2s var(--ease);
+}
+.tab-title { font-weight: 800; font-size: 1.02rem; letter-spacing: .01em; }
+.tab-sub { font-size: .68rem; opacity: .75; }
+.tab.is-active { color: var(--accent-text); }
+
+/* מחוון נע מתחת לטאב הפעיל */
+.tab-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: calc(50% - 6px);
+  border-radius: 12px;
+  background: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transition: transform .28s var(--ease);
+  /* RTL: הטאב הראשון בצד ימין */
+  right: 4px;
+  transform: translateX(0);
+}
+.tabs[data-active="16"] .tab-indicator { transform: translateX(calc(-100% - 4px)); }
+
+/* ------------------------------ רמות קושי ------------------------------ */
+
+.difficulty-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pills {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  flex: 1 1 220px;
+}
+
+.pill {
+  flex: 1;
+  padding: 8px 4px;
+  min-height: 36px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  font-size: .84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .16s, color .16s, transform .12s var(--ease);
+  white-space: nowrap;
+}
+.pill:active { transform: scale(.95); }
+.pill.is-active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: .9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .12s var(--ease), filter .16s, background .16s;
+}
+.btn:active { transform: scale(.96); }
+.btn svg { width: 1.05em; height: 1.05em; }
+.btn-primary { background: var(--accent); color: var(--accent-text); box-shadow: var(--shadow-md); }
+.btn-ghost { background: var(--surface-2); color: var(--text-2); border-color: var(--line); }
+.btn-danger { background: var(--error); color: #fff; }
+.btn[disabled] { opacity: .5; pointer-events: none; }
+.btn-new { flex: 0 0 auto; }
+
+/* ------------------------------ שורת סטטוס ----------------------------- */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.stat-label { font-size: .64rem; color: var(--muted); letter-spacing: .02em; }
+.stat-value {
+  font-size: .98rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.stat-value.is-warn { color: var(--error); }
+.stat-pause { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; }
+.icon-play { display: none; }
+.statusbar.is-paused .icon-pause { display: none; }
+.statusbar.is-paused .icon-play { display: block; }
+
+/* -------------------------------- הלוח --------------------------------- */
+
+.board-area { position: relative; }
+
+.board-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  /* container query: מאפשר לגדלי הגופן בלוח להתייחס לרוחב הלוח עצמו */
+  container-type: inline-size;
+}
+
+/* במצב 16x16 מאפשרים pinch/pan מותאם אישית — לכן חוסמים את מחוות הדפדפן */
+.board-viewport.is-zoomable { touch-action: none; }
+
+.board-stage {
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.board-stage.is-animating { transition: transform .22s var(--ease); }
+
+.board {
+  /* עובי קו התיבה לכל צד של הגבול. ב-16x16 התאים קטנים בחצי,
+     ולכן קו דק יותר — אחרת הקווים "בולעים" את התאים. */
+  --box-line: 2px;
+  --edge-line: 3px;
+
+  display: grid;
+  grid-template-columns: repeat(var(--n), 1fr);
+  grid-template-rows: repeat(var(--n), 1fr);
+  width: 100%;
+  height: 100%;
+  /* רקע הלוח הוא מה שנראה דרך ה-gap => זהו צבע הקווים הדקים */
+  background: var(--grid-line);
+  gap: 1px;
+  padding: 0;
+  border: var(--edge-line) solid var(--grid-edge);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.board[data-size="16"] {
+  --box-line: 1.5px;
+  --edge-line: 2px;
+}
+
+/* ------------------------------- תא בלוח ------------------------------- */
+
+.cell {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  color: var(--entered);
+  font-weight: 600;
+  /* גופן יחסי לרוחב הלוח => קריא גם ב-9 וגם ב-16 */
+  font-size: calc(58cqw / var(--n));
+  line-height: 1;
+  transition: background .13s var(--ease), color .13s;
+}
+
+/*
+ * קווים עבים בגבולות תיבות המשנה.
+ *
+ * הקו נמשח משני צדי הגבול (התא שלפניו והתא שאחריו), כך שהוא יוצא סימטרי
+ * ביחס למרווח שביניהם: box-line + 1px gap + box-line. קו חד-צדדי היה
+ * נראה מוסט לצד אחד.
+ *
+ * כל צד נשמר במשתנה נפרד ומורכב להצהרת box-shadow אחת — לתא יכולים להיות
+ * עד ארבעה גבולות בו-זמנית, והצהרות נפרדות היו דורסות זו את זו.
+ */
+.cell {
+  --sh-r: 0 0 0 0 transparent;
+  --sh-l: 0 0 0 0 transparent;
+  --sh-b: 0 0 0 0 transparent;
+  --sh-t: 0 0 0 0 transparent;
+  box-shadow: var(--sh-r), var(--sh-l), var(--sh-b), var(--sh-t);
+}
+.cell.bx-right  { --sh-r: inset calc(var(--box-line) * -1) 0 0 0 var(--grid-box); }
+.cell.bx-left   { --sh-l: inset var(--box-line) 0 0 0 var(--grid-box); }
+.cell.bx-bottom { --sh-b: inset 0 calc(var(--box-line) * -1) 0 0 var(--grid-box); }
+.cell.bx-top    { --sh-t: inset 0 var(--box-line) 0 0 var(--grid-box); }
+
+.cell.is-given { color: var(--given); font-weight: 800; background: var(--surface-2); }
+.cell.is-hint { color: var(--hint); background: var(--hint-soft); }
+
+/* הדגשות */
+.cell.is-peer { background: var(--accent-soft-2); }
+.cell.is-given.is-peer { background: var(--surface-3); }
+.cell.is-same { background: var(--accent-soft); color: var(--accent); }
+.cell.is-selected {
+  background: var(--accent);
+  color: var(--accent-text);
+  z-index: 2;
+}
+.cell.is-selected.is-given { background: var(--accent); color: var(--accent-text); }
+
+/* שגיאה */
+.cell.is-error { color: var(--error); background: var(--error-soft); }
+.cell.is-error.is-selected { background: var(--error); color: #fff; }
+
+.cell-value { display: block; }
+
+/* אנימציית הזנת מספר */
+@keyframes pop {
+  0% { transform: scale(.55); opacity: .35; }
+  55% { transform: scale(1.16); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.cell.is-pop .cell-value { animation: pop .22s var(--ease); }
+
+/* אנימציית שגיאה */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  22% { transform: translateX(-3px); }
+  46% { transform: translateX(3px); }
+  70% { transform: translateX(-2px); }
+}
+.cell.is-shake { animation: shake .3s var(--ease); }
+
+/* גל ניצחון — מתפשט מהתא הראשון החוצה */
+@keyframes winWave {
+  0% { transform: scale(1); }
+  40% { transform: scale(.82); background: var(--success-soft); color: var(--success); }
+  100% { transform: scale(1); }
+}
+.cell.is-win { animation: winWave .5s var(--ease) both; animation-delay: var(--wd, 0ms); }
+
+/* הגדלה חזותית בלחיצה — קריטי ב-16x16 שבו התאים קטנים */
+.cell.is-selected::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 2px solid var(--accent);
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* -------------------------------- פתקים -------------------------------- */
+
+.cell-notes {
+  position: absolute;
+  inset: 6%;
+  display: grid;
+  grid-template-columns: repeat(var(--note-cols), 1fr);
+  align-content: center;
+  color: var(--muted);
+  font-size: calc(20cqw / var(--n));
+  font-weight: 600;
+  line-height: 1;
+  pointer-events: none;
+}
+.cell-notes span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.cell.is-selected .cell-notes { color: rgba(255, 255, 255, .85); }
+/* פתק שתואם לערך המסומן כרגע — מודגש */
+.cell-notes span.is-match { color: var(--accent); font-weight: 800; }
+.cell.is-selected .cell-notes span.is-match { color: #fff; }
+
+/* ----------------------------- בקרות זום ------------------------------ */
+
+/*
+ * שורה נפרדת מתחת ללוח (ולא שכבה מרחפת מעליו) — בלוח 16x16 כל תא יקר,
+ * ובקרה צפה הסתירה תאים בפינה.
+ */
+.zoom-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.zoom-bar-label {
+  margin-inline-end: auto;
+  font-size: .7rem;
+  color: var(--muted);
+  line-height: 1.2;
+}
+.zoom-btn { width: 42px; height: 34px; border-radius: 10px; }
+
+/* ---------------------------- שכבת השהיה ------------------------------ */
+
+.board-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  z-index: 6;
+}
+.board-overlay-inner { text-align: center; display: grid; gap: 10px; justify-items: center; }
+.overlay-icon { width: 40px; height: 40px; color: var(--muted); }
+.board-overlay p { margin: 0; color: var(--text-2); font-weight: 600; }
+
+/* -------------------------------- כלים --------------------------------- */
+
+.tools {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+}
+
+.tool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 56px;
+  padding: 6px 2px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: .66rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform .12s var(--ease), color .16s, border-color .16s, background .16s;
+}
+.tool:active { transform: scale(.94); }
+.tool svg { width: 20px; height: 20px; }
+.tool[disabled] { opacity: .38; pointer-events: none; }
+.tool.is-on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft-2); }
+
+.tool-badge {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: .58rem;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+.tool.is-on .tool-badge { background: var(--accent); color: var(--accent-text); }
+.tool-badge.is-empty { background: var(--error-soft); color: var(--error); }
+
+/* ---------------------------- פאנל מספרים ----------------------------- */
+
+.numpad-wrap { position: relative; }
+
+.numpad {
+  display: grid;
+  gap: 5px;
+  /* ברירת מחדל (9x9 במובייל): 5 בשורה => 2 שורות נוחות לאגודל */
+  grid-template-columns: repeat(5, 1fr);
+}
+/* 16x16: שתי שורות של 8 */
+.numpad[data-count="16"] { grid-template-columns: repeat(8, 1fr); }
+
+.num {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 1.45rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform .1s var(--ease), background .16s, color .16s, border-color .16s;
+}
+.num:active { transform: scale(.92); }
+.numpad[data-count="16"] .num { min-height: 46px; font-size: 1.15rem; }
+
+.num-count {
+  font-size: .55rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+/* ערך שכבר הושלם על הלוח — מעומעם */
+.num.is-done { color: var(--muted); background: var(--surface-2); opacity: .55; }
+.num.is-notes { color: var(--text-2); border-style: dashed; }
+.num.is-pressed { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+
+/* מסך רחב: פורסים את כל המספרים בשורה אחת */
+@media (min-width: 480px) {
+  .numpad { grid-template-columns: repeat(9, 1fr); }
+}
+@media (min-width: 620px) {
+  .numpad[data-count="16"] { grid-template-columns: repeat(16, 1fr); }
+  .numpad[data-count="16"] .num { min-height: 52px; font-size: 1.05rem; }
+}
+
+/* ------------------------------- פוטר --------------------------------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .74rem;
+  flex-wrap: wrap;
+}
+.link-btn {
+  border: 0;
+  background: none;
+  color: var(--text-2);
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* ------------------------------ מסך טעינה ------------------------------ */
+
+.loading {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  backdrop-filter: blur(10px);
+  animation: fadeIn .18s var(--ease);
+}
+.loading-card {
+  width: 100%;
+  max-width: 280px;
+  padding: 24px 20px 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  width: 54px;
+  margin: 0 auto 14px;
+}
+.loading-grid span {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--accent);
+  opacity: .18;
+  animation: blockPulse 1.1s var(--ease) infinite;
+}
+.loading-grid span:nth-child(1) { animation-delay: 0ms; }
+.loading-grid span:nth-child(2) { animation-delay: 80ms; }
+.loading-grid span:nth-child(3) { animation-delay: 160ms; }
+.loading-grid span:nth-child(4) { animation-delay: 80ms; }
+.loading-grid span:nth-child(5) { animation-delay: 160ms; }
+.loading-grid span:nth-child(6) { animation-delay: 240ms; }
+.loading-grid span:nth-child(7) { animation-delay: 160ms; }
+.loading-grid span:nth-child(8) { animation-delay: 240ms; }
+.loading-grid span:nth-child(9) { animation-delay: 320ms; }
+@keyframes blockPulse { 0%, 100% { opacity: .16; transform: scale(.85); } 50% { opacity: 1; transform: scale(1); } }
+
+.loading-title { margin: 0 0 4px; font-weight: 800; }
+.loading-sub { margin: 0 0 14px; font-size: .78rem; color: var(--muted); }
+.progress { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.progress-bar { height: 100%; width: 0; background: var(--accent); border-radius: 3px; transition: width .2s var(--ease); }
+
+/* ------------------------------- מודלים -------------------------------- */
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rise { from { opacity: 0; transform: translateY(16px) scale(.97); } to { opacity: 1; transform: none; } }
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(10, 13, 22, .45);
+  backdrop-filter: blur(6px);
+  animation: fadeIn .18s var(--ease);
+}
+.modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 330px;
+  padding: 22px 20px 18px;
+  background: var(--surface);
+  border-radius: 22px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: rise .26s var(--ease);
+  overflow: hidden;
+}
+.modal-title { margin: 0 0 4px; font-size: 1.25rem; font-weight: 800; }
+.modal-sub { margin: 0 0 14px; color: var(--text-2); font-size: .86rem; }
+.modal-actions { display: flex; gap: 8px; margin-top: 16px; }
+.modal-actions .btn { flex: 1; }
+
+.win-badge {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--success-soft);
+  color: var(--success);
+  animation: pop .45s var(--ease) both;
+}
+.win-badge svg { width: 30px; height: 30px; stroke-width: 2.6; }
+
+.win-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+.win-stat {
+  padding: 10px 8px;
+  background: var(--surface-2);
+  border-radius: 12px;
+}
+.win-stat .k { display: block; font-size: .64rem; color: var(--muted); }
+.win-stat .v { display: block; font-size: 1.05rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.win-stat.is-best { background: var(--success-soft); }
+.win-stat.is-best .v { color: var(--success); }
+
+/* קונפטי — 12 חלקיקים שנוצרים ב-JS */
+.confetti { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.confetti i {
+  position: absolute;
+  top: -12px;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  opacity: 0;
+  animation: fall 1.5s var(--ease) forwards;
+}
+@keyframes fall {
+  0% { opacity: 1; transform: translateY(0) rotate(0); }
+  100% { opacity: 0; transform: translateY(340px) rotate(540deg); }
+}
+
+/* ---------------------------- טבלת סטטיסטיקה --------------------------- */
+
+.stats-table { display: grid; gap: 10px; text-align: start; }
+.stats-group-title {
+  font-size: .74rem;
+  font-weight: 800;
+  color: var(--muted);
+  letter-spacing: .04em;
+  margin-top: 4px;
+}
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 11px;
+  background: var(--surface-2);
+  border-radius: 11px;
+  font-size: .82rem;
+}
+.stats-row .name { font-weight: 700; }
+.stats-row .meta { color: var(--muted); font-size: .74rem; }
+.stats-row .best { font-weight: 800; font-variant-numeric: tabular-nums; color: var(--success); }
+
+/* -------------------------------- Toast -------------------------------- */
+
+.toast {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 80;
+  width: fit-content;
+  max-width: 88vw;
+  margin: 0 auto;
+  padding: 10px 16px;
+  background: var(--text);
+  color: var(--surface);
+  border-radius: 12px;
+  font-size: .82rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  animation: rise .22s var(--ease);
+}
+
+/* ======================= התאמות רספונסיביות ============================ */
+/* חייב להישאר בסוף הקובץ: לכללים כאן ולכללי הבסיס אותה ספציפיות,
+   ולכן רק סדר ההופעה קובע מי גובר.                                        */
+
+/*
+ * מסכי טלפון צרים: הלוח נפרס לרוחב המסך המלא ("full bleed").
+ * זה מגדיל את התאים בכ-7% — משמעותי כשמדובר ביעד מגע של 44px —
+ * ומקיים את הדרישה שהלוח יתאים בדיוק לרוחב מסך הטלפון.
+ */
+@media (max-width: 430px) {
+  .app { --app-pad: 10px; }
+  .board-area { margin-inline: calc(var(--app-pad) * -1); }
+  .board-viewport { border-radius: 0; }
+  /* בפריסה לרוחב מלא אין פינות מעוגלות, והמסגרת הצדדית מיותרת
+     (הלוח נוגע בקצה המסך) — משאירים רק מסגרת עליונה ותחתונה */
+  .board {
+    border-radius: 0;
+    border-inline: 0;
+  }
+
+  /* "משחק חדש" הופך לאייקון בלבד, כדי ששורת הקושי תישאר בשורה אחת
+     (השורה השנייה עלתה כ-48px של גובה יקר במסך טלפון) */
+  .difficulty-row { flex-wrap: nowrap; }
+  .btn-new { width: 44px; padding: 0; flex: 0 0 44px; }
+  .btn-new-text { display: none; }
+  .btn-new svg { width: 1.3em; height: 1.3em; }
+}
+
+/* מסכים נמוכים: מכווצים מרווחים כדי לצמצם גלילה אנכית */
+@media (max-height: 900px) {
+  .app { --gap: 7px; }
+  .statusbar { padding: 5px 10px; }
+  .stat-label { font-size: .6rem; }
+  .tool { min-height: 48px; }
+  .tool svg { width: 18px; height: 18px; }
+  .num { min-height: 46px; }
+  .numpad[data-count="16"] .num { min-height: 42px; }
+  .tab { padding: 6px 8px; }
+  .tab-sub { font-size: .63rem; }
+  .pill { min-height: 34px; }
+  .btn-new { min-height: 40px; }
+  .footer { font-size: .7rem; }
+}
+
+/* מסכים ממש נמוכים (iPhone SE וכד'): כלים ללא תוויות טקסט */
+@media (max-height: 720px) {
+  .app { --gap: 5px; }
+  .tool { min-height: 42px; gap: 0; }
+  .tool span:not(.tool-badge) { display: none; }
+  .tool svg { width: 21px; height: 21px; }
+  .num { min-height: 40px; font-size: 1.25rem; }
+  .num-count { font-size: .5rem; }
+  .footer { display: none; }
+}
+
+/* --------------------------- מסכים גדולים ------------------------------ */
+
+@media (min-width: 700px) {
+  .app { max-width: 620px; padding-top: 20px; }
+  .cell { font-size: calc(56cqw / var(--n)); }
+  .tool { min-height: 62px; font-size: .72rem; }
+  .tool svg { width: 20px; height: 20px; }
+}
+
+/* ------------------------- העדפת פחות תנועה ---------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* --------------------------- נגישות מקלדת ------------------------------ */
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.cell:focus { outline: none; }
+
+[hidden] { display: none !important; }

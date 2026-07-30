@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <!--
+    viewport-fit=cover  => תמיכה ב"מגרעת" (notch) במכשירים מודרניים.
+    user-scalable=no    => מונע zoom מקרי בלחיצה כפולה / pinch על הדף כולו.
+                           זום מכוון בתוך לוח ה-16x16 ממומש בקוד (ראה ui.js).
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4f6ef7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12151f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="סודוקו 9x9 ו-16x16 — פאזלים אקראיים עם פתרון יחיד, פתקים, רמזים וטיימר. עובד לגמרי בדפדפן.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>סודוקו · 9×9 ו-16×16</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <!-- מאפשר "הוספה למסך הבית" — במצב standalone נחסך סרגל הדפדפן,
+       וכל המשחק נכנס במסך הטלפון בלי גלילה -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ==================== סרגל עליון ==================== -->
+  <header class="topbar">
+    <h1 class="logo">
+      <span class="logo-mark" aria-hidden="true"></span>
+      סודוקו
+    </h1>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== טאבים: גודל לוח ==================== -->
+  <div class="tabs" role="tablist" aria-label="גודל הלוח">
+    <button type="button" class="tab is-active" data-size="9" role="tab" aria-selected="true">
+      <span class="tab-title">9×9</span>
+      <span class="tab-sub">קלאסי</span>
+    </button>
+    <button type="button" class="tab" data-size="16" role="tab" aria-selected="false">
+      <span class="tab-title">16×16</span>
+      <span class="tab-sub">מורחב</span>
+    </button>
+    <span class="tab-indicator" aria-hidden="true"></span>
+  </div>
+
+  <!-- ==================== רמות קושי ==================== -->
+  <div class="difficulty-row">
+    <div class="pills" id="difficultyPills" role="group" aria-label="רמת קושי">
+      <button type="button" class="pill is-active" data-difficulty="easy">קל</button>
+      <button type="button" class="pill" data-difficulty="medium">בינוני</button>
+      <button type="button" class="pill" data-difficulty="hard">קשה</button>
+      <button type="button" class="pill" data-difficulty="expert">מומחה</button>
+    </div>
+    <button type="button" class="btn btn-primary btn-new" id="btnNew" aria-label="משחק חדש" title="משחק חדש">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v4h-4"/></svg>
+      <span class="btn-new-text">משחק חדש</span>
+    </button>
+  </div>
+
+  <!-- ==================== שורת סטטוס ==================== -->
+  <div class="statusbar">
+    <div class="stat">
+      <span class="stat-label">זמן</span>
+      <span class="stat-value" id="statTime">00:00</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">שגיאות</span>
+      <span class="stat-value" id="statMistakes">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">רמזים</span>
+      <span class="stat-value" id="statHints">3</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">נותרו</span>
+      <span class="stat-value" id="statRemaining">0</span>
+    </div>
+    <button type="button" class="icon-btn stat-pause" id="btnPause" aria-label="השהיה" title="השהיה">
+      <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+      <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
+    </button>
+  </div>
+
+  <!-- ==================== הלוח ==================== -->
+  <main class="board-area">
+    <div class="board-viewport" id="boardViewport">
+      <div class="board-stage" id="boardStage">
+        <!-- dir=ltr: סדר העמודות בלוח נשאר משמאל לימין גם בממשק RTL -->
+        <div class="board" id="board" dir="ltr" role="grid" aria-label="לוח סודוקו"></div>
+      </div>
+    </div>
+
+    <!-- שכבת השהיה מעל הלוח -->
+    <div class="board-overlay" id="pauseOverlay" hidden>
+      <div class="board-overlay-inner">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="overlay-icon"><path d="M9 5v14M15 5v14"/></svg>
+        <p>המשחק מושהה</p>
+        <button type="button" class="btn btn-primary" id="btnResume">המשך משחק</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- בקרות זום — מוצגות רק במצב 16x16, מחוץ ללוח כדי לא להסתיר תאים -->
+  <div class="zoom-bar" id="zoomControls" hidden>
+    <span class="zoom-bar-label">זום · אפשר גם לצבוט וללחוץ פעמיים לאיפוס</span>
+    <button type="button" class="icon-btn zoom-btn" data-zoom="out" aria-label="התרחקות">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+    </button>
+    <button type="button" class="icon-btn zoom-btn" data-zoom="in" aria-label="התקרבות">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+
+  <!-- ==================== כלים ==================== -->
+  <div class="tools" id="tools">
+    <button type="button" class="tool" data-action="undo" aria-label="בטל">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-5-5 5-5"/><path d="M4 9h9a7 7 0 0 1 0 14h-3"/></svg>
+      <span>בטל</span>
+    </button>
+    <button type="button" class="tool" data-action="redo" aria-label="בצע שוב">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9h-9a7 7 0 0 0 0 14h3"/></svg>
+      <span>שוב</span>
+    </button>
+    <button type="button" class="tool" data-action="erase" aria-label="מחק">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 6L9 14l-4-4 8-8z" transform="translate(1 2)"/><path d="M4 20h16"/></svg>
+      <span>מחק</span>
+    </button>
+    <button type="button" class="tool" data-action="notes" id="btnNotes" aria-pressed="false" aria-label="מצב פתקים">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M9 4v16M15 4v16M4 9h16M4 15h16"/></svg>
+      <span>פתקים</span>
+      <span class="tool-badge" id="notesBadge">כבוי</span>
+    </button>
+    <button type="button" class="tool" data-action="hint" aria-label="רמז">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.1 1 1.7h5.2c.1-.6.4-1.2 1-1.7A6 6 0 0 0 12 3z"/></svg>
+      <span>רמז</span>
+      <span class="tool-badge" id="hintBadge">3</span>
+    </button>
+    <button type="button" class="tool" data-action="solve" aria-label="פתרון אוטומטי">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+      <span>פתור</span>
+    </button>
+  </div>
+
+  <!-- ==================== פאנל מספרים ==================== -->
+  <div class="numpad-wrap">
+    <div class="numpad" id="numpad" role="group" aria-label="פאנל מספרים"></div>
+  </div>
+
+  <footer class="footer">
+    <button type="button" class="link-btn" id="btnRestart">התחל את הלוח מחדש</button>
+    <span class="footer-sep">·</span>
+    <span id="footerInfo">—</span>
+  </footer>
+</div>
+
+<!-- ==================== מסך טעינה / יצירת פאזל ==================== -->
+<div class="loading" id="loading" hidden>
+  <div class="loading-card">
+    <div class="loading-grid" aria-hidden="true">
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+    <p class="loading-title" id="loadingTitle">יוצר פאזל…</p>
+    <p class="loading-sub" id="loadingSub">מוודא שיש פתרון יחיד</p>
+    <div class="progress"><div class="progress-bar" id="loadingBar"></div></div>
+  </div>
+</div>
+
+<!-- ==================== הודעת ניצחון ==================== -->
+<div class="modal" id="winModal" hidden>
+  <div class="modal-card win-card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="win-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2 class="modal-title" id="winTitle">כל הכבוד!</h2>
+    <p class="modal-sub" id="winSub">פתרת את הלוח</p>
+    <div class="win-stats" id="winStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>סגור</button>
+      <button type="button" class="btn btn-primary" id="btnWinNew">משחק חדש</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== סטטיסטיקות ==================== -->
+<div class="modal" id="statsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <h2 class="modal-title" id="statsTitle">סטטיסטיקות</h2>
+    <div class="stats-table" id="statsTable"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="btnClearStats">איפוס נתונים</button>
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== אישור פעולה ==================== -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h2 class="modal-title" id="confirmTitle">אישור</h2>
+    <p class="modal-sub" id="confirmText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
+      <button type="button" class="btn btn-danger" id="btnConfirmOk">אישור</button>
+    </div>
+  </div>
+</div>
+
+<!-- הודעות קצרות (toast) -->
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="js/core.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/game.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

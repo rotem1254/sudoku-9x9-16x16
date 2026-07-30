@@ -1,0 +1,17 @@
+# Vercel
+.vercel/
+
+# תלויות (הפרויקט לא משתמש בהן, אבל למקרה שיתווספו)
+node_modules/
+
+# מערכת הפעלה / עורכים
+Thumbs.db
+Desktop.ini
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# לוגים
+*.log
+npm-debug.log*
