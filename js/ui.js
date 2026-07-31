@@ -749,7 +749,7 @@
     const btn = e.target.closest('.num');
     if (!btn) return;
     btn.classList.add('is-pressed');
-    setTimeout(() => btn.classList.remove('is-pressed'), 140);
+    setTimeout(() => btn.classList.remove('is-pressed'), 220);
     enterValue(Number(btn.dataset.value));
   });
 

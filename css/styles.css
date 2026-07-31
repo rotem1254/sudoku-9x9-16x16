@@ -29,9 +29,10 @@
   --accent-soft-2: #eef1ff;
   /* רקע התא הנבחר — גוון, לא מילוי מלא. מילוי רווי הפך את התא לבלוק
      אחיד שבו הספרה שהוזנה כמעט לא נראתה */
-  --select-bg: #c9d5ff;
+  --select-bg: #b9caff;
   --given: #1b2033;
-  --entered: #4f6ef7;
+  /* כחול רווי ועמוק — הערך שהשחקן הזין צריך "לקפוץ" מול הנתונים הניטרליים */
+  --entered: #2246e8;
   --hint: #d9861f;
   --hint-soft: #fdf0dc;
   --error: #e14b52;
@@ -66,9 +67,9 @@
   --accent-text: #0e111a;
   --accent-soft: #26304f;
   --accent-soft-2: #1e2438;
-  --select-bg: #37477a;
+  --select-bg: #44568f;
   --given: #e8ebf7;
-  --entered: #7f9bff;
+  --entered: #a9c0ff;
   --hint: #e9a94e;
   --hint-soft: #3a2f1c;
   --error: #ff6b71;
@@ -435,8 +436,8 @@ svg {
   cursor: pointer;
   user-select: none;
   color: var(--entered);
-  /* 700 ולא 600 — הערך שהשחקן הזין צריך לקרוא באותה עוצמה כמו הנתונים */
-  font-weight: 700;
+  /* 800 — הערך שהשחקן הזין נקרא באותה עוצמה כמו הנתונים, ונבדל מהם בצבע */
+  font-weight: 800;
   /* גופן יחסי לרוחב הלוח => קריא גם ב-9 וגם ב-16 */
   font-size: calc(62cqw / var(--n));
   line-height: 1;
@@ -452,7 +453,16 @@ svg {
 /* הדגשות */
 .cell.is-peer { background: var(--accent-soft-2); }
 .cell.is-given.is-peer { background: var(--surface-3); }
-.cell.is-same { background: var(--accent-soft); color: var(--accent); }
+/* כל התאים עם אותו ערך — מודגשים חזק כדי שסריקת הלוח בעין תהיה מיידית */
+.cell.is-same { background: var(--accent-soft); color: var(--accent); font-weight: 800; }
+.cell.is-same::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--accent);
+  opacity: .45;
+  pointer-events: none;
+}
 
 /*
  * התא הנבחר: גוון רקע + טבעת, ולא מילוי מלא בצבע המבטא.
@@ -480,11 +490,11 @@ svg {
  * (נבחר) היא פשוט לא נראתה.
  */
 @keyframes pop {
-  0% { transform: scale(.35); opacity: 0; }
-  60% { transform: scale(1.22); opacity: 1; }
+  0% { transform: scale(.25); opacity: 0; }
+  55% { transform: scale(1.4); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
-.cell.is-pop .cell-value { animation: pop .3s var(--ease); }
+.cell.is-pop .cell-value { animation: pop .36s var(--ease); }
 
 /* שכבת ההבזק — יושבת מתחת לספרה בזכות ה-z-index שלה */
 .cell::before {
@@ -496,13 +506,14 @@ svg {
   pointer-events: none;
 }
 @keyframes flash {
-  0% { opacity: .55; }
+  0% { opacity: .95; }
+  35% { opacity: .8; }
   100% { opacity: 0; }
 }
-.cell.is-pop::before { animation: flash .38s var(--ease); }
+.cell.is-pop::before { animation: flash .5s var(--ease); }
 
 /* בהזנה שגויה ההבזק אדום במקום כחול */
-.cell.is-shake::before { background: var(--error); animation: flash .38s var(--ease); }
+.cell.is-shake::before { background: var(--error); animation: flash .5s var(--ease); }
 
 /* אנימציית שגיאה */
 @keyframes shake {
@@ -691,7 +702,13 @@ svg {
 /* ערך שכבר הושלם על הלוח — מעומעם */
 .num.is-done { color: var(--muted); background: var(--surface-2); opacity: .55; }
 .num.is-notes { color: var(--text-2); border-style: dashed; }
-.num.is-pressed { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.num.is-pressed {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  transform: scale(1.12);
+  box-shadow: var(--shadow-md);
+}
 
 /* מסך רחב: פורסים את כל המספרים בשורה אחת */
 @media (min-width: 480px) {
