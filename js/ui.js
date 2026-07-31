@@ -790,6 +790,10 @@
         updateNumpad();
         break;
 
+      case 'fill-notes':
+        doFillNotes();
+        break;
+
       case 'hint':
         doHint();
         break;
@@ -820,6 +824,32 @@
     // בכוונה בלי השלמה אוטומטית: ביטול/ביצוע-חוזר אינו מהלך של השחקן,
     // והפעלת השלמה כאן הייתה "נלחמת" בשחקן שמנסה לחזור אחורה
     checkWin();
+  }
+
+  /**
+   * ממלא בכל תא ריק את המועמדים החוקיים. לחיצה נוספת כשהכול כבר מלא
+   * מנקה — כך שכפתור אחד עושה את שני הכיוונים ולא צריך שניים.
+   */
+  function doFillNotes() {
+    const g = state.game;
+    if (!g || state.paused || g.finished) return;
+
+    const filled = g.fillNotes();
+    if (filled) {
+      toast('מולאו פתקים ב-' + filled + ' תאים');
+    } else {
+      const cleared = g.clearAllNotes();
+      if (!cleared) {
+        toast('אין תאים ריקים למילוי');
+        return;
+      }
+      toast('הפתקים נוקו');
+    }
+
+    renderAllCells();
+    updateHighlights();
+    updateStatus();
+    scheduleSave();
   }
 
   function doHint() {

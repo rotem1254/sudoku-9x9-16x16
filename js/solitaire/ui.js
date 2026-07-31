@@ -423,9 +423,15 @@
     el.statFound.textContent = g.foundationCount() + '/52';
 
     const undoBtn = el.actions.querySelector('[data-action="undo"]');
+    const redoBtn = el.actions.querySelector('[data-action="redo"]');
     const collectBtn = el.actions.querySelector('[data-action="collect"]');
     undoBtn.disabled = !g.canUndo();
+    redoBtn.disabled = !g.canRedo();
     collectBtn.disabled = g.finished || g.foundationCount() === 52;
+    // ברגע שכל הקלפים גלויים הכפתור הופך מ"אסוף" ל"סיים"
+    collectBtn.classList.toggle('is-finish', g.canAutoFinish());
+    const label = collectBtn.querySelector('span:not(.tool-badge)');
+    if (label) label.textContent = g.canAutoFinish() ? 'סיים' : 'אסוף';
 
     el.footerInfo.textContent =
       (g.drawCount === 3 ? 'משיכת שלושה קלפים' : 'משיכת קלף אחד') +
@@ -464,7 +470,7 @@
     if (res.won) {
       onWin();
     } else if (state.prefs.autoCollect && g.canAutoFinish()) {
-      runAutoCollect();
+      runAutoFinish(true);
     } else {
       checkStuck();
     }
@@ -651,12 +657,26 @@
         }
         break;
 
+      case 'redo':
+        if (g.redo()) {
+          clearSelection();
+          state.stuckShown = false;
+          render();
+          save();
+        }
+        break;
+
       case 'hint':
         showHint();
         break;
 
       case 'collect':
-        if (runAutoCollect() === 0) toast('אין קלף שאפשר לאסוף עכשיו');
+        if (g.canAutoFinish()) {
+          toast('מסיים…');
+          runAutoFinish(true);   // מותר גם לסובב את החפיסה
+        } else if (runAutoFinish(false) === 0) {
+          toast('אין קלף שאפשר לאסוף עכשיו');
+        }
         break;
 
       case 'new':
@@ -669,38 +689,78 @@
     }
   });
 
-  /** שולח לערימות הסיום כל מה שאפשר, בהדרגה כדי שיהיה מה לראות. */
-  function runAutoCollect() {
+  /**
+   * מסיים את המשחק אוטומטית, צעד אחרי צעד.
+   *
+   * לא רק אוסף לערימות הסיום אלא גם מסובב את החפיסה כשאין מה לאסוף, ולכן
+   * הוא באמת מסיים גם כשנשארו קלפים ב-stock — וזה המצב הרגיל ברגע שכל
+   * הקלפים בעמודות כבר גלויים.
+   *
+   * הצעדים מרווחים בזמן כדי שיהיה מה לראות; הלוח לא קופץ למצב מנוצח.
+   */
+  function runAutoFinish(allowDraw) {
     const g = state.game;
-    if (g.finished) return 0;
-
-    const steps = [];
-    // מחשבים מראש את סדר האיסוף על עותק, כדי לא "לקפוץ" בממשק
-    let guard = 0;
-    let moved = true;
-    while (moved && guard++ < 200) {
-      moved = false;
-      const sources = [{ zone: 'waste' }];
-      for (let i = 0; i < Solitaire.TABLEAU_COUNT; i++) sources.push({ zone: 'tableau', pile: i });
-      for (const src of sources) {
-        const cards = g._takeableCards(src);
-        if (!cards || cards.length !== 1) continue;
-        const f = g.foundationFor(cards[0]);
-        if (!g.canPlaceOnFoundation(cards[0], f)) continue;
-        if (g.move(src, { zone: 'foundation', pile: f }).ok) {
-          steps.push(1);
-          moved = true;
-        }
-      }
-    }
-
-    if (!steps.length) return 0;
+    if (!g || g.finished || state.animating) return 0;
 
     clearSelection();
+    state.animating = true;
+
+    let collected = 0;
+    // מגן מפני סיבוב אינסופי: אם עברנו חפיסה שלמה בלי לאסוף כלום, עוצרים
+    let drawsSinceCollect = 0;
+    const drawLimit = g.stock.length + g.waste.length + 2;
+
+    const step = () => {
+      if (state.game !== g || g.finished) return finish();
+
+      const did = allowDraw ? g.autoFinishStep() : g.collectOne();
+      if (!did) return finish();
+
+      if (did.type === 'collect') {
+        collected++;
+        drawsSinceCollect = 0;
+      } else {
+        drawsSinceCollect++;
+        if (drawsSinceCollect > drawLimit) return finish();
+      }
+
+      render();
+      if (did.type === 'collect') landAnimation({ zone: 'foundation', pile: did.to });
+
+      if (g.checkWin()) {
+        state.animating = false;
+        save();
+        onWin();
+        return;
+      }
+      // איסוף מהיר יותר ממשיכה — משיכה היא "חיפוש" וכדאי שתיראה כזו
+      setTimeout(step, did.type === 'collect' ? 110 : 190);
+    };
+
+    function finish() {
+      state.animating = false;
+      render();
+      save();
+      if (!g.finished) checkStuck();
+    }
+
+    // הצעד הראשון רץ מיד, כדי שהקורא יידע אם בכלל היה מה לעשות
+    const first = allowDraw ? g.autoFinishStep() : g.collectOne();
+    if (!first) {
+      state.animating = false;
+      return 0;
+    }
+    collected++;
     render();
-    save();
-    if (g.checkWin()) onWin();
-    return steps.length;
+    if (first.type === 'collect') landAnimation({ zone: 'foundation', pile: first.to });
+    if (g.checkWin()) {
+      state.animating = false;
+      save();
+      onWin();
+      return 1;
+    }
+    setTimeout(step, 140);
+    return 1;
   }
 
   function showHint() {
@@ -1064,7 +1124,7 @@
       render();
       return;
     }
-    if (e.key === 'a' || e.key === 'A') runAutoCollect();
+    if (e.key === 'a' || e.key === 'A') runAutoFinish(state.game.canAutoFinish());
     if (e.key === 'h' || e.key === 'H') showHint();
   });
 

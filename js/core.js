@@ -430,6 +430,21 @@
     return bad;
   }
 
+  /**
+   * מסכת המועמדים החוקיים לכל תא ריק, לפי מה שכבר מוצב בשורה/עמודה/תיבה.
+   * תא מלא מקבל 0. משמש למילוי פתקים אוטומטי.
+   * @returns {Int32Array}
+   */
+  function candidateMasks(values, size) {
+    const spec = specFor(size);
+    const st = createState(values, spec);
+    const out = new Int32Array(spec.cells);
+    for (let i = 0; i < spec.cells; i++) {
+      if (!st.grid[i]) out[i] = candidates(st, spec, i);
+    }
+    return out;
+  }
+
   /** האם הלוח מלא וחוקי לחלוטין. */
   function isSolved(values, size) {
     const spec = specFor(size);
@@ -616,6 +631,7 @@
     hasUniqueSolution,
     solvableByLogicOnly,
     findConflicts,
+    candidateMasks,
     isSolved,
     // יצירה
     generateSolved,

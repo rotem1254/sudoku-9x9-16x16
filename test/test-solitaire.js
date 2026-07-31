@@ -156,6 +156,10 @@ section('איסוף אוטומטי וניצחון');
 
 /** בונה משחק שכל הקלפים בו מסודרים ומוכנים לאיסוף. */
 function nearlyWon() {
+  return nearlyWonSetup();
+}
+
+function nearlyWonSetup() {
   const s = new Solitaire({ seed: 1 });
   s.stock = [];
   s.waste = [];
@@ -182,6 +186,55 @@ check('טיימר נעצר בניצחון', !w.isTimerRunning);
 
 const notReady = new Solitaire({ seed: 11 });
 check('חלוקה טרייה — אי אפשר לסיים אוטומטית', !notReady.canAutoFinish());
+
+/* --------------------------------------------------------------------- */
+
+section('Redo');
+
+const rd = new Solitaire({ seed: 21 });
+check('אין מה לבצע שוב בהתחלה', !rd.canRedo());
+rd.draw();
+const afterDraw = JSON.stringify(rd.waste);
+rd.undo();
+check('אחרי ביטול אפשר לבצע שוב', rd.canRedo());
+rd.redo();
+check('Redo שיחזר את המשיכה', JSON.stringify(rd.waste) === afterDraw);
+check('אחרי Redo אין יותר מה לבצע שוב', !rd.canRedo());
+
+rd.undo();
+rd.draw();  // מהלך חדש אחרי ביטול
+check('מהלך חדש מוחק את ענף ה-redo', !rd.canRedo());
+
+/* --------------------------------------------------------------------- */
+
+section('סיום אוטומטי');
+
+const fin = nearlyWonSetup();
+check('כל הקלפים גלויים => אפשר לסיים', fin.canAutoFinish());
+
+let steps = 0;
+while (fin.autoFinishStep() && steps < 400) steps++;
+check(`autoFinishStep סיים את הלוח ב-${steps} צעדים`, fin.foundationCount() === 52);
+check('המשחק סומן כמנוצח', fin.checkWin());
+
+// הבדיקה החשובה: סיום גם כשנשארו קלפים בחפיסה
+const withStock = new Solitaire({ seed: 5 });
+withStock.tableau = [[], [], [], [], [], [], []];
+withStock.faceUp = [0, 0, 0, 0, 0, 0, 0];
+withStock.foundations = [[], [], [], []];
+withStock.waste = [];
+withStock.stock = [];
+for (let s = 0; s < 4; s++) for (let r = 13; r >= 1; r--) withStock.stock.push(C.makeCard(s, r));
+check('כל הקלפים בחפיסה => עדיין נחשב ניתן לסיום', withStock.canAutoFinish());
+let n = 0;
+while (withStock.autoFinishStep() && n < 500) n++;
+check(`סיום אוטומטי רוקן גם את החפיסה (${n} צעדים)`, withStock.foundationCount() === 52);
+
+// collectOne לא נוגע בחפיסה
+const noDraw = new Solitaire({ seed: 7 });
+const stockBefore = noDraw.stock.length;
+noDraw.collectOne();
+check('collectOne אינו מושך מהחפיסה', noDraw.stock.length === stockBefore);
 
 /* --------------------------------------------------------------------- */
 

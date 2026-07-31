@@ -117,6 +117,7 @@
       this.recycles = 0;
 
       this.undoStack = [];
+      this.redoStack = [];
       this._timerRunning = false;
       this._tickBase = 0;
     }
@@ -207,6 +208,8 @@
 
     _pushUndo() {
       this.undoStack.push(this._snapshot());
+      // מהלך חדש הופך את ענף ה-redo ללא רלוונטי
+      this.redoStack.length = 0;
       // תקרה שומרת על זיכרון סביר במשחק ארוך
       if (this.undoStack.length > 300) this.undoStack.shift();
     }
@@ -215,9 +218,22 @@
       return this.undoStack.length > 0 && !this.finished;
     }
 
+    canRedo() {
+      return this.redoStack.length > 0 && !this.finished;
+    }
+
     undo() {
       if (!this.canUndo()) return false;
+      // שומרים את ההווה כדי שאפשר יהיה לחזור אליו
+      this.redoStack.push(this._snapshot());
       this._restore(this.undoStack.pop());
+      return true;
+    }
+
+    redo() {
+      if (!this.canRedo()) return false;
+      this.undoStack.push(this._snapshot());
+      this._restore(this.redoStack.pop());
       return true;
     }
 
@@ -418,6 +434,48 @@
     }
 
     /**
+     * צעד בודד לקראת סיום אוטומטי: שולח קלף אחד לערימת סיום, ואם אין מה
+     * לשלוח — מושך מהחפיסה כדי לחשוף את הבא בתור.
+     *
+     * מוחזר צעד אחד ולא לולאה שלמה, כדי שהממשק יוכל להנפיש את הסיום
+     * במקום שהלוח יקפוץ למצב מנוצח בבת אחת.
+     *
+     * @returns {{type:'collect'|'draw'}|null} null כשאין יותר מה לעשות
+     */
+    autoFinishStep() {
+      const c = this.collectOne();
+      if (c) return c;
+
+      // שום דבר לא נאסף => מסובבים את החפיסה כדי להביא קלפים חדשים
+      if (this.stock.length || this.waste.length) {
+        if (this.draw().ok) return { type: 'draw' };
+      }
+      return null;
+    }
+
+    /**
+     * שולח קלף בודד לערימת סיום, אם יש כזה. בלי משיכה מהחפיסה — זו
+     * ההפרדה שמאפשרת לכפתור "אסוף" רק לאסוף, בלי לסובב את החפיסה מאחורי
+     * גבו של השחקן.
+     * @returns {{type:'collect'}|null}
+     */
+    collectOne() {
+      const sources = [{ zone: 'waste' }];
+      for (let i = 0; i < TABLEAU_COUNT; i++) sources.push({ zone: 'tableau', pile: i });
+
+      for (const src of sources) {
+        const cards = this._takeableCards(src);
+        if (!cards || cards.length !== 1) continue;
+        const f = this.foundationFor(cards[0]);
+        if (!this.canPlaceOnFoundation(cards[0], f)) continue;
+        if (this.move(src, { zone: 'foundation', pile: f }).ok) {
+          return { type: 'collect', card: cards[0], to: f };
+        }
+      }
+      return null;
+    }
+
+    /**
      * האם אפשר לסיים את המשחק בלחיצה אחת — כלומר כל הקלפים כבר גלויים
      * ואין קלפים הפוכים שחוסמים. רק אז מציעים "סיים אוטומטית".
      */
@@ -552,6 +610,7 @@
       this.drawCount = s.drawCount === 3 ? 3 : 1;
       this.seed = s.seed;
       this.undoStack = [];
+      this.redoStack = [];
       this._timerRunning = false;
       this._tickBase = 0;
     }

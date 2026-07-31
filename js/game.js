@@ -277,6 +277,48 @@
       return { ok: true, index: target, value: val };
     }
 
+    /**
+     * ממלא בכל תא ריק את כל הערכים שעדיין חוקיים בו.
+     *
+     * זו לא עזרה שמגלה מידע חדש — היא רק חוסכת את העבודה הידנית של רישום
+     * מה שכבר נגזר מהלוח. לכן היא אינה נספרת כרמז ואינה משפיעה על הניקוד.
+     *
+     * הפעולה כולה נכנסת כצעד אחד בהיסטוריה, כדי שביטול אחד יבטל את כולה.
+     *
+     * @returns {number} כמה תאים קיבלו פתקים
+     */
+    fillNotes() {
+      if (this.finished) return 0;
+      const masks = Core.candidateMasks(this.values, this.size);
+      let touched = 0;
+
+      this._transaction((touch) => {
+        for (let i = 0; i < this.cells; i++) {
+          if (this.values[i] || this.isGiven(i)) continue;
+          if (masks[i] === this.notes[i]) continue;
+          touch(i);
+          this.notes[i] = masks[i];
+          touched++;
+        }
+      });
+      return touched;
+    }
+
+    /** מוחק את כל הפתקים מהלוח, כצעד אחד בהיסטוריה. */
+    clearAllNotes() {
+      if (this.finished) return 0;
+      let touched = 0;
+      this._transaction((touch) => {
+        for (let i = 0; i < this.cells; i++) {
+          if (!this.notes[i]) continue;
+          touch(i);
+          this.notes[i] = 0;
+          touched++;
+        }
+      });
+      return touched;
+    }
+
     /** פתרון אוטומטי מלא — מסיים את המשחק בלי לרשום ניצחון. */
     solveAll() {
       this._transaction((touch) => {

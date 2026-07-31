@@ -29,7 +29,7 @@
        וכל המשחק נכנס במסך הטלפון בלי גלילה -->
   <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
   <link rel="stylesheet" href="css/theme.css?v=1bf06a28">
-  <link rel="stylesheet" href="css/sudoku.css?v=b0bb3766">
+  <link rel="stylesheet" href="css/sudoku.css?v=911133f1">
 </head>
 <body>
 
@@ -156,6 +156,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M9 4v16M15 4v16M4 9h16M4 15h16"/></svg>
       <span>פתקים</span>
       <span class="tool-badge" id="notesBadge">כבוי</span>
+    </button>
+    <button type="button" class="tool" data-action="fill-notes" aria-label="מלא פתקים אוטומטית">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+      <span>מלא</span>
     </button>
     <button type="button" class="tool" data-action="hint" aria-label="רמז">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.1 1 1.7h5.2c.1-.6.4-1.2 1-1.7A6 6 0 0 0 12 3z"/></svg>
@@ -286,9 +290,9 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/sw-register.js?v=89122463"></script>
-<script src="js/core.js?v=538d980d"></script>
+<script src="js/core.js?v=f5955143"></script>
 <script src="js/storage.js?v=b399d4d7"></script>
-<script src="js/game.js?v=26d7242a"></script>
-<script src="js/ui.js?v=b69998b7"></script>
+<script src="js/game.js?v=9c424b10"></script>
+<script src="js/ui.js?v=69a00ee7"></script>
 </body>
 </html>

@@ -356,10 +356,11 @@
 
 /* -------------------------------- כלים --------------------------------- */
 
+/* שבעה כלים — במסך צר התוויות נעלמות ממילא ונשארים אייקונים בלבד */
 .tools {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 5px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
 }
 
 

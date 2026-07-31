@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
   <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
   <link rel="stylesheet" href="css/theme.css?v=1bf06a28">
-  <link rel="stylesheet" href="css/solitaire.css?v=15571f90">
+  <link rel="stylesheet" href="css/solitaire.css?v=68c2db9f">
 </head>
 <body>
 
@@ -84,6 +84,10 @@
     <button type="button" class="tool" data-action="undo" aria-label="בטל מהלך">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-5-5 5-5"/><path d="M4 9h9a7 7 0 0 1 0 14h-3"/></svg>
       <span>בטל</span>
+    </button>
+    <button type="button" class="tool" data-action="redo" aria-label="בצע שוב">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9h-9a7 7 0 0 0 0 14h3"/></svg>
+      <span>שוב</span>
     </button>
     <button type="button" class="tool" data-action="hint" aria-label="רמז">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.1 1 1.7h5.2c.1-.6.4-1.2 1-1.7A6 6 0 0 0 12 3z"/></svg>
@@ -205,7 +209,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/sw-register.js?v=89122463"></script>
-<script src="js/solitaire/engine.js?v=c5a37724"></script>
-<script src="js/solitaire/ui.js?v=46e5ac03"></script>
+<script src="js/solitaire/engine.js?v=b5524c85"></script>
+<script src="js/solitaire/ui.js?v=bf7a8cc8"></script>
 </body>
 </html>
