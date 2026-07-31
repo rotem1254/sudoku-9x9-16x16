@@ -1,0 +1,169 @@
+/* =============================================================================
+ * hub.css — מרכז המשחקים (דף הבית)
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css. דף קצר וסטטי, ולכן כאן יש רק את כרטיסי המשחקים.
+ * =========================================================================== */
+
+.hub-intro {
+  margin: 0;
+  color: var(--text-2);
+  font-size: .88rem;
+  line-height: 1.5;
+}
+
+.hub-grid {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+/* -------------------------------- כרטיס --------------------------------- */
+
+.game-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow-sm);
+  color: inherit;
+  text-decoration: none;
+  transition: transform .14s var(--ease), box-shadow .18s, border-color .18s;
+}
+.game-card:active { transform: scale(.985); }
+@media (hover: hover) {
+  .game-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+}
+
+.game-body { min-width: 0; }
+
+.game-title {
+  margin: 0 0 3px;
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.game-desc {
+  margin: 0 0 9px;
+  color: var(--text-2);
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.game-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.tag {
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: .66rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+/* תגית שמסמנת משחק שנשמר באמצע */
+.tag.is-live {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent);
+}
+
+/* חץ ההמשך — ב-RTL הוא פונה שמאלה */
+.game-go {
+  width: 22px;
+  height: 22px;
+  color: var(--muted);
+  transition: transform .16s var(--ease), color .16s;
+}
+@media (hover: hover) {
+  .game-card:hover .game-go { color: var(--accent); transform: translateX(-3px); }
+}
+
+/* ------------------------------- איורים --------------------------------- */
+
+.game-art {
+  width: 76px;
+  height: 76px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+/* --- סודוקו: רשת 3×3 מוקטנת --- */
+.game-art-sudoku { background: linear-gradient(135deg, #4f6ef7, #6d8bff); }
+
+.mini-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+  width: 42px;
+  height: 42px;
+}
+.mini-grid i {
+  border-radius: 3px;
+  background: rgba(255, 255, 255, .35);
+}
+/* כמה "תאים מלאים" כדי שזה יקרא כלוח ולא כריבועים */
+.mini-grid i:nth-child(1),
+.mini-grid i:nth-child(5),
+.mini-grid i:nth-child(9),
+.mini-grid i:nth-child(6) { background: #fff; }
+
+/* --- סוליטר: שלושה קלפים בפריסת מניפה --- */
+.game-art-solitaire { background: linear-gradient(135deg, #1f9e6b, #3fc78d); }
+
+.mini-cards { position: relative; width: 46px; height: 46px; }
+.mc {
+  position: absolute;
+  top: 6px;
+  width: 24px;
+  height: 34px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+  display: grid;
+  place-items: center;
+  font-size: .8rem;
+  font-style: normal;
+  font-weight: 800;
+  color: #1e2437;
+}
+.mc-1 { inset-inline-start: 0; transform: rotate(-14deg); }
+.mc-2 { inset-inline-start: 11px; transform: rotate(0deg); color: #d2323c; z-index: 2; }
+.mc-3 { inset-inline-start: 22px; transform: rotate(14deg); color: #d2323c; }
+
+/* -------------------------------- פוטר ---------------------------------- */
+
+.hub-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* --------------------------- מסכים גדולים ------------------------------- */
+
+@media (min-width: 620px) {
+  .hub-grid { grid-template-columns: 1fr 1fr; }
+  .game-card {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    text-align: center;
+    justify-items: center;
+    gap: 12px;
+    padding: 22px 16px;
+  }
+  .game-art { width: 92px; height: 92px; }
+  .game-go { display: none; }
+  .game-tags { justify-content: center; }
+}

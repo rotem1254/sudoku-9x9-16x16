@@ -2,51 +2,31 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <!--
-    viewport-fit=cover  => תמיכה ב"מגרעת" (notch) במכשירים מודרניים.
-    user-scalable=no    => מונע zoom מקרי בלחיצה כפולה / pinch על הדף כולו.
-                           זום מכוון בתוך לוח ה-16x16 ממומש בקוד (ראה ui.js).
-  -->
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#4f6ef7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#12151f" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="סודוקו 9x9 ו-16x16 — פאזלים אקראיים עם פתרון יחיד, פתקים, רמזים וטיימר. עובד לגמרי בדפדפן.">
+  <meta name="description" content="מרכז משחקים — סודוקו 9x9 ו-16x16 וסוליטר קלונדייק. הכול בדפדפן, בלי התקנה ובלי חשבון.">
   <meta name="mobile-web-app-capable" content="yes">
-  <!-- הגרסה עם הקידומת apple- היא זו ש-iOS באמת קורא. בלעדיה הקיצור
-       במסך הבית נפתח בתוך Safari עם סרגל כתובת, ולא כאפליקציה -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <!-- default ולא black-translucent: translucent מושך את התוכן מתחת לשעון
-       ומאלץ טקסט לבן, שנעלם לגמרי במצב התצוגה הבהיר -->
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <!-- השם שיופיע מתחת לאייקון במסך הבית -->
-  <meta name="apple-mobile-web-app-title" content="סודוקו">
-  <title>סודוקו · 9×9 ו-16×16</title>
-  <link rel="icon" href="icon.svg?v=4" type="image/svg+xml">
-  <!-- iOS לא מרנדר SVG כאייקון מסך בית — בלי ה-PNG הזה הוא ישים
-       צילום מסך מוקטן של הדף במקומו -->
-  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=4">
-  <!-- מאפשר "הוספה למסך הבית" — במצב standalone נחסך סרגל הדפדפן,
-       וכל המשחק נכנס במסך הטלפון בלי גלילה -->
-  <link rel="manifest" href="manifest.webmanifest?v=4">
-  <link rel="stylesheet" href="css/styles.css?v=4">
+  <meta name="apple-mobile-web-app-title" content="משחקים">
+  <title>מרכז המשחקים</title>
+  <link rel="icon" href="icon.svg?v=6" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=6">
+  <link rel="manifest" href="manifest.webmanifest?v=6">
+  <link rel="stylesheet" href="css/theme.css?v=6">
+  <link rel="stylesheet" href="css/hub.css?v=6">
 </head>
 <body>
 
 <div class="app">
 
-  <!-- ==================== סרגל עליון ==================== -->
   <header class="topbar">
     <h1 class="logo">
       <span class="logo-mark" aria-hidden="true"></span>
-      סודוקו
+      <span class="logo-text">משחקים</span>
     </h1>
     <div class="topbar-actions">
-      <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
-      </button>
-      <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-      </button>
       <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
@@ -54,237 +34,132 @@
     </div>
   </header>
 
-  <!-- ==================== טאבים: גודל לוח ==================== -->
-  <div class="tabs" role="tablist" aria-label="גודל הלוח">
-    <button type="button" class="tab is-active" data-size="9" role="tab" aria-selected="true">
-      <span class="tab-title">9×9</span>
-      <span class="tab-sub">קלאסי</span>
-    </button>
-    <button type="button" class="tab" data-size="16" role="tab" aria-selected="false">
-      <span class="tab-title">16×16</span>
-      <span class="tab-sub">מורחב</span>
-    </button>
-    <span class="tab-indicator" aria-hidden="true"></span>
-  </div>
+  <p class="hub-intro">בחר משחק. הכול רץ בדפדפן — בלי התקנה, בלי חשבון, וההתקדמות נשמרת אצלך במכשיר.</p>
 
-  <!-- ==================== רמות קושי ==================== -->
-  <div class="difficulty-row">
-    <div class="pills" id="difficultyPills" role="group" aria-label="רמת קושי">
-      <button type="button" class="pill is-active" data-difficulty="easy">קל</button>
-      <button type="button" class="pill" data-difficulty="medium">בינוני</button>
-      <button type="button" class="pill" data-difficulty="hard">קשה</button>
-      <button type="button" class="pill" data-difficulty="expert">מומחה</button>
-    </div>
-    <button type="button" class="btn btn-primary btn-new" id="btnNew" aria-label="משחק חדש" title="משחק חדש">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v4h-4"/></svg>
-      <span class="btn-new-text">משחק חדש</span>
-    </button>
-  </div>
+  <nav class="hub-grid">
 
-  <!-- ==================== שורת סטטוס ==================== -->
-  <div class="statusbar">
-    <div class="stat">
-      <span class="stat-label">זמן</span>
-      <span class="stat-value" id="statTime">00:00</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">שגיאות</span>
-      <span class="stat-value" id="statMistakes">0</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">רמזים</span>
-      <span class="stat-value" id="statHints">3</span>
-    </div>
-    <div class="stat">
-      <span class="stat-label">נותרו</span>
-      <span class="stat-value" id="statRemaining">0</span>
-    </div>
-    <button type="button" class="icon-btn stat-pause" id="btnPause" aria-label="השהיה" title="השהיה">
-      <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
-      <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
-    </button>
-  </div>
-
-  <!-- ==================== הלוח ==================== -->
-  <main class="board-area">
-    <div class="board-viewport" id="boardViewport">
-      <div class="board-stage" id="boardStage">
-        <!-- dir=ltr: סדר העמודות בלוח נשאר משמאל לימין גם בממשק RTL -->
-        <div class="board" id="board" dir="ltr" role="grid" aria-label="לוח סודוקו"></div>
+    <!-- ==================== סודוקו ==================== -->
+    <a class="game-card" href="sudoku.html">
+      <div class="game-art game-art-sudoku" aria-hidden="true">
+        <span class="mini-grid">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </span>
       </div>
-    </div>
-
-    <!-- שכבת השהיה מעל הלוח -->
-    <div class="board-overlay" id="pauseOverlay" hidden>
-      <div class="board-overlay-inner">
-        <svg viewBox="0 0 24 24" aria-hidden="true" class="overlay-icon"><path d="M9 5v14M15 5v14"/></svg>
-        <p>המשחק מושהה</p>
-        <button type="button" class="btn btn-primary" id="btnResume">המשך משחק</button>
+      <div class="game-body">
+        <h2 class="game-title">סודוקו</h2>
+        <p class="game-desc">לוח קלאסי 9×9 ולוח מורחב 16×16, ארבע רמות קושי, פתקים ורמזים.</p>
+        <div class="game-tags">
+          <span class="tag">9×9</span>
+          <span class="tag">16×16</span>
+          <span class="tag" id="tagSudoku">—</span>
+        </div>
       </div>
-    </div>
-  </main>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
 
-  <!-- בקרות זום — מוצגות רק במצב 16x16, מחוץ ללוח כדי לא להסתיר תאים -->
-  <div class="zoom-bar" id="zoomControls" hidden>
-    <span class="zoom-bar-label">זום · אפשר גם לצבוט וללחוץ פעמיים לאיפוס</span>
-    <button type="button" class="icon-btn zoom-btn" data-zoom="out" aria-label="התרחקות">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
-    </button>
-    <button type="button" class="icon-btn zoom-btn" data-zoom="in" aria-label="התקרבות">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-    </button>
-  </div>
+    <!-- ==================== סוליטר ==================== -->
+    <a class="game-card" href="solitaire.html">
+      <div class="game-art game-art-solitaire" aria-hidden="true">
+        <span class="mini-cards">
+          <i class="mc mc-1">♠</i>
+          <i class="mc mc-2">♥</i>
+          <i class="mc mc-3">♦</i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">סוליטר</h2>
+        <p class="game-desc">קלונדייק קלאסי. משיכת קלף אחד או שלושה, ביטול מהלכים ואיסוף אוטומטי.</p>
+        <div class="game-tags">
+          <span class="tag">קלונדייק</span>
+          <span class="tag" id="tagSolitaire">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
 
-  <!-- ==================== כלים ==================== -->
-  <div class="tools" id="tools">
-    <button type="button" class="tool" data-action="undo" aria-label="בטל">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-5-5 5-5"/><path d="M4 9h9a7 7 0 0 1 0 14h-3"/></svg>
-      <span>בטל</span>
-    </button>
-    <button type="button" class="tool" data-action="redo" aria-label="בצע שוב">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 14l5-5-5-5"/><path d="M20 9h-9a7 7 0 0 0 0 14h3"/></svg>
-      <span>שוב</span>
-    </button>
-    <button type="button" class="tool" data-action="erase" aria-label="מחק">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 6L9 14l-4-4 8-8z" transform="translate(1 2)"/><path d="M4 20h16"/></svg>
-      <span>מחק</span>
-    </button>
-    <button type="button" class="tool" data-action="notes" id="btnNotes" aria-pressed="false" aria-label="מצב פתקים">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M9 4v16M15 4v16M4 9h16M4 15h16"/></svg>
-      <span>פתקים</span>
-      <span class="tool-badge" id="notesBadge">כבוי</span>
-    </button>
-    <button type="button" class="tool" data-action="hint" aria-label="רמז">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.1 1 1.7h5.2c.1-.6.4-1.2 1-1.7A6 6 0 0 0 12 3z"/></svg>
-      <span>רמז</span>
-      <span class="tool-badge" id="hintBadge">3</span>
-    </button>
-    <button type="button" class="tool" data-action="solve" aria-label="פתרון אוטומטי">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
-      <span>פתור</span>
-    </button>
-  </div>
+  </nav>
 
-  <!-- ==================== פאנל מספרים ==================== -->
-  <div class="numpad-wrap">
-    <div class="numpad" id="numpad" role="group" aria-label="פאנל מספרים"></div>
-  </div>
-
-  <footer class="footer">
-    <button type="button" class="link-btn" id="btnRestart">התחל את הלוח מחדש</button>
-    <span class="footer-sep">·</span>
-    <span id="footerInfo">—</span>
+  <footer class="footer hub-footer">
+    <span>נבנה כאתר סטטי — עובד גם בלי חיבור לאינטרנט אחרי הטעינה הראשונה.</span>
   </footer>
 </div>
 
-<!-- ==================== מסך טעינה / יצירת פאזל ==================== -->
-<div class="loading" id="loading" hidden>
-  <div class="loading-card">
-    <div class="loading-grid" aria-hidden="true">
-      <span></span><span></span><span></span>
-      <span></span><span></span><span></span>
-      <span></span><span></span><span></span>
-    </div>
-    <p class="loading-title" id="loadingTitle">יוצר פאזל…</p>
-    <p class="loading-sub" id="loadingSub">מוודא שיש פתרון יחיד</p>
-    <div class="progress"><div class="progress-bar" id="loadingBar"></div></div>
-  </div>
-</div>
+<script>
+/* =============================================================================
+ * הסקריפט של המרכז קטן ועצמאי בכוונה: הוא רק מיישר את ערכת הנושא ומציג
+ * "יש משחק שמור" לכל משחק. אין סיבה לטעון בשבילו את מנועי המשחקים.
+ * =========================================================================== */
+(function () {
+  'use strict';
 
-<!-- ==================== הודעת ניצחון ==================== -->
-<div class="modal" id="winModal" hidden>
-  <div class="modal-card win-card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
-    <div class="confetti" id="confetti" aria-hidden="true"></div>
-    <div class="win-badge" aria-hidden="true">
-      <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-    </div>
-    <h2 class="modal-title" id="winTitle">כל הכבוד!</h2>
-    <p class="modal-sub" id="winSub">פתרת את הלוח</p>
-    <div class="win-stats" id="winStats"></div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" data-close-modal>סגור</button>
-      <button type="button" class="btn btn-primary" id="btnWinNew">משחק חדש</button>
-    </div>
-  </div>
-</div>
+  var PREFS = 'sudoku.v1.prefs';
 
-<!-- ==================== סטטיסטיקות ==================== -->
-<div class="modal" id="statsModal" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
-    <h2 class="modal-title" id="statsTitle">סטטיסטיקות</h2>
-    <div class="stats-table" id="statsTable"></div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" id="btnClearStats">איפוס נתונים</button>
-      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
-    </div>
-  </div>
-</div>
+  function read(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) { return fallback; }
+  }
 
-<!-- ==================== הגדרות ==================== -->
-<div class="modal" id="settingsModal" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-    <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
-    <div class="settings-list">
-      <label class="setting">
-        <span class="setting-text">
-          <span class="setting-name">השלמה אוטומטית</span>
-          <span class="setting-desc">משלים לבד את הלוח כשנשארים 6 תאים או פחות</span>
-        </span>
-        <input type="checkbox" class="switch" id="optAutoComplete" data-pref="autoComplete">
-      </label>
-      <label class="setting">
-        <span class="setting-text">
-          <span class="setting-name">סימון שגיאות</span>
-          <span class="setting-desc">מסמן באדום ערכים שמתנגשים זה בזה</span>
-        </span>
-        <input type="checkbox" class="switch" id="optShowErrors" data-pref="showErrors">
-      </label>
-      <label class="setting">
-        <span class="setting-text">
-          <span class="setting-name">הדגשת שורה ועמודה</span>
-          <span class="setting-desc">מדגיש את השורה, העמודה והתיבה של התא הנבחר</span>
-        </span>
-        <input type="checkbox" class="switch" id="optHighlightPeers" data-pref="highlightPeers">
-      </label>
-      <label class="setting">
-        <span class="setting-text">
-          <span class="setting-name">הדגשת ערכים זהים</span>
-          <span class="setting-desc">מדגיש את כל התאים עם אותו מספר</span>
-        </span>
-        <input type="checkbox" class="switch" id="optHighlightSame" data-pref="highlightSame">
-      </label>
-      <label class="setting">
-        <span class="setting-text">
-          <span class="setting-name">ניקוי פתקים אוטומטי</span>
-          <span class="setting-desc">מוחק את הפתק המתאים בשורה, בעמודה ובתיבה</span>
-        </span>
-        <input type="checkbox" class="switch" id="optAutoClearNotes" data-pref="autoClearNotes">
-      </label>
-    </div>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
-    </div>
-  </div>
-</div>
+  /* --- ערכת נושא: משותפת לכל האתר, ולכן נשמרת תחת אותו מפתח --- */
+  function applyTheme() {
+    var prefs = read(PREFS, {});
+    var pref = prefs.theme || 'auto';
+    var dark = pref === 'dark' ||
+      (pref === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  }
 
-<!-- ==================== אישור פעולה ==================== -->
-<div class="modal" id="confirmModal" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-    <h2 class="modal-title" id="confirmTitle">אישור</h2>
-    <p class="modal-sub" id="confirmText"></p>
-    <div class="modal-actions">
-      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
-      <button type="button" class="btn btn-danger" id="btnConfirmOk">אישור</button>
-    </div>
-  </div>
-</div>
+  document.getElementById('btnTheme').addEventListener('click', function () {
+    var prefs = read(PREFS, {});
+    var order = { auto: 'light', light: 'dark', dark: 'auto' };
+    prefs.theme = order[prefs.theme || 'auto'] || 'light';
+    try { localStorage.setItem(PREFS, JSON.stringify(prefs)); } catch (e) {}
+    applyTheme();
+  });
 
-<!-- הודעות קצרות (toast) -->
-<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 
-<script src="js/core.js?v=4"></script>
-<script src="js/storage.js?v=4"></script>
-<script src="js/game.js?v=4"></script>
-<script src="js/ui.js?v=4"></script>
+  /* --- תגיות "משחק שמור" --- */
+  function fmt(sec) {
+    sec = Math.floor(sec || 0);
+    var m = Math.floor(sec / 60), s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  var DIFF = { easy: 'קל', medium: 'בינוני', hard: 'קשה', expert: 'מומחה' };
+
+  // סודוקו שומר בנפרד לכל גודל לוח — מציגים את המתקדם מביניהם
+  var best = null;
+  [9, 16].forEach(function (size) {
+    var s = read('sudoku.v1.save.' + size, null);
+    if (!s || s.finished) return;
+    var filled = (s.values || []).filter(Boolean).length;
+    var total = (s.values || []).length || 1;
+    var ratio = filled / total;
+    if (!best || ratio > best.ratio) {
+      best = { ratio: ratio, size: size, difficulty: s.difficulty };
+    }
+  });
+  var tagS = document.getElementById('tagSudoku');
+  if (best) {
+    tagS.textContent = 'ממשיכים ' + best.size + '×' + best.size + ' · ' + (DIFF[best.difficulty] || '');
+    tagS.classList.add('is-live');
+  } else {
+    tagS.textContent = '4 רמות קושי';
+  }
+
+  var sol = read('solitaire.v1.save', null);
+  var tagK = document.getElementById('tagSolitaire');
+  if (sol && !sol.finished && sol.moves > 0) {
+    tagK.textContent = 'ממשיכים · ' + fmt(sol.elapsed);
+    tagK.classList.add('is-live');
+  } else {
+    tagK.textContent = '52 קלפים';
+  }
+
+  applyTheme();
+})();
+</script>
 </body>
 </html>

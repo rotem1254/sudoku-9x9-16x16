@@ -1,7 +1,7 @@
 {
-  "name": "סודוקו · 9×9 ו-16×16",
-  "short_name": "סודוקו",
-  "description": "סודוקו 9x9 ו-16x16 עם פאזלים אקראיים בעלי פתרון יחיד, פתקים, רמזים וטיימר. עובד גם בלי אינטרנט.",
+  "name": "מרכז המשחקים",
+  "short_name": "משחקים",
+  "description": "מרכז משחקים בדפדפן — סודוקו 9x9 ו-16x16 וסוליטר קלונדייק. בלי התקנה ובלי חשבון.",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./index.html",
@@ -10,7 +10,10 @@
   "orientation": "portrait",
   "background_color": "#eef1f8",
   "theme_color": "#4f6ef7",
-  "categories": ["games", "puzzle"],
+  "categories": [
+    "games",
+    "puzzle"
+  ],
   "icons": [
     {
       "src": "./icons/icon-192.png",
