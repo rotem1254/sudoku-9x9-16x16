@@ -27,6 +27,9 @@
   --accent-text: #ffffff;
   --accent-soft: #e2e8ff;
   --accent-soft-2: #eef1ff;
+  /* רקע התא הנבחר — גוון, לא מילוי מלא. מילוי רווי הפך את התא לבלוק
+     אחיד שבו הספרה שהוזנה כמעט לא נראתה */
+  --select-bg: #c9d5ff;
   --given: #1b2033;
   --entered: #4f6ef7;
   --hint: #d9861f;
@@ -63,6 +66,7 @@
   --accent-text: #0e111a;
   --accent-soft: #26304f;
   --accent-soft-2: #1e2438;
+  --select-bg: #37477a;
   --given: #e8ebf7;
   --entered: #7f9bff;
   --hint: #e9a94e;
@@ -431,12 +435,16 @@ svg {
   cursor: pointer;
   user-select: none;
   color: var(--entered);
-  font-weight: 600;
+  /* 700 ולא 600 — הערך שהשחקן הזין צריך לקרוא באותה עוצמה כמו הנתונים */
+  font-weight: 700;
   /* גופן יחסי לרוחב הלוח => קריא גם ב-9 וגם ב-16 */
-  font-size: calc(58cqw / var(--n));
+  font-size: calc(62cqw / var(--n));
   line-height: 1;
   transition: background .13s var(--ease), color .13s;
 }
+
+/* ב-16x16 התא קטן בחצי — גופן יחסית גדול יותר היה נוגע בקווי הרשת */
+.board[data-size="16"] .cell { font-size: calc(58cqw / var(--n)); }
 
 .cell.is-given { color: var(--given); font-weight: 800; background: var(--surface-2); }
 .cell.is-hint { color: var(--hint); background: var(--hint-soft); }
@@ -445,26 +453,56 @@ svg {
 .cell.is-peer { background: var(--accent-soft-2); }
 .cell.is-given.is-peer { background: var(--surface-3); }
 .cell.is-same { background: var(--accent-soft); color: var(--accent); }
+
+/*
+ * התא הנבחר: גוון רקע + טבעת, ולא מילוי מלא בצבע המבטא.
+ * המילוי המלא אילץ את הספרה לצבע הפוך (accent-text) והפך את התא לבלוק
+ * אחיד — הזנת מספר כמעט לא נראתה. עכשיו הספרה שומרת על הצבע שלה
+ * (כחול למוזן, ניטרלי לנתון) ולכן היא נקראת מיד.
+ */
 .cell.is-selected {
-  background: var(--accent);
-  color: var(--accent-text);
+  background: var(--select-bg);
   z-index: 2;
 }
-.cell.is-selected.is-given { background: var(--accent); color: var(--accent-text); }
 
 /* שגיאה */
 .cell.is-error { color: var(--error); background: var(--error-soft); }
-.cell.is-error.is-selected { background: var(--error); color: #fff; }
+.cell.is-error.is-selected { background: var(--error-soft); }
 
-.cell-value { display: block; }
+/* z-index כדי שהספרה תישאר מעל הבזק ההזנה (ראה .cell::before) */
+.cell-value { display: block; position: relative; z-index: 1; }
 
-/* אנימציית הזנת מספר */
+/*
+ * אנימציית הזנת מספר — שני חלקים:
+ *   1. הספרה "קופצת" פנימה
+ *   2. הבזק צבע קצר על כל התא
+ * הגרסה הקודמת הייתה רק קפיצה קטנה של 0.22s, ובתא שכבר היה מודגש
+ * (נבחר) היא פשוט לא נראתה.
+ */
 @keyframes pop {
-  0% { transform: scale(.55); opacity: .35; }
-  55% { transform: scale(1.16); }
+  0% { transform: scale(.35); opacity: 0; }
+  60% { transform: scale(1.22); opacity: 1; }
   100% { transform: scale(1); opacity: 1; }
 }
-.cell.is-pop .cell-value { animation: pop .22s var(--ease); }
+.cell.is-pop .cell-value { animation: pop .3s var(--ease); }
+
+/* שכבת ההבזק — יושבת מתחת לספרה בזכות ה-z-index שלה */
+.cell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+@keyframes flash {
+  0% { opacity: .55; }
+  100% { opacity: 0; }
+}
+.cell.is-pop::before { animation: flash .38s var(--ease); }
+
+/* בהזנה שגויה ההבזק אדום במקום כחול */
+.cell.is-shake::before { background: var(--error); animation: flash .38s var(--ease); }
 
 /* אנימציית שגיאה */
 @keyframes shake {
@@ -483,15 +521,21 @@ svg {
 }
 .cell.is-win { animation: winWave .5s var(--ease) both; animation-delay: var(--wd, 0ms); }
 
-/* הגדלה חזותית בלחיצה — קריטי ב-16x16 שבו התאים קטנים */
+/*
+ * טבעת סביב התא הנבחר. עכשיו שהרקע רק מגוון ולא ממלא, הטבעת היא מה
+ * שמסמן את הבחירה — ולכן היא עבה יותר. קריטי ב-16x16 שבו התאים קטנים.
+ */
 .cell.is-selected::after {
   content: "";
   position: absolute;
-  inset: -1px;
-  border: 2px solid var(--accent);
-  border-radius: 3px;
+  inset: 0;
+  border: 3px solid var(--accent);
+  border-radius: 2px;
   pointer-events: none;
+  z-index: 2;
 }
+.board[data-size="16"] .cell.is-selected::after { border-width: 2px; }
+.cell.is-error.is-selected::after { border-color: var(--error); }
 
 /* -------------------------------- פתקים -------------------------------- */
 
@@ -506,6 +550,7 @@ svg {
   font-weight: 600;
   line-height: 1;
   pointer-events: none;
+  z-index: 1; /* מעל שכבת ההבזק */
 }
 .cell-notes span {
   display: flex;
@@ -513,10 +558,8 @@ svg {
   justify-content: center;
   min-height: 0;
 }
-.cell.is-selected .cell-notes { color: rgba(255, 255, 255, .85); }
 /* פתק שתואם לערך המסומן כרגע — מודגש */
 .cell-notes span.is-match { color: var(--accent); font-weight: 800; }
-.cell.is-selected .cell-notes span.is-match { color: #fff; }
 
 /* ----------------------------- בקרות זום ------------------------------ */
 
@@ -968,7 +1011,8 @@ svg {
 
 @media (min-width: 700px) {
   .app { max-width: 620px; padding-top: 20px; }
-  .cell { font-size: calc(56cqw / var(--n)); }
+  .cell { font-size: calc(60cqw / var(--n)); }
+  .board[data-size="16"] .cell { font-size: calc(56cqw / var(--n)); }
   .tool { min-height: 62px; font-size: .72rem; }
   .tool svg { width: 20px; height: 20px; }
 }
