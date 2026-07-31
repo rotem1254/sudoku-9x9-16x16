@@ -464,6 +464,67 @@ a.logo:active .logo-back { transform: translateX(3px); color: var(--accent); }
 .switch:checked { background: var(--accent); }
 .switch:checked::after { transform: translateX(-19px); }
 
+
+/* ------------------------------ כפתור כלי ------------------------------- */
+/* משמש גם בסודוקו וגם בסוליטר, ולכן יושב בבסיס ולא בגיליון של משחק אחד */
+
+.tool {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 56px;
+  padding: 6px 2px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: .66rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform .12s var(--ease), color .16s, border-color .16s, background .16s;
+}
+.tool:active { transform: scale(.94); }
+.tool svg { width: 20px; height: 20px; }
+.tool[disabled] { opacity: .38; pointer-events: none; }
+.tool.is-on { color: var(--accent); border-color: var(--accent); background: var(--accent-soft-2); }
+
+.tool-badge {
+  position: absolute;
+  top: 3px;
+  inset-inline-end: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--text-2);
+  font-size: .58rem;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+.tool.is-on .tool-badge { background: var(--accent); color: var(--accent-text); }
+.tool-badge.is-empty { background: var(--error-soft); color: var(--error); }
+
+/* התאמות גובה למסכים נמוכים — נשארות עם הרכיב עצמו */
+@media (max-height: 900px) {
+  .tool { min-height: 48px; }
+  .tool svg { width: 18px; height: 18px; }
+}
+@media (max-height: 720px) {
+  .tool { min-height: 42px; gap: 0; }
+  .tool span:not(.tool-badge) { display: none; }
+  .tool svg { width: 21px; height: 21px; }
+}
+@media (min-width: 700px) {
+  .tool { min-height: 62px; font-size: .72rem; }
+  .tool svg { width: 20px; height: 20px; }
+}
+
 /* -------------------------------- Toast -------------------------------- */
 
 .toast {

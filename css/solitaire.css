@@ -10,36 +10,81 @@
 
 /* ------------------------------- צבעי קלפים ----------------------------- */
 
+/*
+ * הלוח הוא שולחן לבד ירוק, ולכן הצבעים שיושבים עליו אינם נגזרים מערכת
+ * הנושא של האתר אלא מהלבד עצמו: מסגרות המקומות הריקים, סמלי הצורות ומונה
+ * החפיסה כולם לבן שקוף, שנקרא היטב גם על ירוק בהיר וגם על ירוק כהה.
+ */
 :root {
-  --card-face: #ffffff;
-  --card-edge: #c3cbe0;
-  --card-red: #d2323c;
-  --card-black: #1e2437;
-  --card-back: linear-gradient(135deg, #4f6ef7 0%, #6d8bff 100%);
-  --slot-line: #b9c2da;
-  --felt: #e6ebf7;
+  --card-face: #fffdf8;
+  --card-edge: #cdd3e0;
+  --card-red: #cf2233;
+  --card-black: #171c2b;
+  --card-back: linear-gradient(135deg, #2b4bd8 0%, #5b7bff 100%);
+
+  /* לבד: מרכז מואר יותר ושוליים כהים, כמו תאורה מעל שולחן */
+  --felt-hi: #1f8f57;
+  --felt: #157245;
+  --felt-lo: #0c4f2f;
+  --rail: #0a3a23;
+
+  --slot-line: rgba(255, 255, 255, .34);
+  --slot-ghost: rgba(255, 255, 255, .20);
+  --target-ring: #ffd45e;
 }
 
 :root[data-theme="dark"] {
-  --card-face: #f2f4fb;
+  --card-face: #f4f2ec;
   --card-edge: #2b3247;
-  --card-red: #d0313d;
-  --card-black: #1a2033;
-  --card-back: linear-gradient(135deg, #33407a 0%, #4c5fb0 100%);
-  --slot-line: #3d4763;
-  --felt: #141926;
+  --card-red: #c8202f;
+  --card-black: #14192a;
+  --card-back: linear-gradient(135deg, #23347f 0%, #3f52b5 100%);
+
+  --felt-hi: #146b41;
+  --felt: #0d5231;
+  --felt-lo: #06341f;
+  --rail: #04180f;
+
+  --slot-line: rgba(255, 255, 255, .26);
+  --slot-ghost: rgba(255, 255, 255, .16);
+  --target-ring: #ffcf4d;
 }
 
 /* -------------------------------- פריסה --------------------------------- */
 
+/* הילה ירוקה עדינה מאחורי השולחן, כדי שהוא ייראה מונח בחלל ולא מודבק */
+body {
+  background-image:
+    radial-gradient(900px 420px at 50% 8%, rgba(21, 130, 78, .20), transparent 62%),
+    var(--bg-grad);
+}
+
+/*
+ * שולחן הלבד. הכול נבנה משכבות רקע, בלי תמונות ובלי אלמנטים נוספים:
+ *   1-2. אריג — שתי סריגות אלכסוניות דקיקות שנותנות מרקם בד
+ *   3.   הילה עליונה — כאילו יש מנורה מעל השולחן
+ *   4.   בסיס — מרכז מואר ושוליים כהים (vignette)
+ *
+ * ה"מסגרת" היא box-shadow ולא border, כדי שאפשר יהיה לצייר גם קו אור
+ * פנימי, גם עומק פנימי וגם את הרייל החיצוני באותה הצהרה.
+ */
 .sol-board {
   display: grid;
   gap: 10px;
-  padding: 10px;
-  background: var(--felt);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
+  padding: 12px 10px;
+  border: 0;
+  border-radius: 16px;
+  background-color: var(--felt);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .028) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, .04) 0 2px, transparent 2px 4px),
+    radial-gradient(135% 85% at 50% -12%, rgba(255, 255, 255, .16), transparent 58%),
+    radial-gradient(115% 125% at 50% 48%, var(--felt-hi), var(--felt) 52%, var(--felt-lo));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .18),
+    inset 0 0 34px rgba(0, 0, 0, .34),
+    0 0 0 4px var(--rail),
+    0 8px 26px rgba(0, 0, 0, .38);
 }
 
 /* שתי השורות חולקות אותה רשת של 7 עמודות, ולכן ערימות הסיום
@@ -73,15 +118,16 @@
   pointer-events: none;
 }
 
-/* מסגרת מקווקוות למקום ריק */
+/* מקום ריק — מסגרת אור עדינה ושקע קל בלבד */
 .pile::before {
   content: "";
   position: absolute;
   inset: 0;
   height: 140cqw;
-  border: 1.5px dashed var(--slot-line);
+  border: 1.5px solid var(--slot-line);
   border-radius: 6px;
-  opacity: .75;
+  background: rgba(0, 0, 0, .13);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, .22);
 }
 /* ברגע שיש קלפים אין צורך בסימון המקום */
 .pile.has-cards::before { opacity: 0; }
@@ -95,7 +141,7 @@
   place-items: center;
   font-size: 55cqw;
   line-height: 1;
-  color: var(--slot-line);
+  color: var(--slot-ghost);
   pointer-events: none;
 }
 .pile.has-cards .pile-ghost { display: none; }
@@ -105,9 +151,10 @@
   content: "";
   position: absolute;
   inset: -3px;
-  border: 2px solid var(--success);
+  border: 2.5px solid var(--target-ring);
   border-radius: 8px;
   pointer-events: none;
+  box-shadow: 0 0 10px rgba(255, 212, 94, .5);
   animation: targetPulse 1.1s var(--ease) infinite;
 }
 @keyframes targetPulse {
@@ -125,7 +172,7 @@
   border-radius: 6px;
   background: var(--card-face);
   border: 1px solid var(--card-edge);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 3px 8px rgba(0, 0, 0, .22);
   cursor: pointer;
   user-select: none;
   -webkit-touch-callout: none;
@@ -226,9 +273,9 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  color: var(--text-2);
+  background: rgba(0, 0, 0, .62);
+  border: 1px solid rgba(255, 255, 255, .3);
+  color: #fff;
   font-size: .6rem;
   font-weight: 800;
   line-height: 16px;
@@ -273,8 +320,14 @@
   .sol-board {
     margin-inline: calc(var(--app-pad) * -1);
     border-radius: 0;
-    border-inline: 0;
-    padding: 8px 6px;
+    padding: 11px 7px;
+    /* בפריסה לרוחב מלא רייל חיצוני היה נחתך בקצוות המסך, ולכן הוא
+       מצויר פנימה — קו עליון ותחתון בלבד */
+    box-shadow:
+      inset 0 4px 0 var(--rail),
+      inset 0 -4px 0 var(--rail),
+      inset 0 5px 0 rgba(255, 255, 255, .13),
+      inset 0 0 30px rgba(0, 0, 0, .34);
   }
   .sol-row { --col-gap: 4px; }
 }
