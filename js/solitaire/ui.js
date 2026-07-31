@@ -467,14 +467,27 @@
     landAnimation(to);
     save();
 
-    if (res.won) {
-      onWin();
-    } else if (state.prefs.autoCollect && g.canAutoFinish()) {
-      runAutoFinish(true);
-    } else {
-      checkStuck();
-    }
+    if (res.won) onWin();
+    else afterAction();
     return res;
+  }
+
+  /**
+   * מה שצריך לקרות אחרי כל שינוי במצב הלוח: קודם לבדוק אם אפשר לסיים
+   * לבד, ורק אם לא — לבדוק מבוי סתום.
+   *
+   * נקרא גם בטעינת משחק שמור, ולא רק אחרי מהלך: אם סגרת את המשחק בדיוק
+   * כשכל הקלפים כבר גלויים, הוא אמור לסיים את עצמו כשתחזור.
+   */
+  function afterAction() {
+    const g = state.game;
+    if (!g || g.finished || state.animating) return;
+
+    if (state.prefs.autoCollect && g.canAutoFinish()) {
+      runAutoFinish(true);
+      return;
+    }
+    checkStuck();
   }
 
   function landAnimation(to) {
@@ -579,7 +592,7 @@
       if (!r.ok) toast('אין קלפים למשיכה');
       render();
       save();
-      checkStuck();
+      afterAction();
       return;
     }
 
@@ -988,6 +1001,9 @@
       stopTimerLoop();
     }
     saveNow();
+
+    // משחק שנטען כשכל הקלפים כבר גלויים — מסיים את עצמו מיד
+    setTimeout(afterAction, 400);
   }
 
   /* --------------------------------------------------------------------- */
