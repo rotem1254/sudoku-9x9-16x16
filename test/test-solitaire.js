@@ -185,6 +185,68 @@ check('חלוקה טרייה — אי אפשר לסיים אוטומטית', !no
 
 /* --------------------------------------------------------------------- */
 
+section('זיהוי מבוי סתום');
+
+/** בונה משחק ריק שאפשר למלא ידנית. */
+function blank() {
+  const s = new Solitaire({ seed: 1 });
+  s.stock = []; s.waste = [];
+  s.foundations = [[], [], [], []];
+  s.tableau = [[], [], [], [], [], [], []];
+  s.faceUp = [0, 0, 0, 0, 0, 0, 0];
+  return s;
+}
+
+// חלוקה טרייה — תמיד יש מה לעשות
+check('חלוקה טרייה אינה מבוי סתום', new Solitaire({ seed: 3 }).hasAnyMove());
+
+// מבוי סתום אמיתי: אין חפיסה, ואף קלף לא מתאים לשום מקום
+const dead = blank();
+dead.tableau[0] = [C.makeCard(0, 5)];  // 5 עלים
+dead.tableau[1] = [C.makeCard(3, 7)];  // 7 תלתן — אותו צבע, פער 2
+dead.faceUp = [1, 1, 0, 0, 0, 0, 0];
+dead.foundations[0] = [];              // אין אס => 5 לא יכול לעלות
+check('אין חפיסה ואין הנחה חוקית => מבוי סתום', !dead.hasAnyMove());
+
+// אותו מצב, אבל עכשיו יש אס בערימת סיום => ה-5 עדיין לא עולה, אבל...
+const live = blank();
+live.tableau[0] = [C.makeCard(0, 5)];
+live.tableau[1] = [C.makeCard(1, 6)];  // 6 לב — אדום, ערך אחד מעל
+live.faceUp = [1, 1, 0, 0, 0, 0, 0];
+check('5 שחור על 6 אדום => יש מהלך', live.hasAnyMove());
+
+// הבאג שתוקן: קלף בחפיסה שלא מתאים לשום מקום אינו "מהלך"
+const stockDead = blank();
+stockDead.tableau[0] = [C.makeCard(0, 5)];
+stockDead.faceUp[0] = 1;
+stockDead.stock = [C.makeCard(3, 9)];  // 9 תלתן — לא נכנס לשום מקום
+check('קלף לא שמיש בחפיסה אינו נחשב מהלך', !stockDead.hasAnyMove());
+
+const stockLive = blank();
+stockLive.tableau[0] = [C.makeCard(0, 5)];
+stockLive.faceUp[0] = 1;
+stockLive.stock = [C.makeCard(1, 4)];  // 4 לב — יושב על ה-5 השחור
+check('קלף שמיש בחפיסה נחשב מהלך', stockLive.hasAnyMove());
+
+// אס בחפיסה תמיד שמיש (ערימת סיום ריקה)
+const aceInStock = blank();
+aceInStock.stock = [C.makeCard(2, 1)];
+check('אס בחפיסה תמיד נחשב מהלך', aceInStock.hasAnyMove());
+
+// העברת עמודה שלמה לחור אחר אינה התקדמות
+const kingShuffle = blank();
+kingShuffle.tableau[0] = [C.makeCard(0, 13)]; // מלך לבד
+kingShuffle.faceUp[0] = 1;                    // עמודות 1..6 ריקות
+check('העברת מלך מחור לחור אינה נחשבת מהלך', !kingShuffle.hasAnyMove());
+
+// אבל מלך עם קלף מתחתיו כן — ההזזה תחשוף אותו
+const kingReveals = blank();
+kingReveals.tableau[0] = [C.makeCard(2, 8), C.makeCard(0, 13)];
+kingReveals.faceUp[0] = 1;                    // רק המלך גלוי
+check('מלך שמעל קלף הפוך — הזזה לחור כן מקדמת', kingReveals.hasAnyMove());
+
+/* --------------------------------------------------------------------- */
+
 section('שמירה ושחזור');
 
 const sv = new Solitaire({ seed: 42, drawCount: 3 });

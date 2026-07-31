@@ -358,6 +358,19 @@ a.logo:active .logo-back { transform: translateX(3px); color: var(--accent); }
 }
 .win-badge svg { width: 30px; height: 30px; stroke-width: 2.6; }
 
+/* אותו תג, בגרסת "לא הצלחת" */
+.stuck-badge {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 12px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--muted);
+}
+.stuck-badge svg { width: 30px; height: 30px; }
+
 .win-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

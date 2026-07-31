@@ -442,17 +442,56 @@
       return true;
     }
 
-    /** האם קיים מהלך חוקי כלשהו (למעט משיכה). משמש לזיהוי מבוי סתום. */
+    /**
+     * האם נותר מהלך שמקדם את המשחק.
+     *
+     * מה נחשב מהלך:
+     *   - רצף גלוי מעמודה שאפשר להניח על עמודה אחרת או על ערימת סיום
+     *   - קלף שעוד ימתין בחפיסה או ב-waste ושיש לו מקום חוקי
+     *
+     * מה *לא* נחשב:
+     *   - החזרת קלף מערימת סיום לעמודה. זה חוקי אך נסיגה, ואילו נספר
+     *     אותו כמעט לעולם לא היינו מזהים מבוי סתום.
+     *   - העברת עמודה שלמה לעמודה ריקה אחרת. חוקי, אבל רק מחליף חורים
+     *     ואפשר לחזור עליו עד אינסוף.
+     *
+     * ב-draw-3 ייתכן שקלף בחפיסה אינו נגיש בפועל בגלל סבב החלוקה. לכן
+     * הבדיקה שמרנית לכיוון הבטוח: היא עלולה לומר "יש מהלך" כשאין, אך לא
+     * תכריז על מבוי סתום כשעוד נותר מה לעשות.
+     */
     hasAnyMove() {
-      if (this.stock.length || this.waste.length) return true;
-      const sources = [];
+      // --- רצפים מתוך עמודות המשחק ---
       for (let i = 0; i < TABLEAU_COUNT; i++) {
         const pile = this.tableau[i];
-        for (let j = pile.length - this.faceUp[i]; j < pile.length; j++) {
-          if (j >= 0 && this.isMovableRun(i, j)) sources.push({ zone: 'tableau', pile: i, index: j });
+        const start = Math.max(0, pile.length - this.faceUp[i]);
+        for (let j = start; j < pile.length; j++) {
+          if (!this.isMovableRun(i, j)) continue;
+
+          const card = pile[j];
+          if (this.canPlaceOnFoundation(card, this.foundationFor(card))) return true;
+
+          const movingWholePile = j === 0;
+          for (let k = 0; k < TABLEAU_COUNT; k++) {
+            if (k === i) continue;
+            if (!this.canPlaceOnTableau(card, k)) continue;
+            // חור מול חור — לא מקדם כלום
+            if (movingWholePile && this.tableau[k].length === 0) continue;
+            return true;
+          }
         }
       }
-      return sources.some((s) => this.findAutoTarget(s) !== null);
+
+      // --- קלפים שעוד עתידים לצוף מהחפיסה ומה-waste ---
+      const pending = this.stock.concat(this.waste);
+      for (let n = 0; n < pending.length; n++) {
+        const card = pending[n];
+        if (this.canPlaceOnFoundation(card, this.foundationFor(card))) return true;
+        for (let k = 0; k < TABLEAU_COUNT; k++) {
+          if (this.canPlaceOnTableau(card, k)) return true;
+        }
+      }
+
+      return false;
     }
 
     /* ------------------------------ טיימר ------------------------------ */

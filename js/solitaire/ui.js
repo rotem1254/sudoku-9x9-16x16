@@ -89,6 +89,7 @@
     paused: false,
     animating: false,
     confirmAction: null,
+    stuckShown: false,
     lastTapAt: 0,
     lastTapKey: '',
   };
@@ -108,6 +109,10 @@
     footerInfo: $('#footerInfo'),
     toast: $('#toast'),
     winModal: $('#winModal'),
+    stuckModal: $('#stuckModal'),
+    stuckStats: $('#stuckStats'),
+    btnStuckUndo: $('#btnStuckUndo'),
+    btnStuckNew: $('#btnStuckNew'),
     winSub: $('#winSub'),
     winStats: $('#winStats'),
     confetti: $('#confetti'),
@@ -461,6 +466,8 @@
       onWin();
     } else if (state.prefs.autoCollect && g.canAutoFinish()) {
       runAutoCollect();
+    } else {
+      checkStuck();
     }
     return res;
   }
@@ -512,6 +519,7 @@
       if (!r.ok) toast('אין קלפים למשיכה');
       render();
       save();
+      checkStuck();
       return;
     }
 
@@ -600,6 +608,12 @@
       case 'undo':
         if (g.undo()) {
           clearSelection();
+          state.stuckShown = false;
+          // הטיימר נעצר כשהוכרז מבוי סתום — ביטול מחזיר אותנו למשחק
+          if (!g.isTimerRunning && !g.finished && !state.paused) {
+            g.startTimer();
+            startTimerLoop();
+          }
           render();
           save();
         }
@@ -677,6 +691,43 @@
     }
 
     toast(g.stock.length || g.waste.length ? 'אין מהלך — משוך מהחפיסה' : 'אין מהלכים אפשריים');
+  }
+
+
+  /* --------------------------------------------------------------------- */
+  /* מבוי סתום                                                              */
+  /* --------------------------------------------------------------------- */
+
+  /**
+   * בודק אם נגמרו המהלכים ומודיע לשחקן.
+   *
+   * מוצג פעם אחת בלבד לכל מצב תקוע: הדגל מתאפס ברגע שהמצב משתנה (ביטול
+   * מהלך, חלוקה חדשה), אחרת המודל היה קופץ שוב אחרי כל הקשה על הלוח.
+   */
+  function checkStuck() {
+    const g = state.game;
+    if (!g || g.finished) return;
+
+    if (g.hasAnyMove()) {
+      state.stuckShown = false;
+      return;
+    }
+    if (state.stuckShown) return;
+
+    state.stuckShown = true;
+    g.stopTimer();
+    stopTimerLoop();
+    saveNow();
+
+    el.stuckStats.innerHTML = [
+      statCard('זמן', formatTime(g.currentSeconds()), false),
+      statCard('מהלכים', String(g.moves), false),
+      statCard('נאספו', g.foundationCount() + '/52', false),
+      statCard('ניקוד', String(g.score), false),
+    ].join('');
+
+    el.btnStuckUndo.disabled = !g.canUndo();
+    setTimeout(() => openModal(el.stuckModal), 450);
   }
 
   /* --------------------------------------------------------------------- */
@@ -832,6 +883,8 @@
 
   function startGame() {
     clearSelection();
+    state.stuckShown = false;
+    closeModal(el.stuckModal);
     state.paused = false;
     el.statusbar.classList.remove('is-paused');
     el.board.style.visibility = '';
@@ -881,6 +934,16 @@
   });
 
   el.btnWinNew.addEventListener('click', newGame);
+
+  el.btnStuckNew.addEventListener('click', () => {
+    closeModal(el.stuckModal);
+    newGame();
+  });
+
+  el.btnStuckUndo.addEventListener('click', () => {
+    closeModal(el.stuckModal);
+    el.actions.querySelector('[data-action="undo"]').click();
+  });
 
   el.btnConfirmOk.addEventListener('click', () => {
     const fn = state.confirmAction;

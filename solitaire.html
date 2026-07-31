@@ -11,11 +11,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="סוליטר">
   <title>סוליטר · מרכז המשחקים</title>
-  <link rel="icon" href="icon.svg?v=8" type="image/svg+xml">
-  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=8">
-  <link rel="manifest" href="manifest.webmanifest?v=8">
-  <link rel="stylesheet" href="css/theme.css?v=8">
-  <link rel="stylesheet" href="css/solitaire.css?v=8">
+  <link rel="icon" href="icon.svg?v=9" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=9">
+  <link rel="manifest" href="manifest.webmanifest?v=9">
+  <link rel="stylesheet" href="css/theme.css?v=9">
+  <link rel="stylesheet" href="css/solitaire.css?v=9">
 </head>
 <body>
 
@@ -121,6 +121,22 @@
   </div>
 </div>
 
+<!-- ==================== מבוי סתום ==================== -->
+<div class="modal" id="stuckModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="stuckTitle">
+    <div class="stuck-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg>
+    </div>
+    <h2 class="modal-title" id="stuckTitle">נגמרו המהלכים</h2>
+    <p class="modal-sub" id="stuckSub">אין יותר מהלך חוקי בחלוקה הזו.</p>
+    <div class="win-stats" id="stuckStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="btnStuckUndo">בטל מהלך</button>
+      <button type="button" class="btn btn-primary" id="btnStuckNew">חלוקה חדשה</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== הגדרות ==================== -->
 <div class="modal" id="settingsModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
@@ -181,7 +197,8 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/solitaire/engine.js?v=8"></script>
-<script src="js/solitaire/ui.js?v=8"></script>
+<script src="js/sw-register.js?v=9"></script>
+<script src="js/solitaire/engine.js?v=9"></script>
+<script src="js/solitaire/ui.js?v=9"></script>
 </body>
 </html>
