@@ -15,9 +15,18 @@
 
   /* היסטים אנכיים בערימת משחק, ביחידות cqw (אחוז מרוחב העמודה) */
   const OFFSET_DOWN = 11; // קלף הפוך — מספיק כדי לראות שהוא שם
-  const OFFSET_UP = 30; // קלף גלוי — מספיק כדי לקרוא את הפינה
   const CARD_H = 140; // גובה קלף ביחס לרוחב (5:7)
   const WASTE_FAN = 26; // פריסה אופקית ב-waste
+
+  /*
+   * ההיסט של קלף גלוי הוא מה שקובע את גודל שטח ההקשה שלו: קלף בתוך ערימה
+   * חשוף רק ברוחב ההיסט. בטלפון היסט קטן הופך את המשחק לקרב דיוק, ולכן
+   * הוא מחושב דינמית — לוקחים את הגדול ביותר שעדיין מכניס את הערימה
+   * הארוכה ביותר לגובה הפנוי, ומגבילים לטווח סביר.
+   */
+  const OFFSET_UP_MIN = 22;
+  const OFFSET_UP_MAX = 46;
+  let offsetUp = 34;
 
   const PREFS_KEY = 'solitaire.v1.prefs';
   const SAVE_KEY = 'solitaire.v1.save';
@@ -239,10 +248,44 @@
   /* רינדור                                                                 */
   /* --------------------------------------------------------------------- */
 
+  /**
+   * מחשב את ההיסט של קלף גלוי כך שהערימה הארוכה ביותר עדיין תיכנס
+   * לגובה שנשאר על המסך. גדול ככל האפשר => שטח הקשה גדול ככל האפשר.
+   */
+  function computeOffsetUp() {
+    const g = state.game;
+    if (!g) return;
+
+    const pileEl = el.tableau.firstElementChild;
+    const colW = pileEl ? pileEl.getBoundingClientRect().width : 0;
+    if (!colW) return;
+
+    // כמה גובה נשאר לעמודות: מה שיש מתחת לראש הטבלאו ועד תחתית החלון,
+    // פחות מקום לכפתורי הפעולה ולפוטר
+    const top = el.tableau.getBoundingClientRect().top;
+    const reserved = el.actions.offsetHeight + 34;
+    const availablePx = Math.max(120, window.innerHeight - top - reserved);
+    const availableCqw = (availablePx / colW) * 100;
+
+    // הערימה ה"יקרה" ביותר: הכי הרבה קלפים גלויים מעל קלפים הפוכים
+    let worst = 0;
+    for (let i = 0; i < Solitaire.TABLEAU_COUNT; i++) {
+      const total = g.tableau[i].length;
+      if (!total) continue;
+      const up = Math.min(g.faceUp[i], total);
+      const down = total - up;
+      // (up - 1) כי הקלף האחרון תופס גובה קלף מלא, לא היסט
+      worst = Math.max(worst, (availableCqw - CARD_H - down * OFFSET_DOWN) / Math.max(1, up - 1));
+    }
+
+    offsetUp = Math.round(Math.min(OFFSET_UP_MAX, Math.max(OFFSET_UP_MIN, worst)));
+  }
+
   function render() {
     const g = state.game;
     if (!g) return;
 
+    computeOffsetUp();
     renderStock();
     renderWaste();
     renderFoundations();
@@ -323,7 +366,7 @@
       // גובה הערימה: ההיסט של הקלף האחרון + קלף שלם
       let total = CARD_H;
       for (let j = 0; j < cards.length - 1; j++) {
-        total += g.isFaceUp(i, j) ? OFFSET_UP : OFFSET_DOWN;
+        total += g.isFaceUp(i, j) ? offsetUp : OFFSET_DOWN;
       }
       resetPile(host, total);
 
@@ -341,7 +384,7 @@
         if (isSelected({ zone: 'tableau', pile: i, index: j })) c.classList.add('is-selected');
 
         host.appendChild(c);
-        off += faceUp ? OFFSET_UP : OFFSET_DOWN;
+        off += faceUp ? offsetUp : OFFSET_DOWN;
       }
     }
   }
@@ -729,6 +772,13 @@
   function saveNow() {
     if (state.game) store.write(SAVE_KEY, state.game.serialize());
   }
+
+  // סיבוב מסך או שינוי גודל חלון משנים את הגובה הפנוי => מחשבים היסט מחדש
+  let resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { if (state.game) render(); }, 120);
+  });
 
   window.addEventListener('pagehide', saveNow);
   window.addEventListener('beforeunload', saveNow);

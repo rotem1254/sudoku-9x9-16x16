@@ -94,38 +94,6 @@
 }
 
 
-/* ------------------------------ שורת סטטוס ----------------------------- */
-
-.statusbar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: var(--shadow-sm);
-}
-
-.stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 0;
-}
-.stat-label { font-size: .64rem; color: var(--muted); letter-spacing: .02em; }
-.stat-value {
-  font-size: .98rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.stat-value.is-warn { color: var(--error); }
-.stat-pause { flex: 0 0 auto; width: 38px; height: 38px; border-radius: 10px; }
-.icon-play { display: none; }
-.statusbar.is-paused .icon-pause { display: none; }
-.statusbar.is-paused .icon-play { display: block; }
 
 /* -------------------------------- הלוח --------------------------------- */
 
@@ -456,29 +424,6 @@
   .numpad[data-count="16"] .num { min-height: 52px; font-size: 1.05rem; }
 }
 
-/* ------------------------------- פוטר --------------------------------- */
-
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: .74rem;
-  flex-wrap: wrap;
-}
-.link-btn {
-  border: 0;
-  background: none;
-  color: var(--text-2);
-  font-size: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  cursor: pointer;
-  padding: 4px;
-}
 
 /* ======================= התאמות רספונסיביות ============================ */
 /* חייב להישאר בסוף הקובץ: לכללים כאן ולכללי הבסיס אותה ספציפיות,
