@@ -1,16 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="112" fill="#4f6ef7"/>
-  <g stroke="#ffffff" stroke-linecap="round" opacity=".55" stroke-width="10">
-    <path d="M141 96v320M256 96v320M371 96v320M96 141h320M96 256h320M96 371h320"/>
+  <rect width="512" height="512" fill="#4f6ef7"/>
+  <g fill="#ffffff" opacity=".92">
+    <rect x="75.76" y="75.76" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="241.88" y="117.29" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="366.47" y="158.82" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="158.82" y="200.35" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="283.41" y="241.88" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="408" y="283.41" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="117.29" y="324.94" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="200.35" y="366.47" width="28.24" height="28.24" rx="5.81"/>
+    <rect x="324.94" y="408" width="28.24" height="28.24" rx="5.81"/>
   </g>
-  <g stroke="#ffffff" stroke-linecap="round" stroke-width="22">
-    <path d="M198 96v320M314 96v320M96 198h320M96 314h320"/>
+  <g stroke="#ffffff" stroke-width="2.84" opacity=".45">
+    <path d="M110.65 69.12V442.88M69.12 110.65H442.88"/>
+    <path d="M152.18 69.12V442.88M69.12 152.18H442.88"/>
+    <path d="M235.24 69.12V442.88M69.12 235.24H442.88"/>
+    <path d="M276.76 69.12V442.88M69.12 276.76H442.88"/>
+    <path d="M359.82 69.12V442.88M69.12 359.82H442.88"/>
+    <path d="M401.35 69.12V442.88M69.12 401.35H442.88"/>
   </g>
-  <g fill="#ffffff" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="86" font-weight="700" text-anchor="middle">
-    <text x="147" y="180">5</text>
-    <text x="365" y="180">9</text>
-    <text x="256" y="295">7</text>
-    <text x="147" y="410">3</text>
-    <text x="365" y="410">1</text>
+  <g stroke="#ffffff" stroke-width="8.53" opacity="1">
+    <path d="M69.12 69.12V442.88M69.12 69.12H442.88"/>
+    <path d="M193.71 69.12V442.88M69.12 193.71H442.88"/>
+    <path d="M318.29 69.12V442.88M69.12 318.29H442.88"/>
+    <path d="M442.88 69.12V442.88M69.12 442.88H442.88"/>
   </g>
 </svg>
