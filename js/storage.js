@@ -132,6 +132,8 @@
     highlightSame: true,
     showErrors: true,
     autoClearNotes: true,
+    // השלמה אוטומטית כשנשארים מעט תאים — ניתן לכיבוי מתוך ההגדרות
+    autoComplete: true,
   };
 
   function loadPrefs() {

@@ -19,7 +19,7 @@
   <!-- מאפשר "הוספה למסך הבית" — במצב standalone נחסך סרגל הדפדפן,
        וכל המשחק נכנס במסך הטלפון בלי גלילה -->
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=2">
 </head>
 <body>
 
@@ -32,6 +32,9 @@
       סודוקו
     </h1>
     <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
       <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
       </button>
@@ -208,6 +211,53 @@
   </div>
 </div>
 
+<!-- ==================== הגדרות ==================== -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
+    <div class="settings-list">
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">השלמה אוטומטית</span>
+          <span class="setting-desc">משלים לבד את הלוח כשנשארים 6 תאים או פחות</span>
+        </span>
+        <input type="checkbox" class="switch" id="optAutoComplete" data-pref="autoComplete">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">סימון שגיאות</span>
+          <span class="setting-desc">מסמן באדום ערכים שמתנגשים זה בזה</span>
+        </span>
+        <input type="checkbox" class="switch" id="optShowErrors" data-pref="showErrors">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">הדגשת שורה ועמודה</span>
+          <span class="setting-desc">מדגיש את השורה, העמודה והתיבה של התא הנבחר</span>
+        </span>
+        <input type="checkbox" class="switch" id="optHighlightPeers" data-pref="highlightPeers">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">הדגשת ערכים זהים</span>
+          <span class="setting-desc">מדגיש את כל התאים עם אותו מספר</span>
+        </span>
+        <input type="checkbox" class="switch" id="optHighlightSame" data-pref="highlightSame">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">ניקוי פתקים אוטומטי</span>
+          <span class="setting-desc">מוחק את הפתק המתאים בשורה, בעמודה ובתיבה</span>
+        </span>
+        <input type="checkbox" class="switch" id="optAutoClearNotes" data-pref="autoClearNotes">
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== אישור פעולה ==================== -->
 <div class="modal" id="confirmModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
@@ -223,9 +273,9 @@
 <!-- הודעות קצרות (toast) -->
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/core.js"></script>
-<script src="js/storage.js"></script>
-<script src="js/game.js"></script>
-<script src="js/ui.js"></script>
+<script src="js/core.js?v=2"></script>
+<script src="js/storage.js?v=2"></script>
+<script src="js/game.js?v=2"></script>
+<script src="js/ui.js?v=2"></script>
 </body>
 </html>

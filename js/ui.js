@@ -32,6 +32,7 @@
     notesMode: false,
     paused: false,
     generating: false,
+    autoCompleting: false, // חוסם קלט בזמן ריצת ההשלמה האוטומטית
     cellEls: [], // מצביעים ישירים לאלמנטי התאים (מונע שאילתות DOM חוזרות)
     numEls: [],
     conflicts: null,
@@ -48,6 +49,8 @@
     btnNew: $('#btnNew'),
     btnTheme: $('#btnTheme'),
     btnStats: $('#btnStats'),
+    btnSettings: $('#btnSettings'),
+    settingsModal: $('#settingsModal'),
     btnPause: $('#btnPause'),
     btnResume: $('#btnResume'),
     btnRestart: $('#btnRestart'),
@@ -160,45 +163,54 @@
    */
   function buildBoard(size) {
     const spec = Core.specFor(size);
+
+    // כל המידות נגזרות מהמפרט — אין כאן שום הנחה על 9x9
     el.board.style.setProperty('--n', String(spec.N));
-    // מאפשר ל-CSS להתאים את עובי הקווים לגודל הלוח
+    el.board.style.setProperty('--boxes-per-row', String(spec.boxesPerRow));
+    el.board.style.setProperty('--boxes-per-col', String(spec.N / spec.boxH));
+    el.board.style.setProperty('--box-w', String(spec.boxW));
+    el.board.style.setProperty('--box-h', String(spec.boxH));
+    // מספר עמודות בתצוגת הפתקים: 3 ל-9x9, 4 ל-16x16
+    el.board.style.setProperty('--note-cols', String(spec.boxW));
     el.board.dataset.size = String(spec.N);
     el.board.setAttribute('aria-rowcount', spec.N);
     el.board.setAttribute('aria-colcount', spec.N);
 
-    // מספר עמודות בתצוגת הפתקים: 3 ל-9x9, 4 ל-16x16
-    el.board.style.setProperty('--note-cols', String(spec.boxW));
-
     const frag = document.createDocumentFragment();
-    const cells = [];
+    // cellEls ממופה לפי אינדקס הלוח, לא לפי סדר ה-DOM —
+    // ב-DOM התאים מקובצים בתוך תיבות, אבל שאר הקוד עובד באינדקסים
+    const cells = new Array(spec.cells);
 
-    for (let i = 0; i < spec.cells; i++) {
-      const r = spec.rowOf[i];
-      const c = spec.colOf[i];
+    for (let b = 0; b < spec.N; b++) {
+      const box = document.createElement('div');
+      box.className = 'box';
 
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.dataset.i = i;
-      cell.setAttribute('role', 'gridcell');
+      // יחידת התיבה כבר בנויה בסדר שורה-אחר-שורה בתוך התיבה,
+      // כלומר בדיוק הסדר שרשת ה-CSS מצפה לו
+      const unit = spec.units[2 * spec.N + b];
 
-      // קווים עבים בגבול תיבת המשנה (לא בקצה הלוח — שם יש מסגרת).
-      // מסמנים את שני התאים שמשני צדי הגבול כדי שהקו יצא סימטרי.
-      if ((c + 1) % spec.boxW === 0 && c !== spec.N - 1) cell.classList.add('bx-right');
-      if (c % spec.boxW === 0 && c !== 0) cell.classList.add('bx-left');
-      if ((r + 1) % spec.boxH === 0 && r !== spec.N - 1) cell.classList.add('bx-bottom');
-      if (r % spec.boxH === 0 && r !== 0) cell.classList.add('bx-top');
+      for (let k = 0; k < unit.length; k++) {
+        const i = unit[k];
 
-      const value = document.createElement('span');
-      value.className = 'cell-value';
-      cell.appendChild(value);
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.i = i;
+        cell.setAttribute('role', 'gridcell');
 
-      const notes = document.createElement('div');
-      notes.className = 'cell-notes';
-      notes.hidden = true;
-      cell.appendChild(notes);
+        const value = document.createElement('span');
+        value.className = 'cell-value';
+        cell.appendChild(value);
 
-      frag.appendChild(cell);
-      cells.push(cell);
+        const notes = document.createElement('div');
+        notes.className = 'cell-notes';
+        notes.hidden = true;
+        cell.appendChild(notes);
+
+        box.appendChild(cell);
+        cells[i] = cell;
+      }
+
+      frag.appendChild(box);
     }
 
     el.board.textContent = '';
@@ -686,7 +698,7 @@
   /** הזנת ערך לתא הנבחר (או פתק, לפי המצב). */
   function enterValue(v) {
     const g = state.game;
-    if (!g || state.paused || g.finished) return;
+    if (!g || state.paused || g.finished || state.autoCompleting) return;
 
     const i = state.selected;
     if (i < 0) {
@@ -715,16 +727,12 @@
 
     if (!res.ok) return;
 
-    updateHighlights();
-    updateNumpad();
-    updateStatus();
-    scheduleSave();
-    checkWin();
+    afterMove();
   }
 
   function eraseSelected() {
     const g = state.game;
-    if (!g || state.paused || g.finished) return;
+    if (!g || state.paused || g.finished || state.autoCompleting) return;
     const i = state.selected;
     if (i < 0) return;
     const res = g.erase(i);
@@ -809,6 +817,8 @@
     updateNumpad();
     updateStatus();
     scheduleSave();
+    // בכוונה בלי השלמה אוטומטית: ביטול/ביצוע-חוזר אינו מהלך של השחקן,
+    // והפעלת השלמה כאן הייתה "נלחמת" בשחקן שמנסה לחזור אחורה
     checkWin();
   }
 
@@ -825,11 +835,79 @@
     if (entry) entry.before.forEach((s) => renderCell(s.i));
     selectCell(res.index);
     animateCell(res.index, 'is-pop');
+    afterMove();
+  }
+
+  /* --------------------------------------------------------------------- */
+  /* השלמה אוטומטית                                                         */
+  /* --------------------------------------------------------------------- */
+
+  /** מספר התאים שמתחתיו הלוח מושלם אוטומטית. */
+  const AUTO_COMPLETE_AT = 6;
+
+  /**
+   * בודק אם הגיע הרגע להשלים את הלוח לבד.
+   *
+   * מפעילים רק כשהלוח *נקי לחלוטין* — כל מה שמולא עד כה נכון. אחרת היינו
+   * "מתקנים" לשחקן טעויות בלי שביקש, וזה כבר לא השלמה אלא פתרון.
+   *
+   * @returns {boolean} true אם הופעלה השלמה (ואז אין צורך לבדוק ניצחון)
+   */
+  function maybeAutoComplete() {
+    const g = state.game;
+    if (!g || g.finished || !state.prefs.autoComplete) return false;
+
+    const remaining = g.remainingCells();
+    if (remaining === 0 || remaining > AUTO_COMPLETE_AT) return false;
+
+    for (let i = 0; i < g.cells; i++) {
+      if (g.values[i] && g.values[i] !== g.solution[i]) return false;
+    }
+
+    runAutoComplete();
+    return true;
+  }
+
+  /** ממלא את התאים שנותרו בזה אחר זה, עם אנימציה מדורגת. */
+  function runAutoComplete() {
+    const g = state.game;
+    const empties = [];
+    for (let i = 0; i < g.cells; i++) if (!g.values[i]) empties.push(i);
+    if (!empties.length) return;
+
+    state.autoCompleting = true;
+    toast('השלמה אוטומטית · נשארו ' + empties.length);
+
+    empties.forEach((idx, k) => {
+      setTimeout(() => {
+        // המשחק יכול היה להתאפס/להתחלף בזמן ההשלמה
+        if (state.game !== g || g.finished) return;
+
+        g.setValue(idx, g.solution[idx], {
+          autoClearNotes: state.prefs.autoClearNotes,
+        });
+        renderCell(idx);
+        animateCell(idx, 'is-auto');
+        updateNumpad();
+        updateStatus();
+
+        if (k === empties.length - 1) {
+          state.autoCompleting = false;
+          updateHighlights();
+          saveGame();
+          checkWin();
+        }
+      }, k * 110);
+    });
+  }
+
+  /** מרוכז: מה שצריך לקרות אחרי כל מהלך של השחקן. */
+  function afterMove() {
     updateHighlights();
     updateNumpad();
     updateStatus();
     scheduleSave();
-    checkWin();
+    if (!maybeAutoComplete()) checkWin();
   }
 
   /* --------------------------------------------------------------------- */
@@ -941,6 +1019,7 @@
     state.selected = -1;
     state.notesMode = false;
     state.paused = false;
+    state.autoCompleting = false;
 
     buildBoard(game.size);
     buildNumpad(game.size);
@@ -1086,6 +1165,36 @@
   el.btnStats.addEventListener('click', () => {
     renderStats();
     openModal(el.statsModal);
+  });
+
+  /* ------------------------------ הגדרות ------------------------------ */
+
+  /** מסנכרן את מצב המתגים מתוך ההעדפות השמורות. */
+  function syncSettingsUI() {
+    el.settingsModal.querySelectorAll('[data-pref]').forEach((input) => {
+      input.checked = !!state.prefs[input.dataset.pref];
+    });
+  }
+
+  el.btnSettings.addEventListener('click', () => {
+    syncSettingsUI();
+    openModal(el.settingsModal);
+  });
+
+  el.settingsModal.addEventListener('change', (e) => {
+    const input = e.target.closest('[data-pref]');
+    if (!input) return;
+
+    state.prefs[input.dataset.pref] = input.checked;
+    Storage.savePrefs(state.prefs);
+
+    // הדגשות ושגיאות משפיעות על הצביעה => מרעננים מיד
+    updateHighlights();
+
+    // הפעלת ההשלמה כשהלוח כבר קרוב לסיום צריכה לתפוס מיד
+    if (input.dataset.pref === 'autoComplete' && input.checked) {
+      if (maybeAutoComplete()) closeModal(el.settingsModal);
+    }
   });
 
   el.btnClearStats.addEventListener('click', () => {
