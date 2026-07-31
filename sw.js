@@ -12,36 +12,37 @@
  *                        הבאה נקלטת לפעם הבאה.
  *
  * ההתאמה מתעלמת מ-query string, ולכן היא עמידה לסכמת ה-?v= שבדפים:
- * theme.css?v=8 ו-theme.css?v=9 מוצאים את אותה רשומה במטמון.
+ * בקשה ל-theme.css?v=<hash> מוצאת את הרשומה שנשמרה כ-theme.css.
  * =========================================================================== */
 'use strict';
 
-/* חייב לעלות בכל פריסה, אחרת גולשים ותיקים יישארו על נכסים ישנים.
-   מיושר בכוונה למספר ה-?v= שבדפי ה-HTML. */
-const VERSION = 'v9';
+/* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
+   ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
+const VERSION = 'eb12598e';
 const CACHE = 'games-' + VERSION;
 
-/** כל מה שנדרש כדי לשחק בשני המשחקים ללא רשת. */
+/** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
 const PRECACHE = [
   './',
   'index.html',
   'sudoku.html',
   'solitaire.html',
-  'manifest.webmanifest',
+  'css/hub.css',
+  'css/solitaire.css',
+  'css/sudoku.css',
+  'css/theme.css',
   'icon.svg',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  'css/theme.css',
-  'css/hub.css',
-  'css/sudoku.css',
-  'css/solitaire.css',
   'js/core.js',
-  'js/storage.js',
   'js/game.js',
-  'js/ui.js',
   'js/solitaire/engine.js',
   'js/solitaire/ui.js',
+  'js/storage.js',
+  'js/sw-register.js',
+  'js/ui.js',
+  'manifest.webmanifest',
 ];
 
 self.addEventListener('install', (event) => {
