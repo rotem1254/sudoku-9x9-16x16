@@ -76,6 +76,7 @@
     drawThree: false,
     autoCollect: true,
     showTargets: true,
+    tapToMove: true,
   };
 
   /* --------------------------------------------------------------------- */
@@ -90,8 +91,6 @@
     animating: false,
     confirmAction: null,
     stuckShown: false,
-    lastTapAt: 0,
-    lastTapKey: '',
   };
 
   const el = {
@@ -505,9 +504,64 @@
 
   /* -------------------------- מטפל ההקשות ---------------------------- */
 
+  /*
+   * הקשה אחת על קלף שולחת אותו ליעד הטוב ביותר — קודם ערימת סיום, אחרת
+   * עמודה מתאימה. זה מקצר את רוב המשחק להקשה בודדת.
+   *
+   * אבל לפעמים *כן* צריך לבחור יעד: לרצף יכולות להיות כמה עמודות חוקיות,
+   * ורק אחת מהן מקדמת. לכן לחיצה ארוכה עוברת למצב בחירה ידנית — הקלף
+   * מסומן, היעדים החוקיים נצבעים, וההקשה הבאה קובעת לאן.
+   */
+  const LONG_PRESS_MS = 420;
+  let pressTimer = null;
+  let pressStart = null;
+  let suppressClick = false;
+
+  function cancelPress() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+    pressStart = null;
+  }
+
+  el.board.addEventListener('pointerdown', (e) => {
+    const g = state.game;
+    if (!g || state.paused || g.finished) return;
+    if (!state.prefs.tapToMove) return; // במצב הישן ההקשה כבר בוחרת
+
+    const cardEl = e.target.closest('.card');
+    if (!cardEl || cardEl.classList.contains('is-dead')) return;
+
+    pressStart = { x: e.clientX, y: e.clientY };
+    pressTimer = setTimeout(() => {
+      const loc = locOf(cardEl);
+      if (!loc || !g._takeableCards(loc)) return;
+      state.selection = loc;
+      suppressClick = true; // ה-click שאחרי השחרור אינו בחירת יעד
+      render();
+      toast('בחר יעד');
+      cancelPress();
+    }, LONG_PRESS_MS);
+  });
+
+  el.board.addEventListener('pointermove', (e) => {
+    // גלילה או תזוזה מבטלות את הלחיצה הארוכה
+    if (!pressStart) return;
+    if (Math.abs(e.clientX - pressStart.x) > 10 || Math.abs(e.clientY - pressStart.y) > 10) {
+      cancelPress();
+    }
+  });
+
+  el.board.addEventListener('pointerup', cancelPress);
+  el.board.addEventListener('pointercancel', cancelPress);
+
   el.board.addEventListener('click', (e) => {
     const g = state.game;
     if (!g || state.paused || state.animating || g.finished) return;
+
+    if (suppressClick) {
+      suppressClick = false;
+      return;
+    }
 
     const pileEl = e.target.closest('.pile');
     const cardEl = e.target.closest('.card');
@@ -523,16 +577,40 @@
       return;
     }
 
+    /* --- יש בחירה פעילה => ההקשה הזו היא היעד --- */
+    if (state.selection) {
+      const targetEl = pileEl;
+      if (targetEl) {
+        const zone = targetEl.dataset.zone;
+        if (zone === 'tableau' || zone === 'foundation') {
+          const res = doMove(state.selection, { zone, pile: Number(targetEl.dataset.pile) });
+          if (res.ok) return;
+          if (cardEl && isSelected(locOf(cardEl))) {
+            // הקשה חוזרת על הקלף שנבחר => ביטול הבחירה
+            clearSelection();
+            render();
+            return;
+          }
+          toast('מהלך לא חוקי');
+        }
+      }
+      clearSelection();
+      render();
+      return;
+    }
+
     /* --- הקשה על קלף --- */
     if (cardEl && !cardEl.classList.contains('is-dead')) {
       const loc = locOf(cardEl);
       if (!loc) return;
 
-      // הקשה כפולה => שליחה אוטומטית ליעד המתבקש
-      const key = locKey(loc);
-      const now = Date.now();
-      if (key === state.lastTapKey && now - state.lastTapAt < 320) {
-        state.lastTapKey = '';
+      if (!g._takeableCards(loc)) {
+        rejectAnimation(cardEl);
+        toast('אי אפשר להזיז את הקלף הזה');
+        return;
+      }
+
+      if (state.prefs.tapToMove) {
         const target = g.findAutoTarget(loc);
         if (target) {
           doMove(loc, target);
@@ -542,55 +620,9 @@
         }
         return;
       }
-      state.lastTapKey = key;
-      state.lastTapAt = now;
 
-      // בחירה שנייה על אותו קלף מבטלת
-      if (isSelected(loc)) {
-        clearSelection();
-        render();
-        return;
-      }
-
-      // אם כבר יש בחירה, מנסים להזיז אליה כיעד (קלף עליון = ראש הערימה)
-      if (state.selection) {
-        const target = { zone: loc.zone, pile: loc.pile };
-        if (target.zone === 'tableau' || target.zone === 'foundation') {
-          const res = doMove(state.selection, target);
-          if (res.ok) return;
-        }
-      }
-
-      // אחרת — בוחרים, אם באמת אפשר להזיז מכאן
-      if (!g._takeableCards(loc)) {
-        rejectAnimation(cardEl);
-        toast('אי אפשר להזיז את הקלף הזה');
-        clearSelection();
-        render();
-        return;
-      }
+      // מצב ידני: ההקשה בוחרת, וההקשה הבאה קובעת יעד
       state.selection = loc;
-      render();
-      return;
-    }
-
-    /* --- הקשה על ערימה ריקה כיעד --- */
-    if (pileEl && state.selection) {
-      const zone = pileEl.dataset.zone;
-      if (zone === 'tableau' || zone === 'foundation') {
-        const res = doMove(state.selection, { zone, pile: Number(pileEl.dataset.pile) });
-        if (!res.ok) {
-          toast('מהלך לא חוקי');
-          clearSelection();
-          render();
-        }
-        return;
-      }
-    }
-
-    // הקשה על רקע מבטלת בחירה
-    if (state.selection) {
-      clearSelection();
       render();
     }
   });
@@ -923,6 +955,12 @@
     const pref = input.dataset.pref;
     state.prefs[pref] = input.checked;
     savePrefs();
+
+    if (pref === 'tapToMove') {
+      clearSelection();
+      render();
+      return;
+    }
 
     if (pref === 'drawThree') {
       // מספר הקלפים במשיכה הוא חלק מהחלוקה, ולכן מחייב משחק חדש
