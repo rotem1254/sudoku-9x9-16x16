@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4f6ef7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#12151f" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="רמי קוב בדפדפן — 106 אבנים, סדרות וקבוצות, ג'וקרים, יריבים ממוחשבים. מותאם לטלפון.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="רמי קוב">
+  <title>רמי קוב · מרכז המשחקים</title>
+  <link rel="icon" href="icon.svg?v=12c2056b" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
+  <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
+  <link rel="stylesheet" href="css/theme.css?v=1bf06a28">
+  <link rel="stylesheet" href="css/rummikub.css?v=072d8c6e">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <a class="logo" href="index.html" title="חזרה למרכז המשחקים">
+      <svg class="logo-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-text">רמי קוב</span>
+    </a>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnHelp" aria-label="חוקי המשחק" title="חוקים">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- יריבים -->
+  <div class="opponents" id="opponents"></div>
+
+  <div class="statusbar">
+    <div class="stat">
+      <span class="stat-label">בבריכה</span>
+      <span class="stat-value" id="statPool">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">ביד</span>
+      <span class="stat-value" id="statRack">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">הונח</span>
+      <span class="stat-value" id="statPlaced">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">פתיחה</span>
+      <span class="stat-value" id="statMeld">—</span>
+    </div>
+  </div>
+
+  <!-- השולחן -->
+  <main class="table-area">
+    <div class="table-scroll" id="table" aria-label="השולחן"></div>
+    <p class="table-empty" id="tableEmpty">השולחן ריק. הנח כאן את הצירוף הראשון שלך.</p>
+  </main>
+
+  <!-- המגש -->
+  <section class="rack-wrap">
+    <div class="rack-head">
+      <span class="rack-title">המגש שלי</span>
+      <div class="rack-sorts">
+        <button type="button" class="chip" data-sort="number">מיין לפי מספר</button>
+        <button type="button" class="chip" data-sort="color">לפי צבע</button>
+      </div>
+    </div>
+    <div class="rack" id="rack" aria-label="המגש שלי"></div>
+  </section>
+
+  <div class="rk-actions" id="actions">
+    <button type="button" class="tool" data-action="undo" aria-label="בטל את התור">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14l-5-5 5-5"/><path d="M4 9h9a7 7 0 0 1 0 14h-3"/></svg>
+      <span>בטל</span>
+    </button>
+    <button type="button" class="tool" data-action="hint" aria-label="רמז">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.1 1 1.7h5.2c.1-.6.4-1.2 1-1.7A6 6 0 0 0 12 3z"/></svg>
+      <span>רמז</span>
+    </button>
+    <button type="button" class="tool" data-action="draw" aria-label="משוך אבן">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M8 11l4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <span>משוך</span>
+    </button>
+    <button type="button" class="tool is-primary" data-action="commit" aria-label="סיים תור">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
+      <span>סיים תור</span>
+    </button>
+  </div>
+
+  <footer class="footer">
+    <button type="button" class="link-btn" id="btnNew">משחק חדש</button>
+    <span class="footer-sep">·</span>
+    <span id="footerInfo">—</span>
+  </footer>
+</div>
+
+<!-- ==================== סוף משחק ==================== -->
+<div class="modal" id="overModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="win-badge" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h2 class="modal-title" id="overTitle">המשחק נגמר</h2>
+    <p class="modal-sub" id="overSub"></p>
+    <div class="win-stats" id="overStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>סגור</button>
+      <button type="button" class="btn btn-primary" id="btnOverNew">משחק חדש</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== הגדרות ==================== -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
+    <div class="settings-list">
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">מספר שחקנים</span>
+          <span class="setting-desc">אתה ועוד יריבים ממוחשבים. שינוי מתחיל משחק חדש</span>
+        </span>
+        <select class="select" id="optPlayers">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+        </select>
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">סימון צירופים פסולים</span>
+          <span class="setting-desc">מסמן באדום צירוף שאינו חוקי עוד לפני סיום התור</span>
+        </span>
+        <input type="checkbox" class="switch" id="optMarkInvalid" data-pref="markInvalid">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">מיון אוטומטי</span>
+          <span class="setting-desc">ממיין את המגש לפי מספר אחרי כל משיכה</span>
+        </span>
+        <input type="checkbox" class="switch" id="optAutoSort" data-pref="autoSort">
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== חוקים ==================== -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
+    <div class="help-body">
+      <p><b>המטרה</b> — להיפטר מכל האבנים במגש.</p>
+      <p><b>צירופים חוקיים:</b></p>
+      <ul>
+        <li><b>סדרה</b> — 3 אבנים או יותר באותו צבע ובמספרים עוקבים (5־6־7 כחול)</li>
+        <li><b>קבוצה</b> — 3 או 4 אבנים באותו מספר, כל אחת בצבע אחר</li>
+      </ul>
+      <p><b>פתיחה</b> — בהנחה הראשונה שלך סכום האבנים שאתה מניח חייב להיות
+        30 לפחות, ואסור להיעזר באבנים שכבר על השולחן.</p>
+      <p><b>אחרי הפתיחה</b> מותר לסדר את השולחן מחדש כרצונך — להוסיף,
+        לפצל ולהעביר אבנים בין צירופים — ובלבד שבסוף התור כל מה שעל
+        השולחן חוקי.</p>
+      <p><b>ג'וקר</b> מחליף כל אבן. ביד הוא שווה 30 נקודות קנס.</p>
+      <p><b>איך מזיזים</b> — הקש על אבן כדי לבחור אותה, ואז הקש על הצירוף
+        שאליו להוסיף, או על "צירוף חדש". הקשה על אבן שהנחת השנה מחזירה
+        אותה למגש.</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== אישור ==================== -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h2 class="modal-title" id="confirmTitle">אישור</h2>
+    <p class="modal-sub" id="confirmText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
+      <button type="button" class="btn btn-danger" id="btnConfirmOk">אישור</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="js/sw-register.js?v=89122463"></script>
+<script src="js/rummikub/engine.js?v=163059e1"></script>
+<script src="js/rummikub/ai.js?v=da08ce9e"></script>
+<script src="js/rummikub/ui.js?v=5039e982"></script>
+</body>
+</html>

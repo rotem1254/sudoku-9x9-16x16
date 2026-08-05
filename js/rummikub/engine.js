@@ -242,6 +242,8 @@
       this.finished = false;
       this.winner = -1;
       this.moves = 0;
+      // ספירת מסירות רצופות — מסיימת משחק שנתקע כשהבריכה ריקה
+      this.passes = 0;
     }
 
     /* ------------------------------ שאילתות ---------------------------- */
@@ -301,6 +303,7 @@
       this.table = table.map((s) => s.slice());
       this.racks[this.turn] = rack.slice();
       this.moves++;
+      this.passes = 0; // מישהו הצליח להניח — המשחק לא תקוע
 
       if (!this.racks[this.turn].length) {
         this.finished = true;
@@ -361,13 +364,24 @@
     drawTile() {
       if (this.finished) return { ok: false, reason: 'finished' };
       if (!this.pool.length) {
-        // הבריכה נגמרה — התור עובר בלי משיכה
+        /*
+         * הבריכה ריקה ואין מה להניח — זו מסירה. כשכל השחקנים מסרו ברצף
+         * המשחק תקוע, ולפי החוקים הוא נגמר: מנצח מי שנשארו לו הכי מעט
+         * נקודות ביד. בלי זה המשחק היה נכנס ללולאה אינסופית.
+         */
+        this.passes++;
         this._nextTurn();
+        if (this.passes >= this.playerCount) {
+          this.finished = true;
+          this.winner = lowestRack(this.racks);
+          return { ok: true, tile: null, empty: true, stalemate: true };
+        }
         return { ok: true, tile: null, empty: true };
       }
       const tile = this.pool.pop();
       this.racks[this.turn].push(tile);
       this.moves++;
+      this.passes = 0; // משיכה משנה את המצב, אז זו אינה מסירה
       this._nextTurn();
       return { ok: true, tile };
     }
@@ -408,6 +422,7 @@
         finished: this.finished,
         winner: this.winner,
         moves: this.moves,
+        passes: this.passes,
         savedAt: Date.now(),
       };
     }
@@ -423,6 +438,7 @@
       this.finished = !!s.finished;
       this.winner = s.winner == null ? -1 : s.winner;
       this.moves = s.moves || 0;
+      this.passes = s.passes || 0;
     }
 
     static deserialize(data) {
@@ -438,6 +454,17 @@
   /* --------------------------------------------------------------------- */
   /* עזרים                                                                  */
   /* --------------------------------------------------------------------- */
+
+  /** אינדקס השחקן עם הכי מעט נקודות ביד. */
+  function lowestRack(racks) {
+    let best = 0;
+    let bestValue = Infinity;
+    racks.forEach((r, i) => {
+      const v = rackValue(r);
+      if (v < bestValue) { bestValue = v; best = i; }
+    });
+    return best;
+  }
 
   function countTiles(tiles) {
     const map = Object.create(null);

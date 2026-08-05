@@ -7,9 +7,11 @@
 
 const path = require('path');
 require(path.join(__dirname, '..', 'js', 'rummikub', 'engine.js'));
+require(path.join(__dirname, '..', 'js', 'rummikub', 'ai.js'));
 
 const Rummikub = globalThis.Rummikub;
 const T = globalThis.RummikubTiles;
+const AI = globalThis.RummikubAI;
 
 let passed = 0;
 let failed = 0;
@@ -278,6 +280,80 @@ for (let trial = 0; trial < 20; trial++) {
   if (!intact) break;
 }
 check('106 אבנים נשמרות לאורך 20 משחקים', intact);
+
+/* --------------------------------------------------------------------- */
+
+section('מסירות ותיקו');
+
+const stale = new Rummikub({ seed: 4, players: 2 });
+stale.pool = [];
+stale.drawTile();
+check('מסירה ראשונה אינה מסיימת', !stale.finished && stale.passes === 1);
+stale.drawTile();
+check('כשכל השחקנים מסרו — המשחק נגמר', stale.finished && stale.passes >= 2);
+check('מנצח התיקו הוא בעל היד הזולה',
+  T.rackValue(stale.racks[stale.winner]) ===
+  Math.min(...stale.racks.map((r) => T.rackValue(r))));
+
+const notStale = new Rummikub({ seed: 4, players: 2 });
+notStale.drawTile();
+check('משיכה אמיתית מאפסת את מונה המסירות', notStale.passes === 0);
+
+/* --------------------------------------------------------------------- */
+
+section('היריב הממוחשב');
+
+const perfect = [t(0,7), t(1,7), t(2,7), t(2,4), t(2,5), t(2,6)];
+const pk = AI.bestPacking(perfect);
+check('פתרן מוצא את שני הצירופים', pk.used === 6 && pk.sets.length === 2);
+check('הערך מחושב נכון (21+15)', pk.value === 36);
+
+const junk = [t(0,1), t(1,4), t(2,9), t(3,12)];
+check('יד בלי צירוף — אין מה להניח', AI.bestPacking(junk).used === 0);
+
+const low = [t(0,1), t(1,1), t(2,1)];
+check('פתרון מתחת לסף הפתיחה נדחה',
+  AI.bestPacking(low, { minValue: 30 }).sets.length === 0);
+check('אותו פתרון מתקבל בלי סף', AI.bestPacking(low).used === 3);
+
+const ext = AI.extendTable([[t(0,7), t(1,7), t(2,7)]], [t(3,7), t(0,2)]);
+check('extendTable מוסיף צבע רביעי',
+  ext.placed.length === 1 && ext.table[0].length === 4 && ext.rack.length === 1);
+check('extendTable אינו נוגע במה שלא מתאים', ext.rack[0] === t(0,2));
+
+const bigRack = new Rummikub({ seed: 5, players: 2 });
+for (let i = 0; i < 20; i++) bigRack.racks[0].push(bigRack.pool.pop());
+const tAI = Date.now();
+AI.bestPacking(bigRack.racks[0]);
+const aiMs = Date.now() - tAI;
+check(`פתרן על יד של ${bigRack.racks[0].length} אבנים ב-${aiMs}ms`, aiMs < 500);
+
+/* --------------------------------------------------------------------- */
+
+section('משחקים מלאים בין יריבים');
+
+let finished = 0;
+let integrity = true;
+let legalTables = true;
+let maxTurns = 0;
+
+for (let s = 0; s < 25; s++) {
+  const game = new Rummikub({ seed: s * 31 + 11, players: s % 3 === 0 ? 3 : 2 });
+  let turns = 0;
+  while (!game.finished && turns < 500) { AI.playTurn(game); turns++; }
+  maxTurns = Math.max(maxTurns, turns);
+  if (game.finished) finished++;
+
+  const tiles = [].concat(...game.racks, game.pool, ...game.table);
+  if (tiles.length !== 106) integrity = false;
+  if (tiles.filter((x) => T.isJoker(x)).length !== 2) integrity = false;
+  if (new Set(tiles.filter((x) => !T.isJoker(x))).size !== 104) integrity = false;
+  if (!T.validateTable(game.table).ok) legalTables = false;
+}
+
+check(`כל 25 המשחקים הסתיימו (מקס ${maxTurns} תורות)`, finished === 25);
+check('106 אבנים נשמרות בכל משחק', integrity);
+check('השולחן נשאר חוקי לאורך כל משחק', legalTables);
 
 /* --------------------------------------------------------------------- */
 

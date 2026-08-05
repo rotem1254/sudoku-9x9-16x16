@@ -24,8 +24,15 @@ const crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
 const CHECK_ONLY = process.argv.includes('--check');
 
-/** דפי ה-HTML שמקבלים כתובות מגורסאות. */
-const PAGES = ['index.html', 'sudoku.html', 'solitaire.html'];
+/**
+ * דפי ה-HTML שמקבלים כתובות מגורסאות — מתגלים אוטומטית.
+ * רשימה ידנית כבר פספסה דף חדש פעם אחת, וזה בדיוק סוג התחזוקה
+ * שהסקריפט הזה נועד לבטל.
+ */
+const PAGES = fs
+  .readdirSync(ROOT)
+  .filter((f) => f.endsWith('.html'))
+  .sort();
 
 /** תיקיות שאינן חלק מהאתר הפרוס. */
 const SKIP_DIRS = new Set(['.git', '.vercel', 'node_modules', 'tools', 'test']);

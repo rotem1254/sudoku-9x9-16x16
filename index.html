@@ -78,7 +78,7 @@
     </a>
 
     <!-- ==================== רמי קוב ==================== -->
-    <div class="game-card is-soon" aria-disabled="true">
+    <a class="game-card" href="rummikub.html">
       <div class="game-art game-art-rummikub" aria-hidden="true">
         <span class="mini-tiles">
           <i class="mt mt-1">7</i>
@@ -88,13 +88,14 @@
       </div>
       <div class="game-body">
         <h2 class="game-title">רמי קוב</h2>
-        <p class="game-desc">106 אבנים, סדרות וקבוצות, ג'וקרים ופתיחה של 30. המנוע בנוי ונבדק — הממשק בדרך.</p>
+        <p class="game-desc">סדרות וקבוצות, ג'וקרים, פתיחה של 30 וסידור מחדש של השולחן. מול יריבים ממוחשבים.</p>
         <div class="game-tags">
-          <span class="tag">בבנייה</span>
-          <span class="tag">המנוע מוכן</span>
+          <span class="tag">106 אבנים</span>
+          <span class="tag" id="tagRummikub">—</span>
         </div>
       </div>
-    </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
 
   </nav>
 
@@ -166,6 +167,17 @@
     tagS.classList.add('is-live');
   } else {
     tagS.textContent = '4 רמות קושי';
+  }
+
+  var rk = read('rummikub.v1.save', null);
+  var tagR = document.getElementById('tagRummikub');
+  if (tagR) {
+    if (rk && !rk.finished && rk.moves > 0) {
+      tagR.textContent = 'ממשיכים · ' + (rk.racks && rk.racks[0] ? rk.racks[0].length : 0) + ' אבנים';
+      tagR.classList.add('is-live');
+    } else {
+      tagR.textContent = '2–4 שחקנים';
+    }
   }
 
   var sol = read('solitaire.v1.save', null);
