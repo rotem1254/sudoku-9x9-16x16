@@ -142,6 +142,41 @@
 .mc-2 { inset-inline-start: 11px; transform: rotate(0deg); color: #d2323c; z-index: 2; }
 .mc-3 { inset-inline-start: 22px; transform: rotate(14deg); color: #d2323c; }
 
+/* --- רמי קוב: כרטיס שעוד אינו לחיץ --- */
+.game-card.is-soon {
+  opacity: .62;
+  cursor: default;
+}
+.game-card.is-soon:active { transform: none; }
+@media (hover: hover) {
+  .game-card.is-soon:hover {
+    transform: none;
+    border-color: var(--line);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+.game-art-rummikub { background: linear-gradient(135deg, #b9461f, #e8863c); }
+
+.mini-tiles { position: relative; width: 48px; height: 44px; }
+.mt {
+  position: absolute;
+  top: 4px;
+  width: 17px;
+  height: 24px;
+  border-radius: 3px;
+  background: #fdf6e8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+  display: grid;
+  place-items: center;
+  font-size: .72rem;
+  font-style: normal;
+  font-weight: 800;
+}
+.mt-1 { inset-inline-start: 0; color: #1b2033; transform: rotate(-8deg); }
+.mt-2 { inset-inline-start: 15px; color: #cf2233; z-index: 2; }
+.mt-3 { inset-inline-start: 30px; color: #2b4bd8; transform: rotate(8deg); }
+
 /* -------------------------------- פוטר ---------------------------------- */
 
 .hub-footer {
