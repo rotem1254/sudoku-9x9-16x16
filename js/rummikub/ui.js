@@ -244,7 +244,7 @@
     const draw = el.actions.querySelector('[data-action="draw"]');
     const busy = !myTurn() || state.aiRunning;
     commit.disabled = busy || !state.freshTiles.length;
-    undo.disabled = busy || !state.freshTiles.length;
+    undo.disabled = busy || !undoStack.length;
     draw.disabled = busy;
 
     el.footerInfo.textContent = state.aiRunning
@@ -264,149 +264,343 @@
   }
 
   /* --------------------------------------------------------------------- */
-  /* בחירה והזזה                                                            */
+  /* הזזת אבנים — מקור, יעד, וביטול צעד                                     */
   /* --------------------------------------------------------------------- */
 
+  /*
+   * מחסנית ביטול בתוך התור. כל שינוי דוחף צילום, וכך "בטל" מחזיר צעד
+   * אחד אחורה במקום לאפס את כל התור — זה ההבדל בין ממשק שנוח לתקן בו
+   * טעות לבין ממשק שמעניש עליה.
+   */
+  const undoStack = [];
+
+  function pushUndo() {
+    undoStack.push({
+      table: state.workTable.map((x) => x.slice()),
+      rack: state.workRack.slice(),
+      fresh: state.freshTiles.slice(),
+    });
+    if (undoStack.length > 120) undoStack.shift();
+  }
+
+  function popUndo() {
+    const snap = undoStack.pop();
+    if (!snap) return false;
+    state.workTable = snap.table;
+    state.workRack = snap.rack;
+    state.freshTiles = snap.fresh;
+    clearSelection();
+    return true;
+  }
+
   function isSelected(from, setIndex, tileIndex) {
-    const s = state.selection;
-    return !!s && s.from === from && s.setIndex === setIndex && s.tileIndex === tileIndex;
+    const sel = state.selection;
+    return !!sel && sel.from === from && sel.setIndex === setIndex && sel.tileIndex === tileIndex;
   }
 
   const clearSelection = () => { state.selection = null; };
 
-  /**
-   * מסיר את האבן הנבחרת ממקומה.
-   * @returns {{tile:number, removedSet:number}|null} removedSet הוא אינדקס
-   *   הצירוף שהתרוקן ונמחק, או -1. הקורא חייב לתקן אינדקסים בהתאם.
-   */
-  function takeSelected() {
-    const s = state.selection;
-    if (!s) return null;
-    if (s.from === 'rack') {
-      return { tile: state.workRack.splice(s.tileIndex, 1)[0], removedSet: -1 };
-    }
-
-    const set = state.workTable[s.setIndex];
-    const tile = set.splice(s.tileIndex, 1)[0];
-    let removedSet = -1;
-    if (!set.length) {
-      state.workTable.splice(s.setIndex, 1);
-      removedSet = s.setIndex;
-    }
-    return { tile, removedSet };
+  /** רטט קצר — המשוב שגורם להנחה להרגיש פיזית. */
+  function buzz(ms) {
+    if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} }
   }
 
-  /** האם מותר להחזיר את האבן הזו למגש — רק אם היא הונחה בתור הנוכחי. */
-  const canReturn = (tile) => state.freshTiles.includes(tile);
+  /**
+   * מבצע העברת אבן ממקור ליעד. זו הנקודה היחידה שמשנה את מצב העבודה,
+   * ולכן הקשה וגרירה מתנהגות בדיוק אותו הדבר.
+   *
+   * @param {{from:string,setIndex:number,tileIndex:number,tile:number}} src
+   * @param {{kind:string,setIndex:number,insertAt:number}} dst
+   * @returns {boolean}
+   */
+  function applyMove(src, dst) {
+    if (!src || !dst) return false;
 
-  el.table.addEventListener('click', (e) => {
-    if (!myTurn() || state.aiRunning) return;
+    // החזרה למגש מותרת רק לאבנים שהנחנו בתור הזה
+    if (dst.kind === 'rack' && src.from === 'table' && !state.freshTiles.includes(src.tile)) {
+      toast('אפשר להחזיר רק אבנים שהנחת בתור הזה');
+      return false;
+    }
+    // הזזה בדיוק למקום שממנו באנו אינה שינוי
+    if (dst.kind === 'set' && src.from === 'table' && dst.setIndex === src.setIndex) {
+      const at = dst.insertAt;
+      if (at === src.tileIndex || at === src.tileIndex + 1) return false;
+    }
 
-    const tileEl = e.target.closest('.tile');
-    const setEl = e.target.closest('.set');
-    const newSlot = e.target.closest('.set-new');
+    pushUndo();
 
-    /* --- הנחה בצירוף חדש --- */
-    if (newSlot && state.selection) {
-      const fromRack = state.selection.from === 'rack';
-      const taken = takeSelected();
-      if (taken) {
-        if (fromRack) state.freshTiles.push(taken.tile);
-        state.workTable.push([taken.tile]);
-        clearSelection();
-        render();
-        saveDraft();
+    /* --- הסרה מהמקור --- */
+    let removedSet = -1;
+    if (src.from === 'rack') {
+      state.workRack.splice(src.tileIndex, 1);
+    } else {
+      const set = state.workTable[src.setIndex];
+      set.splice(src.tileIndex, 1);
+      if (!set.length) {
+        state.workTable.splice(src.setIndex, 1);
+        removedSet = src.setIndex;
       }
-      return;
     }
 
-    /* --- הקשה על אבן --- */
-    if (tileEl) {
-      const si = Number(tileEl.dataset.set);
-      const ti = Number(tileEl.dataset.index);
-      const tile = Number(tileEl.dataset.tile);
-
-      // ביטול בחירה
-      if (isSelected('table', si, ti)) { clearSelection(); render(); return; }
-
-      // יש בחירה ואנחנו מקישים על צירוף אחר => מוסיפים אליו
-      if (state.selection && state.selection.setIndex !== si) {
-        placeIntoSet(si);
-        return;
+    /* --- הכנסה ליעד --- */
+    if (dst.kind === 'rack') {
+      const at = dst.insertAt == null ? state.workRack.length : dst.insertAt;
+      state.workRack.splice(Math.min(at, state.workRack.length), 0, src.tile);
+      const fi = state.freshTiles.indexOf(src.tile);
+      if (fi >= 0) state.freshTiles.splice(fi, 1);
+    } else if (dst.kind === 'new') {
+      state.workTable.push([src.tile]);
+      if (src.from === 'rack') state.freshTiles.push(src.tile);
+    } else {
+      // מחיקת צירוף המקור מזיזה אחורה כל מה שאחריו
+      let idx = dst.setIndex;
+      if (removedSet >= 0 && removedSet < idx) idx--;
+      const set = state.workTable[idx];
+      if (!set) {
+        state.workTable.push([src.tile]);
+      } else {
+        let at = dst.insertAt == null ? set.length : dst.insertAt;
+        // ההסרה מאותו צירוף מזיזה גם את נקודת ההכנסה
+        if (src.from === 'table' && idx === src.setIndex && at > src.tileIndex) at--;
+        set.splice(Math.min(Math.max(at, 0), set.length), 0, src.tile);
       }
-
-      state.selection = { from: 'table', setIndex: si, tileIndex: ti, tile };
-      render();
-      return;
+      if (src.from === 'rack') state.freshTiles.push(src.tile);
     }
 
-    /* --- הקשה על צירוף (לא על אבן) => הנחה בסופו --- */
-    if (setEl && state.selection) {
-      placeIntoSet(Number(setEl.dataset.set));
-      return;
-    }
-
-    if (state.selection) { clearSelection(); render(); }
-  });
-
-  function placeIntoSet(targetIndex) {
-    const s = state.selection;
-    if (!s) return;
-    const fromRack = s.from === 'rack';
-
-    const taken = takeSelected();
-    if (!taken) return;
-
-    /*
-     * אם צירוף המקור התרוקן הוא נמחק מהמערך, וכל מה שאחריו הוזז מקום
-     * אחד אחורה. יעד שהיה *אחרי* הצירוף שנמחק צריך לרדת באחד.
-     */
-    let idx = targetIndex;
-    if (taken.removedSet >= 0 && taken.removedSet < targetIndex) idx--;
-
-    const set = state.workTable[idx];
-    if (set) set.push(taken.tile);
-    else state.workTable.push([taken.tile]); // היעד עצמו נעלם — פותחים חדש
-
-    if (fromRack) state.freshTiles.push(taken.tile);
     clearSelection();
+    buzz(12);
     render();
     saveDraft();
+    return true;
   }
 
-  el.rack.addEventListener('click', (e) => {
+  /** מיקום האבן מתוך אלמנט ה-DOM שלה. */
+  function sourceOf(node) {
+    if (!node) return null;
+    const tile = Number(node.dataset.tile);
+    if (node.dataset.rack != null) {
+      return { from: 'rack', setIndex: -1, tileIndex: Number(node.dataset.rack), tile };
+    }
+    return {
+      from: 'table',
+      setIndex: Number(node.dataset.set),
+      tileIndex: Number(node.dataset.index),
+      tile,
+    };
+  }
+
+  /**
+   * מזהה לאן האבן תיפול לפי נקודה על המסך, כולל באיזה *מקום* בתוך הצירוף.
+   * נקודת ההכנסה נקבעת לפי אמצע כל אבן, כמו בכל עורך שמסדרים בו פריטים.
+   */
+  function dropTargetAt(x, y) {
+    const under = document.elementFromPoint(x, y);
+    if (!under) return null;
+
+    if (under.closest('.set-new')) return { kind: 'new' };
+
+    const rackEl = under.closest('#rack');
+    if (rackEl) return { kind: 'rack', insertAt: insertIndex(rackEl, x) };
+
+    const setEl = under.closest('.set');
+    if (setEl) {
+      return {
+        kind: 'set',
+        setIndex: Number(setEl.dataset.set),
+        insertAt: insertIndex(setEl, x),
+      };
+    }
+    // נפילה על השולחן עצמו ולא על צירוף => צירוף חדש
+    if (under.closest('#table')) return { kind: 'new' };
+    return null;
+  }
+
+  /** כמה אבנים נמצאות "לפני" הנקודה. ב-RTL הכיוון הפוך. */
+  function insertIndex(container, x) {
+    const tiles = [...container.querySelectorAll('.tile')].filter(
+      (n) => !n.classList.contains('is-dragging')
+    );
+    let i = 0;
+    for (const t of tiles) {
+      const r = t.getBoundingClientRect();
+      if (x < r.left + r.width / 2) i++;
+    }
+    return i;
+  }
+
+  /* ------------------------------ הקשה ---------------------------------- */
+
+  function handleTap(node, container) {
     if (!myTurn() || state.aiRunning) return;
 
-    const tileEl = e.target.closest('.tile');
-
-    /* --- החזרת אבן מהשולחן למגש --- */
-    if (state.selection && state.selection.from === 'table') {
-      const tile = state.selection.tile;
-      if (!canReturn(tile)) {
-        toast('אפשר להחזיר רק אבנים שהנחת בתור הזה');
+    if (node) {
+      const src = sourceOf(node);
+      if (isSelected(src.from, src.setIndex, src.tileIndex)) {
         clearSelection();
         render();
         return;
       }
-      takeSelected();
-      state.workRack.push(tile);
-      state.freshTiles.splice(state.freshTiles.indexOf(tile), 1);
-      clearSelection();
+      // יש בחירה קודמת => ההקשה הזו היא היעד
+      if (state.selection) {
+        const sel = state.selection;
+        const samePlace = sel.from === src.from && sel.setIndex === src.setIndex;
+        if (!samePlace) {
+          const dst = src.from === 'rack'
+            ? { kind: 'rack', insertAt: src.tileIndex }
+            : { kind: 'set', setIndex: src.setIndex, insertAt: src.tileIndex + 1 };
+          if (applyMove(sel, dst)) return;
+        }
+      }
+      state.selection = src;
       render();
-      saveDraft();
       return;
     }
 
-    if (tileEl) {
-      const i = Number(tileEl.dataset.rack);
-      if (isSelected('rack', -1, i)) { clearSelection(); render(); return; }
-      state.selection = { from: 'rack', setIndex: -1, tileIndex: i, tile: Number(tileEl.dataset.tile) };
-      render();
+    if (!state.selection) return;
+    if (container === 'rack') applyMove(state.selection, { kind: 'rack' });
+    else { clearSelection(); render(); }
+  }
+
+  el.table.addEventListener('click', (e) => {
+    if (dragMoved) return; // סוף גרירה אינו הקשה
+    if (!myTurn() || state.aiRunning) return;
+
+    if (e.target.closest('.set-new') && state.selection) {
+      applyMove(state.selection, { kind: 'new' });
       return;
     }
-
-    if (state.selection) { clearSelection(); render(); }
+    const setEl = e.target.closest('.set');
+    const tileEl = e.target.closest('.tile');
+    if (!tileEl && setEl && state.selection) {
+      applyMove(state.selection, { kind: 'set', setIndex: Number(setEl.dataset.set) });
+      return;
+    }
+    handleTap(tileEl, 'table');
   });
+
+  el.rack.addEventListener('click', (e) => {
+    if (dragMoved) return;
+    handleTap(e.target.closest('.tile'), 'rack');
+  });
+
+  /* ------------------------------ גרירה --------------------------------- */
+
+  /*
+   * גרירה ממומשת ב-Pointer Events ולא ב-HTML5 drag&drop, שאינו נתמך במגע.
+   * האבן המקורית נשארת דהויה במקומה ועותק "עף" עם האצבע, כך שרואים גם
+   * מאיפה וגם לאן. סף של 6px מפריד בין גרירה להקשה.
+   */
+  let dragSrc = null;
+  let dragGhost = null;
+  let dragMoved = false;
+  let dragStart = null;
+  const DRAG_THRESHOLD = 6;
+
+  function onPointerDown(e) {
+    if (!myTurn() || state.aiRunning) return;
+    if (e.button != null && e.button !== 0) return;
+    const node = e.target.closest('.tile');
+    if (!node) return;
+
+    dragSrc = { node, loc: sourceOf(node) };
+    dragStart = { x: e.clientX, y: e.clientY };
+    dragMoved = false;
+  }
+
+  function onPointerMove(e) {
+    if (!dragSrc) return;
+    const dx = e.clientX - dragStart.x;
+    const dy = e.clientY - dragStart.y;
+
+    if (!dragMoved) {
+      if (Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
+      dragMoved = true;
+      beginGhost(e);
+    }
+    e.preventDefault();
+    moveGhost(e.clientX, e.clientY);
+    highlightDrop(e.clientX, e.clientY);
+  }
+
+  function beginGhost(e) {
+    const rect = dragSrc.node.getBoundingClientRect();
+    dragGhost = dragSrc.node.cloneNode(true);
+    dragGhost.classList.add('drag-ghost');
+    dragGhost.classList.remove('is-selected', 'is-dragging');
+    dragGhost.style.width = rect.width + 'px';
+    dragGhost.style.height = rect.height + 'px';
+    document.body.appendChild(dragGhost);
+    dragSrc.node.classList.add('is-dragging');
+    clearSelection();
+    buzz(8);
+    moveGhost(e.clientX, e.clientY);
+  }
+
+  function moveGhost(x, y) {
+    if (!dragGhost) return;
+    dragGhost.style.left = x + 'px';
+    dragGhost.style.top = y + 'px';
+  }
+
+  /** מסמן את היעד ומצייר קו הכנסה במקום המדויק שאליו האבן תיכנס. */
+  function highlightDrop(x, y) {
+    document.querySelectorAll('.is-target').forEach((n) => n.classList.remove('is-target'));
+    const old = document.querySelector('.drop-caret');
+    if (old) old.remove();
+
+    const dst = dropTargetAt(x, y);
+    if (!dst) return;
+
+    if (dst.kind === 'new') {
+      const slot = document.querySelector('.set-new');
+      if (slot) slot.classList.add('is-target');
+      return;
+    }
+
+    const host = dst.kind === 'rack'
+      ? el.rack
+      : el.table.querySelector('.set[data-set="' + dst.setIndex + '"]');
+    if (!host) return;
+    host.classList.add('is-target');
+
+    const mark = document.createElement('div');
+    mark.className = 'drop-caret';
+    const tiles = [...host.querySelectorAll('.tile')].filter(
+      (n) => !n.classList.contains('is-dragging')
+    );
+    const before = tiles[dst.insertAt];
+    if (before) host.insertBefore(mark, before);
+    else host.appendChild(mark);
+  }
+
+  function onPointerUp(e) {
+    if (!dragSrc) return;
+    const src = dragSrc.loc;
+    const wasDrag = dragMoved;
+
+    if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+    dragSrc.node.classList.remove('is-dragging');
+    document.querySelectorAll('.is-target').forEach((n) => n.classList.remove('is-target'));
+    const caret = document.querySelector('.drop-caret');
+    if (caret) caret.remove();
+    dragSrc = null;
+
+    if (!wasDrag) return; // הקשה רגילה — ה-click יטפל
+
+    const dst = dropTargetAt(e.clientX, e.clientY);
+    if (dst) applyMove(src, dst);
+    else render();
+
+    // מונע מה-click שאחרי השחרור להיחשב כבחירה
+    setTimeout(() => { dragMoved = false; }, 0);
+  }
+
+  [el.table, el.rack].forEach((zone) => {
+    zone.addEventListener('pointerdown', onPointerDown);
+  });
+  document.addEventListener('pointermove', onPointerMove, { passive: false });
+  document.addEventListener('pointerup', onPointerUp);
+  document.addEventListener('pointercancel', onPointerUp);
 
   /* --------------------------------------------------------------------- */
   /* מיון המגש                                                              */
@@ -439,6 +633,7 @@
 
   /** מתחיל תור אנושי: עותק עבודה נקי. */
   function beginTurn() {
+    undoStack.length = 0;
     state.workTable = state.game.snapshotTable();
     state.workRack = state.game.currentRack.slice();
     state.freshTiles = [];
@@ -630,7 +825,10 @@
     const btn = e.target.closest('.tool');
     if (!btn || !state.game) return;
     switch (btn.dataset.action) {
-      case 'undo': resetTurn(); toast('התור אופס'); break;
+      case 'undo':
+        if (popUndo()) { render(); saveDraft(); }
+        else toast('אין מה לבטל');
+        break;
       case 'hint': showHint(); break;
       case 'draw': drawAndPass(); break;
       case 'commit': commitTurn(); break;
