@@ -17,10 +17,12 @@
  */
 :root {
   --card-face: #fffdf8;
-  --card-edge: #cdd3e0;
-  --card-red: #cf2233;
-  --card-black: #171c2b;
-  --card-back: linear-gradient(135deg, #2b4bd8 0%, #5b7bff 100%);
+  --card-face-2: #f6f1e6; /* תחתית הקלף, נוטה לחום — נייר ולא מסך */
+  --card-edge: #c6ccdb;
+  --card-rule: rgba(23, 28, 43, .13); /* המסגרת המודפסת הפנימית */
+  --card-red: #c8102e;
+  --card-black: #161b2a;
+  --card-back: #2f4fd0;
 
   /* לבד: מרכז מואר יותר ושוליים כהים, כמו תאורה מעל שולחן */
   --felt-hi: #1f8f57;
@@ -34,11 +36,13 @@
 }
 
 :root[data-theme="dark"] {
-  --card-face: #f4f2ec;
-  --card-edge: #2b3247;
-  --card-red: #c8202f;
+  --card-face: #f6f3ea;
+  --card-face-2: #e8e2d3;
+  --card-edge: #1d2334;
+  --card-rule: rgba(20, 25, 42, .16);
+  --card-red: #c01d2c;
   --card-black: #14192a;
-  --card-back: linear-gradient(135deg, #23347f 0%, #3f52b5 100%);
+  --card-back: #26379a;
 
   --felt-hi: #146b41;
   --felt: #0d5231;
@@ -169,75 +173,202 @@ body {
   inset-inline: 0;
   top: calc(var(--off, 0) * 1cqw);
   height: 140cqw;
-  border-radius: 6px;
-  background: var(--card-face);
-  border: 1px solid var(--card-edge);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 3px 8px rgba(0, 0, 0, .22);
+  border-radius: 7cqw;
+  /* נייר, לא לבן שטוח: הבהקה עדינה מלמעלה ונטייה חמה כלפי מטה */
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255,255,255,.95), transparent 60%),
+    linear-gradient(180deg, var(--card-face) 0%, var(--card-face-2) 100%);
   cursor: pointer;
   user-select: none;
   -webkit-touch-callout: none;
   overflow: hidden;
+  /* קו המתאר והעומק מגיעים מצללים, לא מ-border — כך הפינות נשארות נקיות
+     ואין קו שנשבר בחצאי פיקסלים כשהקלף מוקטן */
+  box-shadow:
+    inset 0 0 0 1px var(--card-edge),
+    inset 0 1px 0 rgba(255, 255, 255, .9),
+    0 1px 1px rgba(0, 0, 0, .28),
+    0 4px 10px rgba(0, 0, 0, .26);
   transition: transform .13s var(--ease), box-shadow .13s;
 }
 
-/* פינה עליונה: ערך + צורה, זה מה שנקרא כשקלפים חופפים */
-.card-corner {
+/* מסגרת פנימית דקה — הפרט שגורם לקלף להיראות מודפס ולא מצויר ב-CSS */
+.card:not(.is-down)::before {
+  content: "";
   position: absolute;
-  top: 4cqw;
-  inset-inline-start: 5cqw;
+  inset: 3.5cqw;
+  border-radius: 4cqw;
+  box-shadow: inset 0 0 0 1px var(--card-rule);
+  pointer-events: none;
+}
+
+/* ------------------------------ מדדי פינה ------------------------------- */
+
+/*
+ * המדד העליון הוא כמעט כל מה שרואים כשקלפים חופפים בעמודה, ולכן הוא
+ * גדול ובמשקל כבד. התחתון מסובב, כמו בקלף אמיתי
+ */
+/*
+ * בקלף הצר הערך והצורה יושבים זה לצד זה ולא זה מעל זה. הסיבה מעשית:
+ * כשקלפים גלויים חופפים בעמודה נשאר גלוי רק פס עליון של כ-11 עד 22
+ * פיקסלים, ומדד בשתי שורות פשוט נחתך — הצורה נעלמת מתחת לקלף הבא.
+ * בשורה אחת שניהם נכנסים לפס. בקלף רחב חוזרים לסידור המסורתית
+ */
+.card-ix {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: .1em;
+  line-height: .88;
+  font-weight: 850;
+  font-variant-numeric: lining-nums;
+  pointer-events: none;
+}
+/*
+ * בקלף הצר אין פריסת סמלים שמתחרה על המקום, ולכן המדד יכול להיות גדול
+ * באמת — וזה מה שהופך את המשחק לנוח בטלפון. בקלף רחב הוא מתכווץ יחסית,
+ * ראו את שאילתת הקונטיינר בסוף הקובץ
+ */
+.card-ix b { font-size: 36cqw; letter-spacing: -.07em; }
+.card-ix i { font-size: 23cqw; font-style: normal; margin-top: .5cqw; }
+
+/*
+ * מיקום פיזי ולא לוגי: הדף כולו RTL, אבל קלף משחק הוא קלף משחק — המדד
+ * יושב בפינה השמאלית העליונה ובימנית התחתונה בכל שפה. inset-inline-start
+ * היה הופך אותם, וזה בדיוק מה שקרה כאן לפני שמדדתי
+ */
+.card-ix-tl { top: 5cqw; left: 6cqw; }
+.card-ix-br {
+  bottom: 5cqw;
+  right: 6cqw;
+  transform: rotate(180deg);
+}
+
+/* ------------------------------- סמלים ---------------------------------- */
+
+/*
+ * שטח הסמלים מוסט פנימה כדי לא להתנגש במדדי הפינה. המיקומים מגיעים
+ * מ-JS כאחוזים, כך שאותה פריסה עובדת בכל גודל קלף
+ */
+/*
+ * ברירת המחדל היא הפנים הצרות: סמל אחד גדול במרכז. הפריסה המסורתית
+ * נדלקת רק כשיש לה מקום — ראו את שאילתת הקונטיינר בהמשך
+ */
+.card-emblem {
+  position: absolute;
+  inset-inline: 0;
+  top: 60%;
+  translate: 0 -50%;
+  text-align: center;
+  font-size: 50cqw;
+  line-height: 1;
+  pointer-events: none;
+  /* לא סימן מים דהוי אלא סמל מודפס: צבע מלא, עם עומק קל */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .55);
+}
+
+.card-pips {
+  display: none;
+  position: absolute;
+  inset: 20cqw 22cqw;
+  pointer-events: none;
+}
+.card-pip {
+  position: absolute;
+  translate: -50% -50%;
+  font-size: 20cqw;
+  line-height: 1;
+}
+.card-pip.is-flip { rotate: 180deg; }
+
+/* ------------------------- נסיך, מלכה ומלך ------------------------------ */
+
+.card-court {
+  position: absolute;
+  inset: 15cqw 20cqw;
+  pointer-events: none;
+}
+.court-frame {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: .95;
-  font-weight: 800;
+  justify-content: space-between;
+  padding: 4cqw 0;
+  border-radius: 3cqw;
+  /* לוח בצבע הצורה, בעוצמה נמוכה — נותן לקלפי הכתר נוכחות בלי לצעוק */
+  background: linear-gradient(160deg,
+    color-mix(in srgb, currentColor 13%, transparent),
+    color-mix(in srgb, currentColor 5%, transparent));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, currentColor 38%, transparent),
+    inset 0 0 0 3cqw color-mix(in srgb, currentColor 6%, transparent);
 }
-.card-rank { font-size: 34cqw; letter-spacing: -.04em; }
-.card-suit { font-size: 26cqw; }
-
-/* סמל גדול ודהוי במרכז — נותן זיהוי מהיר של הצורה */
-.card-pip {
-  position: absolute;
-  inset-inline-end: 6cqw;
-  bottom: 4cqw;
-  font-size: 52cqw;
+.court-mono {
+  font-size: 46cqw;
+  font-weight: 850;
   line-height: 1;
-  opacity: .16;
-  pointer-events: none;
+  letter-spacing: -.04em;
 }
+.court-crest { font-size: 20cqw; line-height: 1; }
+.court-crest:first-child { rotate: 180deg; }
 
 .card.is-red { color: var(--card-red); }
 .card.is-black { color: var(--card-black); }
 
-/* גב הקלף */
+/* -------------------------------- גב ------------------------------------ */
+
 .card.is-down {
-  background: var(--card-back);
-  border-color: transparent;
+  background:
+    linear-gradient(160deg,
+      color-mix(in srgb, var(--card-back) 88%, #fff 12%),
+      var(--card-back) 55%,
+      color-mix(in srgb, var(--card-back) 84%, #000 16%));
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, .28),
+    0 1px 1px rgba(0, 0, 0, .3),
+    0 4px 10px rgba(0, 0, 0, .28);
 }
-.card.is-down .card-corner,
-.card.is-down .card-pip { display: none; }
+.card.is-down > * { display: none; }
+
+/* שוליים לבנים ואז סריג מעוינים — הגב הקלאסי של חפיסת קלפים */
+.card.is-down::before {
+  content: "";
+  position: absolute;
+  inset: 4cqw;
+  border-radius: 4cqw;
+  background: var(--card-face);
+}
 .card.is-down::after {
   content: "";
   position: absolute;
-  inset: 12%;
-  border-radius: 4px;
-  border: 1.5px solid rgba(255, 255, 255, .28);
+  inset: 7cqw;
+  border-radius: 2cqw;
+  background-color: var(--card-back);
   background-image:
-    repeating-linear-gradient(45deg, rgba(255,255,255,.14) 0 3px, transparent 3px 7px);
+    repeating-linear-gradient(45deg,
+      rgba(255,255,255,.20) 0 1px, transparent 1px 7cqw),
+    repeating-linear-gradient(-45deg,
+      rgba(255,255,255,.20) 0 1px, transparent 1px 7cqw),
+    radial-gradient(60% 40% at 50% 50%, rgba(255,255,255,.14), transparent 70%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .30);
 }
 
 /* קלף שנבחר — מורם ומודגש */
+/*
+ * טבעת הבחירה היא outline ולא ::before, כי ::before כבר מחזיק את המסגרת
+ * המודפסת בפנים הקלף ואת השוליים הלבנים של הגב
+ */
 .card.is-selected {
   transform: translateY(-6cqw) scale(1.03);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, .3);
+  outline: 2.5px solid var(--accent);
+  outline-offset: -2px;
+  box-shadow:
+    inset 0 0 0 1px var(--card-edge),
+    0 8px 18px rgba(0, 0, 0, .34);
   z-index: 40 !important;
-}
-.card.is-selected::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 2.5px solid var(--accent);
-  border-radius: 6px;
-  pointer-events: none;
 }
 
 /* קלף שאי אפשר להזיז כרגע */
@@ -347,4 +478,52 @@ body {
 @media (min-width: 700px) {
   .sol-row { --col-gap: 8px; }
   .sol-board { gap: 14px; padding: 14px; }
+}
+
+/* ------------------- פנים הקלף לפי רוחב הקלף בפועל ---------------------- */
+
+/*
+ * הכל כאן נמדד ב-cqw, כלומר ביחס לרוחב הקלף — ולכן הגדלת הקלף לבדה לא
+ * פותרת את הצפיפות: היחסים נשארים. מה שמשתנה בקלף רחב הוא שאפשר להרשות
+ * מדד פינה *קטן יותר ביחס* ועדיין קריא לגמרי, וברגע שהמדד מתכווץ
+ * מתפנה מקום לשלוש עמודות הסמלים של הפריסה המסורתית.
+ *
+ * הסף נבחר מהמדידה: מתחת לזה המדד והסמלים החיצוניים נוגעים זה בזה
+ */
+@container (min-width: 96px) {
+  /*
+   * שלושת המספרים האלה נבחרו בסריקה על הקלף החי: עברתי על צירופי גודל
+   * מדד, היסט שדה הסמלים וגודל סמל, ובדקתי לכל אחד חפיפה בין סמל למדד,
+   * חפיפה בין סמלים וחריגה מגבולות הקלף. זה הצירוף עם המדד הגדול ביותר
+   * שעדיין נקי לגמרי, ועם מרווח של 11 פיקסלים בין הסמלים
+   */
+  .card-ix { flex-direction: column; gap: 0; }
+  .card-ix b { font-size: 18cqw; letter-spacing: -.06em; }
+  .card-ix i { font-size: 12.6cqw; margin-top: .5cqw; }
+  .card-ix-tl { top: 4cqw; left: 5cqw; }
+  .card-ix-br { bottom: 4cqw; right: 5cqw; }
+
+  .card-emblem { display: none; }
+  .card-pips { display: block; inset: 20cqw 29cqw; }
+  .card-pip { font-size: 18cqw; }
+
+  /* לאס אין פריסה — אצלו הסמל הגדול הוא הפנים בכל מידה */
+  .card-pips:empty { display: none; }
+  .card-pips:empty ~ .card-emblem,
+  .card:not(:has(.card-pips)) .card-emblem { display: block; }
+
+  .card-court { inset: 13cqw 17cqw; }
+  .court-mono { font-size: 40cqw; }
+}
+
+/*
+ * מסך רחב: הלוח יוצא מרוחב העמודה של האתר (620 פיקסלים, מידה שנקבעה
+ * לטלפון) ומקבל מקום אמיתי. זה מה שמכניס את הקלף מעל סף 96 הפיקסלים
+ * ומדליק את הפריסה המסורתית של הסמלים. הגיליון הזה נטען רק בדף הסוליטר,
+ * ולכן מותר לגעת כאן ב-.app
+ */
+@media (min-width: 1000px) {
+  .app { max-width: 1000px; }
+  .sol-row { --col-gap: 10px; }
+  .sol-board { gap: 16px; padding: 16px; }
 }

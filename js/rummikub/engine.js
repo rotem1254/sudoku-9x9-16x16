@@ -427,6 +427,14 @@
       };
     }
 
+    /**
+     * עותק עצמאי לחלוטין של המשחק. משמש להשוואת מהלכים חלופיים מאותה
+     * עמדה בדיוק, בלי לגעת במשחק האמיתי.
+     */
+    clone() {
+      return new Rummikub({ state: this.serialize() });
+    }
+
     _load(s) {
       this.seed = s.seed;
       this.playerCount = s.playerCount;

@@ -14,10 +14,10 @@
  * הוכרעה, ומסתעפים רק על הצירופים שמכילים אותה (או מוותרים עליה). כך
  * העומק חסום בגודל היד ולא במספר הצירופים.
  *
- * מה ה-AI *לא* עושה: פירוק וסידור מחדש של השולחן. זו בעיית אופטימיזציה
- * על היד והשולחן יחד, והיא יקרה בהרבה. הוא כן מוסיף אבנים לצירופים
- * קיימים, וזה מכסה את רוב המהלכים הטבעיים. השחקן האנושי כן יכול לסדר
- * מחדש — הגבלה זו חלה על היריב בלבד.
+ * פירוק וסידור מחדש של השולחן הוא בעיית אופטימיזציה על היד והשולחן יחד,
+ * והיא יקרה בהרבה. לכן היא שמורה לרמה "קשה" בלבד (repackTable), עם תקציב
+ * צמתים שתוחם את המקרה הגרוע. ברמות הנמוכות היריב מסתפק בהוספת אבנים
+ * לצירופים קיימים, וזה מכסה את רוב המהלכים הטבעיים.
  * =========================================================================== */
 (function (global) {
   'use strict';
@@ -27,6 +27,30 @@
 
   const MAX_NUMBER = T.MAX_NUMBER;
   const COLOR_COUNT = T.COLORS.length;
+
+  /* --------------------------------------------------------------------- */
+  /* דרגות קושי                                                             */
+  /* --------------------------------------------------------------------- */
+
+  /*
+   * שלוש התנהגויות שנבדלות בדברים שבאמת משנים במשחק:
+   *
+   *   extend     — האם היריב מוסיף אבנים לצירופים שכבר על השולחן. בלי זה
+   *                הוא מפספס חלק גדול מהמהלכים הזמינים
+   *   hesitate   — הסתברות לוותר על מהלך אפשרי ולמשוך במקומו
+   *   repack     — סידור מחדש של כל השולחן יחד עם היד. זה המהלך החזק
+   *                באמת ברמי קוב: לפרק צירוף קיים ולהרכיב אותו אחרת כדי
+   *                לפנות מקום לאבן מהיד. מכיל בתוכו גם צירופים חדשים וגם
+   *                הוספות, ולכן תמיד שווה או טוב יותר מ-extend
+   *
+   * מדדתי את ההבדל, לא הנחתי אותו: ראו את הדו-קרבות ב-test-rummikub.js
+   */
+  const LEVELS = {
+    easy: { extend: false, hesitate: 0.4, repack: false },
+    normal: { extend: true, hesitate: 0, repack: false },
+    hard: { extend: true, hesitate: 0, repack: true },
+  };
+  const LEVEL_ORDER = ['easy', 'normal', 'hard'];
 
   /* --------------------------------------------------------------------- */
   /* מניית צירופים אפשריים                                                  */
@@ -113,7 +137,10 @@
    * בוחר אוסף צירופים זרים שמכסה כמה שיותר אבנים.
    *
    * @param {number[]} tiles
-   * @param {object} [opts] { minValue } — סף ניקוד, לצורך הפתיחה
+   * @param {object} [opts] { minValue, mustUse }
+   *   minValue — סף ניקוד, לצורך חוק הפתיחה
+   *   mustUse  — מערך בוליאני: אבנים שחייבות להיכנס לצירוף כלשהו. משמש
+   *              לסידור השולחן מחדש, כי אסור להחזיר אבן מהשולחן ליד
    * @returns {{sets:number[][], used:number, value:number}}
    */
   function bestPacking(tiles, opts) {
@@ -124,11 +151,22 @@
     const containing = tiles.map(() => []);
     candidates.forEach((set, si) => set.forEach((i) => containing[i].push(si)));
 
+    const mustUse = o.mustUse || [];
     const used = new Array(tiles.length).fill(false);
     let best = { sets: [], used: 0, value: 0 };
 
+    /*
+     * תקציב צמתים. עלות החיפוש היא דו-קוטבית: רוב הקריאות מסתיימות
+     * במיקרו-שניות, אבל הזנב הארוך הגיע ל-111ms על שולחן גדול — וזה
+     * מורגש היטב על טלפון. חסם על מספר הצמתים תוחם את המקרה הגרוע
+     * בלי לפגוע במקרה הרגיל, ומה שנמצא עד לעצירה עדיין תקף
+     */
+    let nodes = 0;
+    const budget = o.maxNodes || Infinity;
+
     /** @param {number} from האבן הראשונה שטרם הוכרעה */
     function search(from, chosen, usedCount, value) {
+      if (++nodes > budget) return;
       // גיזום: גם אם כל השאר ייכנס, לא נשתפר
       if (usedCount + (tiles.length - from) <= best.used) return;
 
@@ -150,10 +188,12 @@
         set.forEach((k) => { used[k] = false; });
       }
 
-      // ענף 2: מוותרים על האבן הזו
-      used[i] = true;
-      search(i + 1, chosen, usedCount, value);
-      used[i] = false;
+      // ענף 2: מוותרים על האבן הזו — אלא אם היא חייבת להיכנס
+      if (!mustUse[i]) {
+        used[i] = true;
+        search(i + 1, chosen, usedCount, value);
+        used[i] = false;
+      }
     }
 
     function record(chosen, usedCount, value) {
@@ -167,7 +207,9 @@
       }
     }
 
+    if (mustUse.length) best.used = -1; // כדי שגם פתרון "גרוע" עדיף על כלום
     search(0, [], 0, 0);
+    if (best.used < 0) return { sets: [], used: 0, value: 0 };
     return best;
   }
 
@@ -205,6 +247,46 @@
   }
 
   /* --------------------------------------------------------------------- */
+  /* סידור השולחן מחדש                                                      */
+  /* --------------------------------------------------------------------- */
+
+  /*
+   * תקציב הצמתים לסידור מחדש. מכויל כך שהתור האיטי ביותר נשאר בסדר גודל
+   * של כמה מילישניות גם על שולחן מלא — נמדד, לא מנוחש
+   */
+  const REPACK_NODES = 20000;
+
+  /**
+   * מסדר את כל השולחן מחדש יחד עם היד, כדי לשחק כמה שיותר אבנים מהיד.
+   * כל אבני השולחן חייבות להישאר על השולחן — זה בדיוק mustUse.
+   *
+   * @returns {{table:number[][], rack:number[], placed:number[]}|null}
+   */
+  function repackTable(table, rack) {
+    const tableTiles = [].concat(...table);
+    const all = tableTiles.concat(rack);
+
+    const mustUse = all.map((_, i) => i < tableTiles.length);
+    const packing = bestPacking(all, { mustUse, maxNodes: REPACK_NODES });
+    if (!packing.sets.length && tableTiles.length) return null;
+
+    const usedIdx = new Set([].concat(...packing.sets));
+    const placed = [];
+    const left = [];
+    rack.forEach((tile, i) => {
+      if (usedIdx.has(tableTiles.length + i)) placed.push(tile);
+      else left.push(tile);
+    });
+    if (!placed.length) return null;
+
+    return {
+      table: packing.sets.map((set) => set.map((i) => all[i])),
+      rack: left,
+      placed,
+    };
+  }
+
+  /* --------------------------------------------------------------------- */
   /* תור של היריב                                                           */
   /* --------------------------------------------------------------------- */
 
@@ -212,9 +294,13 @@
    * מחשב ומבצע תור עבור השחקן הנוכחי.
    *
    * @param {Rummikub} game
+   * @param {string} [level] easy | normal | hard
+   * @param {function} [rng] מקור אקראיות, לצורך בדיקות דטרמיניסטיות
    * @returns {{action:'meld'|'draw', placed?:number[], value?:number, won?:boolean}}
    */
-  function playTurn(game) {
+  function playTurn(game, level, rng) {
+    const conf = LEVELS[level] || LEVELS.normal;
+    const random = rng || Math.random;
     const rack = game.currentRack.slice();
 
     /* --- טרם פתח: חייב 30 נקודות מהיד בלבד --- */
@@ -240,13 +326,31 @@
     }
 
     /* --- כבר פתח: צירופים חדשים מהיד + הוספות לשולחן --- */
+
+    // ברמה הקלה הוא מדי פעם פשוט לא רואה את המהלך
+    if (conf.hesitate && random() < conf.hesitate) {
+      const d0 = game.drawTile();
+      return { action: 'draw', tile: d0.tile, hesitated: true };
+    }
+
     const packing = bestPacking(rack);
     const placedIdx = new Set([].concat(...packing.sets));
     const newSets = packing.sets.map((set) => set.map((i) => rack[i]));
     const afterPacking = rack.filter((_, i) => !placedIdx.has(i));
 
-    const ext = extendTable(game.table.concat(newSets), afterPacking);
-    const totalPlaced = [].concat(...newSets, ext.placed);
+    let ext = conf.extend
+      ? extendTable(game.table.concat(newSets), afterPacking)
+      : { table: game.table.concat(newSets), rack: afterPacking, placed: [] };
+    let totalPlaced = [].concat(...newSets, ext.placed);
+
+    // ברמה הקשה: לנסות לסדר את כל השולחן מחדש, ולקחת את זה רק אם באמת עדיף
+    if (conf.repack) {
+      const rp = repackTable(game.table, rack);
+      if (rp && rp.placed.length > totalPlaced.length) {
+        ext = rp;
+        totalPlaced = rp.placed;
+      }
+    }
 
     if (totalPlaced.length) {
       const res = game.commitTurn(ext.table, ext.rack);
@@ -260,6 +364,10 @@
   }
 
   global.RummikubAI = {
+    LEVELS,
+    LEVEL_ORDER,
+    REPACK_NODES,
+    repackTable,
     enumerateSets,
     bestPacking,
     extendTable,

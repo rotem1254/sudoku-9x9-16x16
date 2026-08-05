@@ -21,7 +21,38 @@
   const SAVE_KEY = 'rummikub.v1.save';
   const STATS_KEY = 'rummikub.v1.stats';
 
-  const AI_DELAY = 750; // כדי שאפשר יהיה לעקוב אחרי מהלכי היריבים
+  // מספיק זמן כדי לראות שהיריב "חושב" ואז לקרוא מה הוא עשה. קצר מדי
+  // והמהלך פשוט קורה בלי שמבחינים בו — זו בדיוק הייתה התחושה שאין יריב
+  const AI_THINK = 900;
+  const AI_READ = 550; // שהות אחרי המהלך, כדי להספיק לראות את האבנים שהונחו
+
+  /*
+   * ליריבים יש שם וצבע קבועים לפי המושב. שם אמיתי הופך את השורה שלמעלה
+   * ממונה אבנים למישהו שיושב מולך.
+   *
+   * f מסמן לשון נקבה. בעברית אין דרך לכתוב "הניח" בלי להתחייב למגדר,
+   * ולכן כל ניסוח שמדבר על יריב עובר דרך verbs() ולא נכתב ישירות
+   */
+  const OPPONENTS = [
+    null,
+    { name: 'דנה', color: '#e05f6a', f: true },
+    { name: 'יוסי', color: '#4a90d9', f: false },
+    { name: 'מיכל', color: '#3fa66c', f: true },
+  ];
+  const oppInfo = (p) => OPPONENTS[p] || { name: 'יריב ' + p, color: '#888', f: false };
+
+  /** צורות הפועל המתאימות ליריב מסוים. */
+  function verbs(p) {
+    const f = oppInfo(p).f;
+    return {
+      thinking: f ? 'חושבת' : 'חושב',
+      placed: f ? 'הניחה' : 'הניח',
+      drew: f ? 'משכה אבן' : 'משך אבן',
+      leftHim: f ? 'נשארו לה' : 'נשארו לו',
+      cannot: f ? 'לא יכולה לשחק' : 'לא יכול לשחק',
+      finishedFirst: f ? 'סיימה ראשונה' : 'סיים ראשון',
+    };
+  }
 
   /* --------------------------------------------------------------------- */
   /* אחסון                                                                  */
@@ -49,6 +80,7 @@
     players: 2,
     markInvalid: true,
     autoSort: true,
+    aiLevel: 'normal',
   };
 
   /* --------------------------------------------------------------------- */
@@ -90,6 +122,7 @@
     settingsModal: $('#settingsModal'),
     btnSettings: $('#btnSettings'),
     optPlayers: $('#optPlayers'),
+    optAiLevel: $('#optAiLevel'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
     confirmModal: $('#confirmModal'),
@@ -102,6 +135,12 @@
   /* --------------------------------------------------------------------- */
   /* עזרים                                                                  */
   /* --------------------------------------------------------------------- */
+
+  // מה כל יריב עשה בתורו האחרון — נשאר על המסך עד התור הבא שלו
+  const lastMove = [];
+  let thinkingFor = -1; // מושב היריב שכרגע "חושב", או 1-
+  let lastActor = -1; // מי שיחק אחרון, כדי להציג מה קרה גם אחרי החשיבה
+  let justPlayed = []; // אבנים שיריב הרגע הניח, לצורך הבהוב על השולחן
 
   let toastTimer = null;
   function toast(msg) {
@@ -162,22 +201,54 @@
     const g = state.game;
     el.opponents.textContent = '';
     for (let p = 1; p < g.playerCount; p++) {
+      const info = oppInfo(p);
+      const thinking = thinkingFor === p;
+
       const d = document.createElement('div');
-      d.className = 'opp' + (g.turn === p ? ' is-turn' : '');
+      d.className = 'opp'
+        + (g.turn === p ? ' is-turn' : '')
+        + (thinking ? ' is-thinking' : '');
+      d.style.setProperty('--opp-color', info.color);
+
+      const av = document.createElement('span');
+      av.className = 'opp-av';
+      av.textContent = info.name.charAt(0);
+      d.appendChild(av);
+
+      const main = document.createElement('span');
+      main.className = 'opp-main';
+
       const name = document.createElement('span');
       name.className = 'opp-name';
-      name.textContent = 'יריב ' + p;
-      const right = document.createElement('span');
-      right.className = 'opp-count';
-      right.textContent = g.racks[p].length + ' אבנים';
-      d.appendChild(name);
+      name.textContent = info.name;
       if (g.melded[p]) {
         const badge = document.createElement('span');
         badge.className = 'opp-melded';
         badge.textContent = 'פתח';
-        d.appendChild(badge);
+        name.appendChild(badge);
       }
+      main.appendChild(name);
+
+      const move = document.createElement('span');
+      move.className = 'opp-move';
+      if (thinking) {
+        move.classList.add('is-dots');
+        move.setAttribute('aria-label', 'חושב');
+        for (let i = 0; i < 3; i++) move.appendChild(document.createElement('i'));
+      } else {
+        move.textContent = lastMove[p] || '';
+      }
+      main.appendChild(move);
+      d.appendChild(main);
+
+      const right = document.createElement('span');
+      right.className = 'opp-count';
+      right.textContent = g.racks[p].length;
+      const unit = document.createElement('small');
+      unit.textContent = 'אבנים';
+      right.appendChild(unit);
       d.appendChild(right);
+
       el.opponents.appendChild(d);
     }
   }
@@ -194,7 +265,9 @@
 
       set.forEach((tile, ti) => {
         const fresh = state.freshTiles.includes(tile);
-        const t = makeTileEl(tile, fresh ? 'is-fresh' : '');
+        let cls = fresh ? 'is-fresh' : '';
+        if (justPlayed.includes(tile)) cls += ' is-played';
+        const t = makeTileEl(tile, cls);
         t.dataset.set = String(si);
         t.dataset.index = String(ti);
         if (isSelected('table', si, ti)) t.classList.add('is-selected');
@@ -248,7 +321,11 @@
     draw.disabled = busy;
 
     el.footerInfo.textContent = state.aiRunning
-      ? 'תור היריב…'
+      ? (thinkingFor > 0
+          ? oppInfo(thinkingFor).name + ' ' + verbs(thinkingFor).thinking + '…'
+          : lastActor > 0
+            ? oppInfo(lastActor).name + ': ' + (lastMove[lastActor] || '')
+            : 'תור היריב…')
       : myTurn() ? 'התור שלך' : 'ממתין';
   }
 
@@ -716,32 +793,60 @@
     if (g.finished) return endGame();
     if (g.turn === 0) { beginTurn(); return; }
 
+    const who = g.turn;
     state.aiRunning = true;
+    thinkingFor = who;
+    lastMove[who] = '';
+    justPlayed = [];
     updateStatus();
     renderOpponents();
 
     setTimeout(() => {
       if (!state.game || state.game !== g) return;
-      const who = g.turn;
-      const result = AI.playTurn(g);
+      const before = g.racks[who].length;
+      const result = AI.playTurn(g, state.prefs.aiLevel);
+      const name = oppInfo(who).name;
+
+      const v = verbs(who);
+      thinkingFor = -1;
+      lastActor = who;
+      justPlayed = result.action === 'meld' ? result.placed.slice() : [];
+      lastMove[who] = result.action === 'meld'
+        ? v.placed + ' ' + result.placed.length
+          + (result.placed.length === 1 ? ' אבן' : ' אבנים')
+        : v.drew;
 
       state.workTable = g.snapshotTable();
       render();
       saveGame();
 
       if (result.action === 'meld') {
-        toast('יריב ' + who + ' הניח ' + result.placed.length + ' אבנים');
+        toast(name + ' ' + v.placed + ' ' + result.placed.length
+          + (result.placed.length === 1 ? ' אבן' : ' אבנים')
+          + ' · ' + v.leftHim + ' ' + g.racks[who].length);
+      } else if (before === g.racks[who].length) {
+        toast(name + ' ' + v.cannot + ' — הבריכה ריקה');
       }
 
+      // ההבהוב מתפוגג לבד, בלי לצייר מחדש את כל השולחן
+      setTimeout(() => {
+        justPlayed = [];
+        el.table.querySelectorAll('.tile.is-played')
+          .forEach((t) => t.classList.remove('is-played'));
+      }, 1800);
+
       if (g.finished) { state.aiRunning = false; return endGame(); }
-      if (g.turn === 0) {
-        state.aiRunning = false;
-        beginTurn();
-        toast('התור שלך');
-      } else {
-        runOpponents();
-      }
-    }, AI_DELAY);
+      setTimeout(() => {
+        if (!state.game || state.game !== g) return;
+        if (g.turn === 0) {
+          state.aiRunning = false;
+          beginTurn();
+          updateStatus();
+        } else {
+          runOpponents();
+        }
+      }, AI_READ);
+    }, AI_THINK);
   }
 
   /* --------------------------------------------------------------------- */
@@ -763,11 +868,11 @@
     el.overTitle.textContent = iWon ? 'ניצחת!' : 'המשחק נגמר';
     el.overSub.textContent = iWon
       ? 'רוקנת את המגש'
-      : 'יריב ' + g.winner + ' סיים ראשון';
+      : oppInfo(g.winner).name + ' ' + verbs(g.winner).finishedFirst;
 
     el.overStats.innerHTML = scores.map((sc, i) => `
       <div class="win-stat${i === g.winner ? ' is-best' : ''}">
-        <span class="k">${i === 0 ? 'אתה' : 'יריב ' + i}${i === g.winner ? ' 🏆' : ''}</span>
+        <span class="k">${i === 0 ? 'אתה' : oppInfo(i).name}${i === g.winner ? ' 🏆' : ''}</span>
         <span class="v">${sc}</span>
       </div>`).join('');
 
@@ -841,6 +946,10 @@
 
   function newGame() {
     closeModal(el.overModal);
+    lastMove.length = 0;
+    thinkingFor = -1;
+    lastActor = -1;
+    justPlayed = [];
     state.game = new Rummikub({ players: Number(state.prefs.players) || 2 });
     state.aiRunning = false;
     store.remove(SAVE_KEY + '.draft');
@@ -891,6 +1000,7 @@
       i.checked = !!state.prefs[i.dataset.pref];
     });
     el.optPlayers.value = String(state.prefs.players);
+    el.optAiLevel.value = state.prefs.aiLevel;
     openModal(el.settingsModal);
   });
 
@@ -900,6 +1010,12 @@
       state.prefs[input.dataset.pref] = input.checked;
       savePrefs();
       render();
+      return;
+    }
+    if (e.target === el.optAiLevel) {
+      // משנה מיד — אין צורך להתחיל משחק חדש בשביל להחליף יריב
+      state.prefs.aiLevel = el.optAiLevel.value;
+      savePrefs();
       return;
     }
     if (e.target === el.optPlayers) {

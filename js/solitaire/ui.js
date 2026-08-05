@@ -221,6 +221,110 @@
     });
   }
 
+  /* --------------------------------------------------------------------- */
+  /* פני הקלף                                                               */
+  /* --------------------------------------------------------------------- */
+
+  /*
+   * פריסת הסמלים על קלפי המספר, לפי הפריסה המסורתית של חפיסה צרפתית.
+   * הרשת היא שלוש עמודות על שלוש-עשרה שורות: השורות האי-זוגיות הן שבע
+   * העמדות ה"רגילות", והזוגיות משמשות לסמלים שיושבים בין שורות — כמו
+   * הסמל האמצעי בשבע ובשמונה. כל ערך הוא [עמודה, שורה].
+   *
+   * זה מה שמבדיל קלף אמיתי מקלף גנרי: העין מזהה "שבע" מהצורה של הפריסה,
+   * בלי לקרוא את הספרה
+   */
+  const PIP_LAYOUT = {
+    2: [[2, 1], [2, 13]],
+    3: [[2, 1], [2, 7], [2, 13]],
+    4: [[1, 1], [3, 1], [1, 13], [3, 13]],
+    5: [[1, 1], [3, 1], [2, 7], [1, 13], [3, 13]],
+    6: [[1, 1], [3, 1], [1, 7], [3, 7], [1, 13], [3, 13]],
+    7: [[1, 1], [3, 1], [2, 4], [1, 7], [3, 7], [1, 13], [3, 13]],
+    8: [[1, 1], [3, 1], [2, 4], [1, 7], [3, 7], [2, 10], [1, 13], [3, 13]],
+    9: [[1, 1], [3, 1], [1, 5], [3, 5], [2, 7], [1, 9], [3, 9], [1, 13], [3, 13]],
+    10: [[1, 1], [3, 1], [2, 4], [1, 5], [3, 5], [1, 9], [3, 9], [2, 10], [1, 13], [3, 13]],
+  };
+
+  /** מדד פינה: ערך מעל צורה. tl למעלה, br למטה ומסובב. */
+  function makeIndex(where, label, symbol) {
+    const ix = document.createElement('span');
+    ix.className = 'card-ix card-ix-' + where;
+    ix.setAttribute('aria-hidden', 'true');
+    const r = document.createElement('b');
+    r.textContent = label;
+    const s = document.createElement('i');
+    s.textContent = symbol;
+    ix.appendChild(r);
+    ix.appendChild(s);
+    return ix;
+  }
+
+  /**
+   * גוף הקלף לאס ולקלפי מספר.
+   *
+   * מוחזרים *שני* גופים, וה-CSS בוחר לפי רוחב הקלף בפועל:
+   *
+   *   - סמל מרכזי אחד, לקלף צר. בעמודה על טלפון קלף הוא כ-52 פיקסלים
+   *     רוחב, ובמידה הזו מדד פינה קריא תופס כרבע מהרוחב — כלומר פשוט
+   *     אין מקום לשלוש עמודות סמלים בלי שהן ייגעו במדד. מדדתי
+   *   - הפריסה המסורתית המלאה, כשהקלף רחב מספיק כדי להכיל אותה יפה
+   *
+   * זו לא פשרה טכנית אלא ההחלטה הנכונה: קלף אמיתי רחב פי שלושה מהקלף
+   * שיש לנו כאן, ולכן היחסים שלו לא מועתקים כמו שהם
+   */
+  function makeFace(rank, symbol) {
+    const frag = document.createDocumentFragment();
+
+    const emblem = document.createElement('span');
+    emblem.className = 'card-emblem';
+    emblem.setAttribute('aria-hidden', 'true');
+    emblem.textContent = symbol;
+    frag.appendChild(emblem);
+
+    if (rank === 1) return frag; // אס — הסמל הגדול הוא כל הקלף
+
+    const box = document.createElement('span');
+    box.className = 'card-pips';
+    box.setAttribute('aria-hidden', 'true');
+
+    for (const [col, row] of PIP_LAYOUT[rank] || []) {
+      const p = document.createElement('span');
+      // חצי התחתון הפוך, בדיוק כמו בחפיסה אמיתית
+      p.className = 'card-pip' + (row > 7 ? ' is-flip' : '');
+      p.style.left = ((col - 1) * 50) + '%';
+      p.style.top = (((row - 1) / 12) * 100) + '%';
+      p.textContent = symbol;
+      box.appendChild(p);
+    }
+    frag.appendChild(box);
+    return frag;
+  }
+
+  /** גוף הקלף לנסיך, מלכה ומלך: מסגרת מעוטרת עם מונוגרמה. */
+  function makeCourt(label, symbol) {
+    const box = document.createElement('span');
+    box.className = 'card-court';
+    box.setAttribute('aria-hidden', 'true');
+
+    const frame = document.createElement('span');
+    frame.className = 'court-frame';
+
+    const mono = document.createElement('span');
+    mono.className = 'court-mono';
+    mono.textContent = label;
+
+    const crest = document.createElement('span');
+    crest.className = 'court-crest';
+    crest.textContent = symbol;
+
+    frame.appendChild(crest.cloneNode(true));
+    frame.appendChild(mono);
+    frame.appendChild(crest);
+    box.appendChild(frame);
+    return box;
+  }
+
   /** יוצר אלמנט קלף. faceUp=false מצייר גב. */
   function makeCardEl(card, faceUp) {
     const d = document.createElement('div');
@@ -228,24 +332,22 @@
     d.dataset.card = String(card);
 
     if (faceUp) {
-      const corner = document.createElement('span');
-      corner.className = 'card-corner';
-      const rank = document.createElement('span');
-      rank.className = 'card-rank';
-      rank.textContent = Cards.cardLabel(card);
-      const suit = document.createElement('span');
-      suit.className = 'card-suit';
-      suit.textContent = Cards.cardSymbol(card);
-      corner.appendChild(rank);
-      corner.appendChild(suit);
+      const label = Cards.cardLabel(card);
+      const symbol = Cards.cardSymbol(card);
+      const rank = Cards.cardRank(card);
 
-      const pip = document.createElement('span');
-      pip.className = 'card-pip';
-      pip.textContent = Cards.cardSymbol(card);
+      // שני מדדי פינה, כמו בקלף אמיתי. העליון הוא מה שנקרא כשקלפים חופפים,
+      // ולכן הוא זה שנשאר גדול
+      d.appendChild(makeIndex('tl', label, symbol));
+      d.appendChild(makeIndex('br', label, symbol));
 
-      d.appendChild(corner);
-      d.appendChild(pip);
-      d.setAttribute('aria-label', Cards.cardLabel(card) + ' ' + Cards.cardSymbol(card));
+      if (rank >= 11) {
+        d.appendChild(makeCourt(label, symbol));
+      } else {
+        d.appendChild(makeFace(rank, symbol));
+      }
+
+      d.setAttribute('aria-label', label + ' ' + symbol);
     } else {
       d.setAttribute('aria-label', 'קלף הפוך');
     }

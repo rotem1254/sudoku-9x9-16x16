@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
   <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
   <link rel="stylesheet" href="css/theme.css?v=1bf06a28">
-  <link rel="stylesheet" href="css/rummikub.css?v=8e174eba">
+  <link rel="stylesheet" href="css/rummikub.css?v=cb2cfcd9">
 </head>
 <body>
 
@@ -142,6 +142,17 @@
       </label>
       <label class="setting">
         <span class="setting-text">
+          <span class="setting-name">רמת היריב</span>
+          <span class="setting-desc">קל מפספס מהלכים · קשה מפרק ומסדר מחדש את השולחן</span>
+        </span>
+        <select class="select" id="optAiLevel">
+          <option value="easy">קל</option>
+          <option value="normal">בינוני</option>
+          <option value="hard">קשה</option>
+        </select>
+      </label>
+      <label class="setting">
+        <span class="setting-text">
           <span class="setting-name">סימון צירופים פסולים</span>
           <span class="setting-desc">מסמן באדום צירוף שאינו חוקי עוד לפני סיום התור</span>
         </span>
@@ -207,8 +218,8 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/sw-register.js?v=89122463"></script>
-<script src="js/rummikub/engine.js?v=163059e1"></script>
-<script src="js/rummikub/ai.js?v=da08ce9e"></script>
-<script src="js/rummikub/ui.js?v=2a410e16"></script>
+<script src="js/rummikub/engine.js?v=771546fc"></script>
+<script src="js/rummikub/ai.js?v=410fed3d"></script>
+<script src="js/rummikub/ui.js?v=d419165a"></script>
 </body>
 </html>

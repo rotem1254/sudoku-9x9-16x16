@@ -165,22 +165,92 @@
 .opponents { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .opp {
+  --opp-color: var(--accent);
   flex: 1 1 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  padding: 7px 11px;
+  padding: 6px 9px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
   font-size: .78rem;
+  transition: border-color .18s, background .18s, transform .18s;
 }
-.opp-name { font-weight: 700; }
-.opp-count { color: var(--muted); font-variant-numeric: tabular-nums; }
-.opp.is-turn { border-color: var(--accent); background: var(--accent-soft-2); }
-.opp.is-turn .opp-name { color: var(--accent); }
+
+/* עיגול עם האות הראשונה של השם — נותן ליריב פנים */
+.opp-av {
+  flex: none;
+  width: 26px; height: 26px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--opp-color);
+  color: #fff;
+  font-weight: 800;
+  font-size: .8rem;
+  line-height: 1;
+}
+
+.opp-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.opp-name {
+  font-weight: 700;
+  display: flex; align-items: center; gap: 5px;
+}
+
+/* שורת "מה הוא עשה עכשיו" — נשארת עד התור הבא שלו */
+.opp-move {
+  min-height: .82em;
+  font-size: .68rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.opp-count {
+  flex: none;
+  display: flex; flex-direction: column; align-items: center;
+  font-size: 1rem; font-weight: 800;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: var(--opp-color);
+}
+.opp-count small { font-size: .58rem; font-weight: 600; color: var(--muted); }
+
+.opp.is-turn {
+  border-color: var(--opp-color);
+  background: color-mix(in srgb, var(--opp-color) 9%, var(--surface));
+}
+
+/* "חושב" — שלוש נקודות קופצות, כדי שיהיה ברור שמישהו אחר משחק עכשיו */
+.opp.is-thinking { transform: translateY(-1px); }
+.opp.is-thinking .opp-av { animation: opp-pulse 1.1s ease-in-out infinite; }
+.opp-move.is-dots { display: flex; align-items: center; gap: 3px; padding-top: 3px; }
+.opp-move.is-dots i {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--opp-color);
+  animation: opp-dot .9s ease-in-out infinite;
+}
+.opp-move.is-dots i:nth-child(2) { animation-delay: .15s; }
+.opp-move.is-dots i:nth-child(3) { animation-delay: .3s; }
+
+@keyframes opp-dot {
+  0%, 60%, 100% { opacity: .25; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+@keyframes opp-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--opp-color) 55%, transparent); }
+  70% { box-shadow: 0 0 0 6px transparent; }
+}
+
 .opp-melded {
   font-size: .6rem;
   padding: 1px 6px;
@@ -188,6 +258,24 @@
   background: var(--success-soft);
   color: var(--success);
   font-weight: 800;
+}
+
+/* אבן שיריב הרגע הניח — מהבהבת רגע כדי שרואים מה השתנה על השולחן */
+.tile.is-played {
+  animation: tile-played 1.8s ease-out;
+  z-index: 2;
+}
+@keyframes tile-played {
+  0% { box-shadow: 0 0 0 3px var(--accent), 0 0 16px 4px var(--accent-soft); transform: translateY(-4px); }
+  70% { box-shadow: 0 0 0 3px var(--accent), 0 0 12px 2px transparent; transform: translateY(0); }
+  100% { box-shadow: none; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .opp.is-thinking .opp-av,
+  .opp-move.is-dots i,
+  .tile.is-played { animation: none; }
+  .tile.is-played { box-shadow: 0 0 0 3px var(--accent); }
 }
 
 /* ------------------------------- השולחן --------------------------------- */

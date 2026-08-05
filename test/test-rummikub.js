@@ -357,5 +357,150 @@ check('השולחן נשאר חוקי לאורך כל משחק', legalTables);
 
 /* --------------------------------------------------------------------- */
 
+section('רמות היריב');
+
+check('שלוש רמות מוגדרות', AI.LEVEL_ORDER.length === 3
+  && AI.LEVEL_ORDER.every((k) => AI.LEVELS[k]));
+
+// valueFirst: כששתי חלוקות משתמשות באותו מספר אבנים, "קשה" בוחר את היקרה
+{
+  // 1,2,3 שחור (ערך 6) מול 11,12,13 אדום (ערך 36) — שלוש אבנים כל אחת
+  const rack = [t(0, 1), t(0, 2), t(0, 3), t(1, 11), t(1, 12), t(1, 13)];
+  const cheap = AI.bestPacking(rack.slice(0, 3));
+  const plain = AI.bestPacking(rack);
+  const rich = AI.bestPacking(rack, { valueFirst: true });
+  check('חלוקה רגילה לוקחת את כל שש האבנים', plain.used === 6);
+  check('valueFirst עדיין מעדיף יותר אבנים כשאפשר', rich.used === 6);
+  check('בדיקת שפיות: שלוש אבנים נמוכות שוות 6', cheap.value === 6);
+}
+
+// hesitate: ב"קל", rng שמחזיר 0 תמיד גורם לוותר על המהלך ולמשוך
+{
+  const game = new Rummikub({ players: 2, seed: 7 });
+  game.melded[game.turn] = true; // כבר פתח, כדי להגיע לענף ההיסוס
+  const poolBefore = game.poolCount();
+  const res = AI.playTurn(game, 'easy', () => 0);
+  check('רמה קלה מהססת ומושכת', res.action === 'draw' && res.hesitated === true);
+  check('המשיכה באמת הורידה אבן מהבריכה', game.poolCount() === poolBefore - 1);
+}
+
+// אותו מצב בדיוק ברמה "בינוני" — לא מהסס
+{
+  const game = new Rummikub({ players: 2, seed: 7 });
+  game.melded[game.turn] = true;
+  const res = AI.playTurn(game, 'normal', () => 0);
+  check('רמה בינונית לא מהססת', !res.hesitated);
+}
+
+// רמה לא מוכרת נופלת חזרה ל"בינוני" ולא מתרסקת
+{
+  const game = new Rummikub({ players: 2, seed: 3 });
+  const res = AI.playTurn(game, 'no-such-level');
+  check('רמה לא מוכרת נופלת לבינוני', res && (res.action === 'meld' || res.action === 'draw'));
+}
+
+// כל שלוש הרמות מסיימות משחק שלם בלי לשבור את החוקיות
+for (const level of AI.LEVEL_ORDER) {
+  let finishedL = 0;
+  let legal = true;
+  let tilesOk = true;
+  for (let s = 0; s < 8; s++) {
+    const game = new Rummikub({ players: 3, seed: 500 + s });
+    let turns = 0;
+    while (!game.finished && turns < 700) { AI.playTurn(game, level); turns++; }
+    if (game.finished) finishedL++;
+    if (!T.validateTable(game.table).ok) legal = false;
+    if ([].concat(...game.racks, game.pool, ...game.table).length !== 106) tilesOk = false;
+  }
+  check(`רמה ${level}: כל 8 המשחקים הסתיימו`, finishedL === 8);
+  check(`רמה ${level}: השולחן נשאר חוקי`, legal);
+  check(`רמה ${level}: 106 אבנים נשמרות`, tilesOk);
+}
+
+/*
+ * דו-קרב בין שתי רמות, עם החלפת מושבים כדי לנטרל את יתרון הפתיחה.
+ * מחזיר ניצחונות וסכום ניקוד לכל צד, וכן התור האיטי ביותר שנמדד.
+ */
+function duel(levelA, levelB, games, seed0) {
+  let winsA = 0;
+  let scoreA = 0;
+  let scoreB = 0;
+  let worstMs = 0;
+  for (let s = 0; s < games; s++) {
+    const first = s % 2 === 0 ? levelA : levelB;
+    const second = s % 2 === 0 ? levelB : levelA;
+    const game = new Rummikub({ players: 2, seed: seed0 + s });
+    let turns = 0;
+    while (!game.finished && turns < 700) {
+      const t0 = process.hrtime.bigint();
+      AI.playTurn(game, game.turn === 0 ? first : second);
+      worstMs = Math.max(worstMs, Number(process.hrtime.bigint() - t0) / 1e6);
+      turns++;
+    }
+    const seatA = s % 2 === 0 ? 0 : 1;
+    const sc = game.finalScores();
+    scoreA += sc[seatA];
+    scoreB += sc[1 - seatA];
+    if (game.winner === seatA) winsA++;
+  }
+  return { winsA, scoreA, scoreB, worstMs };
+}
+
+// "קשה" חייב לגבור על "קל" — מדידה, לא הנחה
+{
+  const games = 40;
+  const r = duel('hard', 'easy', games, 900);
+  console.log(`    (קשה ${r.winsA}/${games} מול קל · ניקוד ${r.scoreA} מול ${r.scoreB})`);
+  check('קשה מנצח את קל ברוב מוחלט', r.winsA > games * 0.75);
+}
+
+/*
+ * קשה מול בינוני, בכנות: מדדתי 200 משחקים וקיבלתי 103:97 בניצחונות.
+ * זה רעש. גם יתרון הניקוד התהפך בין מדגמים קטנים. השונות ברמי קוב
+ * גבוהה מדי מכדי לנעול בדיקה על תוצאת משחקים.
+ *
+ * לכן הבדיקה נועלת את מה שנכון *מהבנייה* ולא מהסטטיסטיקה: מאותה עמדה
+ * בדיוק, קשה לעולם לא מניח פחות אבנים מבינוני, ולפעמים יותר. זו
+ * ההבטחה האמיתית של הסידור מחדש
+ */
+{
+  let sameOrBetter = true;
+  let strictlyBetter = 0;
+  let compared = 0;
+
+  for (let s = 0; s < 25 && sameOrBetter; s++) {
+    const game = new Rummikub({ players: 2, seed: 1100 + s });
+    let turns = 0;
+    while (!game.finished && turns < 400) {
+      if (game.hasMelded()) {
+        // שני עותקים של אותה עמדה בדיוק, ומהלך אחד לכל רמה
+        const ra = AI.playTurn(game.clone(), 'normal');
+        const rb = AI.playTurn(game.clone(), 'hard');
+        const na = ra.action === 'meld' ? ra.placed.length : 0;
+        const nb = rb.action === 'meld' ? rb.placed.length : 0;
+        compared++;
+        if (nb < na) sameOrBetter = false;
+        if (nb > na) strictlyBetter++;
+      }
+      AI.playTurn(game, 'normal');
+      turns++;
+    }
+  }
+
+  console.log(`    (הושוו ${compared} עמדות · קשה הניח יותר ב-${strictlyBetter})`);
+  check('היו מספיק עמדות להשוואה', compared > 100);
+  check('קשה אף פעם לא מניח פחות אבנים מבינוני', sameOrBetter);
+  check('קשה מנצל את הסידור מחדש לפחות פעם אחת', strictlyBetter > 0);
+}
+
+// מהירות: התור האיטי ביותר חייב להיבלע בתוך זמן ה"חשיבה" של הממשק
+{
+  const r = duel('hard', 'hard', 20, 1300);
+  console.log(`    (התור האיטי ביותר: ${r.worstMs.toFixed(0)}ms)`);
+  check('תור היריב נשאר מהיר', r.worstMs < 250);
+}
+
+/* --------------------------------------------------------------------- */
+
 console.log(`\n${passed} עברו, ${failed} נכשלו`);
 process.exit(failed ? 1 : 0);

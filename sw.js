@@ -18,7 +18,7 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = '36a9e68f';
+const VERSION = '105d5385';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
@@ -102,9 +102,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // --- נכסים: קודם מטמון, ורענון ברקע ---
+  /*
+   * נכסים: קודם מטמון, ורענון ברקע.
+   *
+   * ההתאמה חייבת להיות מדויקת כשיש חותם גרסה בכתובת. עם ignoreSearch
+   * בקשה ל-css/solitaire.css?v=חדש הייתה נענית מהמטמון של ?v=ישן — כלומר
+   * כל מנגנון חתימת התוכן היה חסר משמעות, וכל פריסה הייתה נכנסת לתוקף רק
+   * בטעינה השנייה. בלי ignoreSearch חותם חדש פשוט לא נמצא במטמון, נשלף
+   * מהרשת, והמשתמש מקבל את הגרסה הנכונה מיד.
+   *
+   * לכתובות בלי חותם משאירים את ההתאמה הסלחנית, כי שם השאילתה אינה חלק
+   * מזהות הקובץ
+   */
+  const versioned = new URL(req.url).searchParams.has('v');
+
   event.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((hit) => {
+    caches.match(req, { ignoreSearch: !versioned }).then((hit) => {
       const network = fetch(req)
         .then((res) => {
           if (res && res.status === 200) {
