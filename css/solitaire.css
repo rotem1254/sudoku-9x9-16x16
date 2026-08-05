@@ -298,6 +298,14 @@ body {
 /* ב-waste פורסים עד שלושה קלפים כך שרואים את מה שמתחת */
 .pile.waste .card { inset-inline-start: calc(var(--fan, 0) * 1cqw); }
 
+/* שורת הקושי מגיעה מ-sudoku.css במקור; כאן רק הרוחב של כפתור החלוקה */
+@media (max-width: 430px) {
+  .difficulty-row { flex-wrap: nowrap; }
+  .btn-new { width: 44px; padding: 0; flex: 0 0 44px; }
+  .btn-new-text { display: none; }
+  .btn-new svg { width: 1.3em; height: 1.3em; }
+}
+
 /* ------------------------------ שורת סטטוס ------------------------------ */
 
 .sol-actions {

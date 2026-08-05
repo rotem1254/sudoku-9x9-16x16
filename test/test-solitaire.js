@@ -189,6 +189,57 @@ check('חלוקה טרייה — אי אפשר לסיים אוטומטית', !no
 
 /* --------------------------------------------------------------------- */
 
+section('רמות קושי');
+
+const conf = Solitaire.DIFFICULTY;
+check('ארבע רמות', Solitaire.DIFFICULTY_ORDER.length === 4);
+check('קל ובינוני = משיכת קלף אחד', conf.easy.drawCount === 1 && conf.medium.drawCount === 1);
+check('קשה ומומחה = משיכת שלושה', conf.hard.drawCount === 3 && conf.expert.drawCount === 3);
+check('רק מומחה מגביל סיבובים',
+  conf.easy.maxRecycles === Infinity && conf.hard.maxRecycles === Infinity &&
+  conf.expert.maxRecycles === 1);
+
+Solitaire.DIFFICULTY_ORDER.forEach((d) => {
+  const t0 = Date.now();
+  const g = new Solitaire({ difficulty: d });
+  const ms = Date.now() - t0;
+  const cards = [].concat(...g.tableau, g.stock, g.waste, ...g.foundations);
+  check(`${d}: חלוקה תקינה, draw=${g.drawCount}, ${ms}ms`,
+    cards.length === 52 && new Set(cards).size === 52 &&
+    g.drawCount === conf[d].drawCount && g.difficulty === d && ms < 3000);
+});
+
+// הבטחת הרמה הקלה: החלוקה באמת ניתנת לניצחון בשיטה פשוטה
+let easyOk = 0;
+for (let i = 0; i < 8; i++) {
+  const g = new Solitaire({ difficulty: 'easy' });
+  if (Solitaire.isEasyDeal(g.seed, g.drawCount)) easyOk++;
+}
+check(`רמה קלה מסננת חלוקות פתירות (${easyOk}/8)`, easyOk === 8);
+
+// מומחה: סיבוב אחד בלבד
+const ex = new Solitaire({ difficulty: 'expert' });
+while (ex.stock.length) ex.draw();
+check('מומחה: הסיבוב הראשון מותר', ex.draw().ok && ex.recycles === 1);
+while (ex.stock.length) ex.draw();
+const blocked = ex.draw();
+check('מומחה: הסיבוב השני נחסם',
+  !blocked.ok && blocked.reason === 'no-more-redeals');
+
+// קל: אין הגבלה
+const ez = new Solitaire({ difficulty: 'easy' });
+for (let cycle = 0; cycle < 3; cycle++) { while (ez.stock.length) ez.draw(); ez.draw(); }
+check('קל: סיבובים ללא הגבלה', ez.recycles === 3);
+
+// הרמה נשמרת ונטענת
+const round2 = Solitaire.deserialize(JSON.parse(JSON.stringify(ex.serialize())));
+check('הרמה והגבלת הסיבובים נשמרות',
+  round2.difficulty === 'expert' && round2.maxRecycles === 1 && round2.drawCount === 3);
+const roundEasy = Solitaire.deserialize(JSON.parse(JSON.stringify(ez.serialize())));
+check('ללא הגבלה נשמר כ-Infinity ולא כ-null', roundEasy.maxRecycles === Infinity);
+
+/* --------------------------------------------------------------------- */
+
 section('Redo');
 
 const rd = new Solitaire({ seed: 21 });

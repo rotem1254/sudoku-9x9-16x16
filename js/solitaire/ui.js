@@ -71,9 +71,11 @@
     },
   };
 
+  const DIFF_LABELS = { easy: 'קל', medium: 'בינוני', hard: 'קשה', expert: 'מומחה' };
+
   const DEFAULT_PREFS = {
     theme: 'auto',
-    drawThree: false,
+    difficulty: 'easy',
     autoCollect: true,
     showTargets: true,
     tapToMove: true,
@@ -118,6 +120,8 @@
     btnWinNew: $('#btnWinNew'),
     settingsModal: $('#settingsModal'),
     btnSettings: $('#btnSettings'),
+    pills: $('#difficultyPills'),
+    btnNew: $('#btnNew'),
     statsModal: $('#statsModal'),
     statsTable: $('#statsTable'),
     btnStats: $('#btnStats'),
@@ -433,9 +437,15 @@
     const label = collectBtn.querySelector('span:not(.tool-badge)');
     if (label) label.textContent = g.canAutoFinish() ? 'סיים' : 'אסוף';
 
-    el.footerInfo.textContent =
-      (g.drawCount === 3 ? 'משיכת שלושה קלפים' : 'משיכת קלף אחד') +
-      (g.recycles ? ' · סיבובים: ' + g.recycles : '');
+    const parts = [];
+    if (g.difficulty) parts.push(DIFF_LABELS[g.difficulty]);
+    parts.push(g.drawCount === 3 ? 'משיכת שלושה' : 'משיכת קלף');
+    if (g.maxRecycles !== Infinity) {
+      parts.push('סיבובים: ' + g.recycles + '/' + g.maxRecycles);
+    } else if (g.recycles) {
+      parts.push('סיבובים: ' + g.recycles);
+    }
+    el.footerInfo.textContent = parts.join(' · ');
   }
 
   /* --------------------------------------------------------------------- */
@@ -589,7 +599,9 @@
     if (pileEl && pileEl.dataset.zone === 'stock') {
       clearSelection();
       const r = g.draw();
-      if (!r.ok) toast('אין קלפים למשיכה');
+      if (!r.ok) {
+        toast(r.reason === 'no-more-redeals' ? 'נגמרו סיבובי החפיסה ברמה הזו' : 'אין קלפים למשיכה');
+      }
       render();
       save();
       afterAction();
@@ -848,7 +860,7 @@
 
     const seconds = g.currentSeconds();
     const stats = store.read(STATS_KEY, {});
-    const key = g.drawCount === 3 ? 'draw3' : 'draw1';
+    const key = g.difficulty || 'medium';
     const rec = stats[key] || { played: 0, won: 0, best: null, bestScore: 0 };
     rec.won += 1;
     const isNewBest = rec.best == null || seconds < rec.best;
@@ -859,7 +871,8 @@
 
     flyAwayCards();
 
-    el.winSub.textContent = g.drawCount === 3 ? 'משיכת שלושה קלפים' : 'משיכת קלף אחד';
+    el.winSub.textContent = (DIFF_LABELS[g.difficulty] || '') +
+      ' · ' + (g.drawCount === 3 ? 'משיכת שלושה' : 'משיכת קלף');
     el.winStats.innerHTML = [
       statCard('זמן', formatTime(seconds), isNewBest),
       statCard('שיא אישי', rec.best != null ? formatTime(rec.best) : '—', false),
@@ -973,18 +986,47 @@
 
   function newGame() {
     closeModal(el.winModal);
-    state.game = new Solitaire({ drawCount: state.prefs.drawThree ? 3 : 1 });
+    const difficulty = state.prefs.difficulty || 'easy';
+    state.game = new Solitaire({ difficulty });
 
     const stats = store.read(STATS_KEY, {});
-    const key = state.prefs.drawThree ? 'draw3' : 'draw1';
-    const rec = stats[key] || { played: 0, won: 0, best: null, bestScore: 0 };
+    const rec = stats[difficulty] || { played: 0, won: 0, best: null, bestScore: 0 };
     rec.played += 1;
-    stats[key] = rec;
+    stats[difficulty] = rec;
     store.write(STATS_KEY, stats);
 
     startGame();
-    toast('חלוקה חדשה');
+    toast('חלוקה חדשה · ' + DIFF_LABELS[difficulty]);
   }
+
+  /** מסמן את הגלולה הפעילה, ואופציונלית שומר את הבחירה. */
+  function setActiveDifficulty(difficulty, persist) {
+    el.pills.querySelectorAll('.pill').forEach((p) => {
+      p.classList.toggle('is-active', p.dataset.difficulty === difficulty);
+    });
+    if (persist) {
+      state.prefs.difficulty = difficulty;
+      savePrefs();
+    }
+  }
+
+  el.pills.addEventListener('click', (e) => {
+    const pill = e.target.closest('.pill');
+    if (!pill || state.animating) return;
+    const difficulty = pill.dataset.difficulty;
+    if (difficulty === state.prefs.difficulty) return;
+    setActiveDifficulty(difficulty, true);
+    newGame();
+  });
+
+  el.btnNew.addEventListener('click', () => {
+    const g = state.game;
+    if (g && !g.finished && g.moves > 3) {
+      confirmAction('להתחיל חלוקה חדשה? ההתקדמות הנוכחית תימחק.', newGame);
+    } else {
+      newGame();
+    }
+  });
 
   function startGame() {
     clearSelection();
@@ -1038,12 +1080,6 @@
       return;
     }
 
-    if (pref === 'drawThree') {
-      // מספר הקלפים במשיכה הוא חלק מהחלוקה, ולכן מחייב משחק חדש
-      closeModal(el.settingsModal);
-      newGame();
-      return;
-    }
     render();
   });
 
@@ -1090,10 +1126,7 @@
 
   function renderStats() {
     const stats = store.read(STATS_KEY, {});
-    const rows = [
-      ['draw1', 'משיכת קלף אחד'],
-      ['draw3', 'משיכת שלושה'],
-    ];
+    const rows = Solitaire.DIFFICULTY_ORDER.map((d) => [d, DIFF_LABELS[d]]);
     el.statsTable.innerHTML = rows
       .map(([key, name]) => {
         const r = stats[key] || { played: 0, won: 0, best: null, bestScore: 0 };
@@ -1158,9 +1191,11 @@
     if (g && !g.finished) {
       state.game = g;
       // ההעדפה מתיישרת לפי המשחק שנטען, לא להפך
-      state.prefs.drawThree = g.drawCount === 3;
+      if (g.difficulty) state.prefs.difficulty = g.difficulty;
+      setActiveDifficulty(state.prefs.difficulty, false);
       startGame();
     } else {
+      setActiveDifficulty(state.prefs.difficulty || 'easy', false);
       newGame();
     }
 
