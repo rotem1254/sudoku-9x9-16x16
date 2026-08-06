@@ -257,13 +257,20 @@
   const REPACK_NODES = 20000;
 
   /**
-   * מסדר את כל השולחן מחדש יחד עם היד, כדי לשחק כמה שיותר אבנים מהיד.
+   * מסדר את השולחן מחדש יחד עם היד, כדי לשחק כמה שיותר אבנים מהיד.
    * כל אבני השולחן חייבות להישאר על השולחן — זה בדיוק mustUse.
+   *
+   * **צירוף שיש בו ג'וקר יוצא מהחישוב לגמרי.** לפי החוקים אי אפשר לקחת
+   * ממנו דבר ואי אפשר לסדר אותו מחדש כל עוד הג'וקר בתוכו, ולכן הוא נשאר
+   * בצד ומוחזר כמו שהוא. בלי זה היריב היה מייצר מהלכים שהמנוע דוחה.
    *
    * @returns {{table:number[][], rack:number[], placed:number[]}|null}
    */
   function repackTable(table, rack) {
-    const tableTiles = [].concat(...table);
+    const frozen = table.filter((s) => s.some(T.isJoker));
+    const movable = table.filter((s) => !s.some(T.isJoker));
+
+    const tableTiles = [].concat(...movable);
     const all = tableTiles.concat(rack);
 
     const mustUse = all.map((_, i) => i < tableTiles.length);
@@ -280,7 +287,8 @@
     if (!placed.length) return null;
 
     return {
-      table: packing.sets.map((set) => set.map((i) => all[i])),
+      table: frozen.map((s) => s.slice())
+        .concat(packing.sets.map((set) => set.map((i) => all[i]))),
       rack: left,
       placed,
     };

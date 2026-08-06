@@ -21,6 +21,13 @@
   --tile-red: #c8202f;
   --tile-blue: #1f49c0;
   --tile-orange: #d97316;
+
+  /* זהב הג'וקר — צבע ייעודי שלא מופיע בשום מקום אחר בממשק */
+  --joker-ring: #e0a615;
+  --joker-glow: rgba(224, 166, 21, .45);
+  --joker-soft: #fdf3d8;
+  --joker-line: #eccf82;
+  --joker-ink: #7a5405;
 }
 
 :root[data-theme="dark"] {
@@ -37,6 +44,12 @@
   --tile-red: #bf1c2b;
   --tile-blue: #1c40ad;
   --tile-orange: #c96410;
+
+  --joker-ring: #f0b929;
+  --joker-glow: rgba(240, 185, 41, .42);
+  --joker-soft: #3a2f12;
+  --joker-line: #6b5620;
+  --joker-ink: #f4d68a;
 }
 
 /* --------------------------------- אבן ---------------------------------- */
@@ -436,6 +449,51 @@
 .help-body ul { margin: 0 0 9px; padding-inline-start: 18px; }
 .help-body li { margin-bottom: 3px; }
 .help-body b { color: var(--text); }
+
+/* --------------------------- הזדמנות לג'וקר ------------------------------ */
+
+/*
+ * המהלך הזה שווה יותר מכל אבן בודדת על הלוח, ולכן הוא מסומן בזהב ולא
+ * בצבע המבטא הרגיל — הוא לא אמור להתערבב עם שום סימון אחר בממשק
+ */
+.joker-tip {
+  margin: 0 0 7px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: var(--joker-soft);
+  color: var(--joker-ink);
+  border: 1px solid var(--joker-line);
+  font-size: .76rem;
+  font-weight: 700;
+  text-align: start;
+}
+
+.tile.can-take {
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, .95),
+    inset 0 -2.5px 0 rgba(0, 0, 0, .16),
+    0 0 0 2.5px var(--joker-ring),
+    0 0 12px 2px var(--joker-glow);
+  animation: jokerCall 1.5s var(--ease) infinite;
+}
+
+/* האבן ביד שמחליפה אותו — אותו זהב, חלש יותר */
+.tile.can-swap {
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, .95),
+    inset 0 -2.5px 0 rgba(0, 0, 0, .16),
+    0 0 0 2px var(--joker-ring),
+    0 2px 3px var(--tile-shadow);
+}
+
+@keyframes jokerCall {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile.can-take { animation: none; }
+}
 
 /* ---------------------------- יומן הפעולות ------------------------------ */
 

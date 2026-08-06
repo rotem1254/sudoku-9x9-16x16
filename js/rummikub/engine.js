@@ -153,23 +153,25 @@
   const isValidSet = (tiles) => isGroup(tiles) || isRun(tiles);
 
   /**
-   * ניקוד צירוף. ג'וקר שווה את הערך שהוא מייצג בפועל, ולכן חייבים לגזור
-   * אותו מהצירוף ולא להניח ערך קבוע.
-   * @returns {number} 0 אם הצירוף אינו חוקי
+   * הטווח שסדרה מכסה בפועל, כולל ההכרעה איפה יושבים הג'וקרים העודפים.
+   *
+   * שלושה מקומות צריכים בדיוק את אותה הכרעה — הניקוד, סדר התצוגה,
+   * וחוק החלפת הג'וקר — ואם הם היו מחשבים אותה בנפרד, אבן הייתה מוצגת
+   * במקום אחד, נספרת כמשהו אחר, ומוחלפת באבן שלישית. לכן זה יושב כאן.
+   *
+   * @returns {{low:number, high:number, color:number, byNumber:Map}|null}
    */
-  function setValue(tiles) {
-    if (!isValidSet(tiles)) return 0;
+  function runSpan(tiles) {
+    if (!isRun(tiles)) return null;
 
     const real = tiles.filter((t) => !isJoker(t));
     const jokers = tiles.length - real.length;
+    const color = tileColorIndex(real[0]);
 
-    if (isGroup(tiles)) {
-      // בקבוצה כל האבנים באותו ערך, כולל הג'וקרים
-      return tileNumber(real[0]) * tiles.length;
-    }
-
-    // בסדרה: סכום כל הטווח, פחות מה שכבר ידוע — הג'וקרים משלימים אותו
+    const byNumber = new Map();
+    real.forEach((t) => byNumber.set(tileNumber(t), t));
     const numbers = real.map(tileNumber).sort((a, b) => a - b);
+
     let low = numbers[0];
     let high = numbers[numbers.length - 1];
     let spare = jokers - (high - low + 1 - real.length); // ג'וקרים שאינם בפערים
@@ -178,9 +180,60 @@
     while (spare > 0 && high < MAX_NUMBER) { high++; spare--; }
     while (spare > 0 && low > MIN_NUMBER) { low--; spare--; }
 
+    return { low, high, color, byNumber };
+  }
+
+  /**
+   * ניקוד צירוף. ג'וקר שווה את הערך שהוא מייצג בפועל, ולכן חייבים לגזור
+   * אותו מהצירוף ולא להניח ערך קבוע.
+   * @returns {number} 0 אם הצירוף אינו חוקי
+   */
+  function setValue(tiles) {
+    if (!isValidSet(tiles)) return 0;
+
+    if (isGroup(tiles)) {
+      // בקבוצה כל האבנים באותו ערך, כולל הג'וקרים
+      const real = tiles.filter((t) => !isJoker(t));
+      return tileNumber(real[0]) * tiles.length;
+    }
+
+    const span = runSpan(tiles);
     let sum = 0;
-    for (let n = low; n <= high; n++) sum += n;
+    for (let n = span.low; n <= span.high; n++) sum += n;
     return sum;
+  }
+
+  /**
+   * מה כל ג'וקר בצירוף מייצג בפועל.
+   *
+   * בסדרה התשובה יחידה — מספר וצבע. בקבוצה המספר קבוע אבל הצבע אינו
+   * מוכרע: הג'וקר עומד במקום *אחד* מהצבעים החסרים, וכל אחד מהם תקף.
+   *
+   * @returns {Array<Array<{color:number, number:number}>>}
+   *   איבר לכל ג'וקר, ובו כל האבנים שיכולות להחליף אותו
+   */
+  function jokerSubstitutes(tiles) {
+    if (!isValidSet(tiles)) return [];
+    const jokers = tiles.filter(isJoker).length;
+    if (!jokers) return [];
+
+    if (isGroup(tiles)) {
+      const real = tiles.filter((t) => !isJoker(t));
+      const number = tileNumber(real[0]);
+      const used = new Set(real.map(tileColorIndex));
+      const free = [];
+      for (let c = 0; c < COLORS.length; c++) {
+        if (!used.has(c)) free.push({ color: c, number });
+      }
+      return new Array(jokers).fill(null).map(() => free);
+    }
+
+    const span = runSpan(tiles);
+    const out = [];
+    for (let n = span.low; n <= span.high; n++) {
+      if (!span.byNumber.has(n)) out.push([{ color: span.color, number: n }]);
+    }
+    return out;
   }
 
   /**
@@ -192,8 +245,8 @@
    * צירוף שאינו חוקי מוחזר כמו שהוא: באמצע התור השחקן מסדר אבנים ועדיין
    * לא בנה צירוף, ואסור לקפוץ לו על הידיים.
    *
-   * שיבוץ הג'וקרים חייב להסכים עם setValue, אחרת אבן תוצג במקום אחד
-   * ותיספר כמשהו אחר.
+   * שיבוץ הג'וקרים מגיע מ-runSpan, המקור היחיד שגם setValue וגם חוק
+   * החלפת הג'וקר נשענים עליו.
    *
    * @param {number[]} tiles
    * @returns {number[]} מערך חדש
@@ -210,20 +263,10 @@
       return sorted;
     }
 
-    // סדרה: קובעים את הטווח בדיוק כמו ב-setValue
-    const byNumber = new Map();
-    real.forEach((t) => byNumber.set(tileNumber(t), t));
-    const numbers = real.map(tileNumber).sort((a, b) => a - b);
-    let low = numbers[0];
-    let high = numbers[numbers.length - 1];
-    let spare = jokers - (high - low + 1 - real.length);
-
-    while (spare > 0 && high < MAX_NUMBER) { high++; spare--; }
-    while (spare > 0 && low > MIN_NUMBER) { low--; spare--; }
-
+    const span = runSpan(tiles);
     const out = [];
-    for (let n = low; n <= high; n++) {
-      out.push(byNumber.has(n) ? byNumber.get(n) : JOKER);
+    for (let n = span.low; n <= span.high; n++) {
+      out.push(span.byNumber.has(n) ? span.byNumber.get(n) : JOKER);
     }
     return out;
   }
@@ -341,7 +384,11 @@
       const placed = this._placedTiles(table);
       if (!placed.length) return { ok: false, reason: 'nothing-placed' };
 
-      // 4. חוק הפתיחה
+      // 4. חוקי הג'וקר
+      const jokerCheck = this._jokerCheck(table, rack);
+      if (!jokerCheck.ok) return jokerCheck;
+
+      // 5. חוק הפתיחה
       if (!this.melded[this.turn]) {
         const check2 = this._initialMeldCheck(table, placed);
         if (!check2.ok) return check2;
@@ -392,6 +439,82 @@
       void proposed;
       void placed;
       return { ok: true, meldValue: value };
+    }
+
+    /**
+     * חוקי הג'וקר — הכלל שהכי הרבה גרסאות ביתיות מפספסות.
+     *
+     * מהחוקים הרשמיים:
+     *   "צירוף שיש בו ג'וקר אפשר להוסיף לו אבנים, אבל אי אפשר לקחת ממנו
+     *    דבר ואי אפשר לסדר אותו מחדש כל עוד הג'וקר בתוכו"
+     *   "שחקן שיש *בידו* האבן שהג'וקר מייצג יכול להחליף אותה בג'וקר,
+     *    ואז לשלב את הג'וקר בצירוף אחר על השולחן"
+     *   "ג'וקר שהשתחרר כך אינו יכול להילקח ליד לשימוש מאוחר יותר"
+     *
+     * המנוע מאמת מצב סופי בלבד, ולכן החוק הזה נבדק בהשוואה בין השולחן
+     * שלפני התור לזה שאחריו: כל צירוף שהיה בו ג'וקר חייב להימצא כמות
+     * שהוא (אולי עם תוספות) — או שהג'וקר הוחלף כדין.
+     *
+     * @param {number[][]} table השולחן בסוף התור
+     * @param {number[]} rack המגש בסוף התור
+     */
+    _jokerCheck(table, rack) {
+      /* ג'וקר לא חוזר ליד. אם מספרם ביד גדל — מישהו לקח אחד מהשולחן */
+      const jokersBefore = this.racks[this.turn].filter(isJoker).length;
+      const jokersAfter = rack.filter(isJoker).length;
+      if (jokersAfter > jokersBefore) return { ok: false, reason: 'joker-to-rack' };
+
+      for (const set of this.table) {
+        if (!set.some(isJoker)) continue;
+
+        // א. נשאר שלם, אולי עם תוספות — זה תמיד מותר
+        if (table.some((t) => containsAll(t, set))) continue;
+
+        // ב. אחרת מותר רק אם כל ג'וקר הוחלף באבן שהוא ייצג, מהיד
+        if (this._jokerReplaced(set, table)) continue;
+
+        return { ok: false, reason: 'joker-locked' };
+      }
+      return { ok: true };
+    }
+
+    /**
+     * האם הצירוף פורק כדין: כל ג'וקר שבו הוחלף באבן שהוא מייצג, האבן
+     * הגיעה מהיד, והצירוף שנוצר נמצא על השולחן.
+     */
+    _jokerReplaced(set, table) {
+      const options = jokerSubstitutes(set);
+      if (!options.length) return false;
+
+      const real = set.filter((t) => !isJoker(t));
+      const hand = this.racks[this.turn];
+
+      /* כל שילוב של החלפות — חסום, כי יש לכל היותר 2 ג'וקרים ו-4 צבעים */
+      const combos = (function build(i) {
+        if (i === options.length) return [[]];
+        const rest = build(i + 1);
+        const out = [];
+        for (const opt of options[i]) for (const r of rest) out.push([opt].concat(r));
+        return out;
+      })(0);
+
+      for (const combo of combos) {
+        const pool = hand.slice();
+        const swapped = [];
+        let possible = true;
+
+        for (const want of combo) {
+          const idx = pool.findIndex((t) =>
+            !isJoker(t) && tileColorIndex(t) === want.color && tileNumber(t) === want.number);
+          if (idx < 0) { possible = false; break; }
+          swapped.push(pool.splice(idx, 1)[0]);
+        }
+        if (!possible) continue;
+
+        const target = real.concat(swapped);
+        if (table.some((t) => containsAll(t, target))) return true;
+      }
+      return false;
     }
 
     /** אבנים שנוספו לשולחן ביחס למצב הקודם. */
@@ -446,12 +569,24 @@
     }
 
     /** ניקוד סופי: המנצח מקבל את סכום הקנסות של כולם. */
+    /**
+     * ניקוד סופי, לפי החוקים הרשמיים — ושתי הדרכים לסיים שונות זו מזו:
+     *
+     *   ניצחון רגיל (מישהו רוקן את המגש) — המנצח מקבל את סכום כל אבני
+     *   האחרים, וכל אחד מהאחרים מפסיד את מה שנשאר בידו.
+     *
+     *   בריכה ריקה בלי מנצח — מנצח מי שנשארו לו הכי מעט נקודות, אבל
+     *   הספירה היא של *ההפרש* ממנו ולא של המגש המלא. מי שנשארו לו 12
+     *   מול מנצח עם 10 מפסיד 2, לא 12. קודם נספר כאן המגש המלא, וזו
+     *   הייתה טעות: היא העניקה למנצח גם את האבנים שנשארו בידו שלו
+     */
     finalScores() {
       const penalties = this.racks.map((r) => rackValue(r));
-      const scores = penalties.map((p) => -p);
-      if (this.winner >= 0) {
-        scores[this.winner] = penalties.reduce((a, b) => a + b, 0);
-      }
+      if (this.winner < 0) return penalties.map((p) => -p);
+
+      const base = penalties[this.winner]; // 0 בניצחון רגיל
+      const scores = penalties.map((p) => -(p - base));
+      scores[this.winner] = penalties.reduce((sum, p) => sum + (p - base), 0);
       return scores;
     }
 
@@ -538,6 +673,17 @@
     return true;
   }
 
+  /** האם `big` מכיל את כל אבני `small`, כולל כפילויות. */
+  function containsAll(big, small) {
+    if (small.length > big.length) return false;
+    const have = countTiles(big);
+    for (const t of small) {
+      if (!have[t]) return false;
+      have[t]--;
+    }
+    return true;
+  }
+
   Rummikub.RACK_SIZE = RACK_SIZE;
   Rummikub.INITIAL_MELD = INITIAL_MELD;
   Rummikub.COLORS = COLORS;
@@ -563,8 +709,11 @@
     isRun,
     isValidSet,
     setValue,
+    runSpan,
+    jokerSubstitutes,
     orderSet,
     orderTable,
+    containsAll,
     rackValue,
     validateTable,
     sameMultiset,

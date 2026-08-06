@@ -357,6 +357,146 @@ check('השולחן נשאר חוקי לאורך כל משחק', legalTables);
 
 /* --------------------------------------------------------------------- */
 
+section("חוקי הג'וקר");
+
+// מה הג'וקר מייצג
+check("בסדרה הג'וקר מייצג אבן אחת ויחידה", (() => {
+  const s = T.jokerSubstitutes([t(2, 5), J, t(2, 7)]);
+  return s.length === 1 && s[0].length === 1 && s[0][0].color === 2 && s[0][0].number === 6;
+})());
+check("ג'וקר בקצה סדרה מייצג את המספר הגבוה", (() => {
+  const s = T.jokerSubstitutes([t(2, 5), t(2, 6), J]);
+  return s[0][0].number === 7;
+})());
+check("בקבוצה הג'וקר יכול להיות כל צבע חסר", (() => {
+  const s = T.jokerSubstitutes([t(0, 7), t(1, 7), J]);
+  return s.length === 1 && s[0].length === 2 && s[0].every((x) => x.number === 7);
+})());
+check("צירוף בלי ג'וקר מחזיר רשימה ריקה",
+  T.jokerSubstitutes([t(0, 7), t(1, 7), t(2, 7)]).length === 0);
+
+/** משחק שבו היד, השולחן והבריכה ידועים מראש. */
+function stagedTable(rack0, table) {
+  const game = new Rummikub({ seed: 11, players: 2 });
+  const used = rack0.concat(...table);
+  const pool = [];
+  const counts = {};
+  used.forEach((x) => { counts[x] = (counts[x] || 0) + 1; });
+  for (const x of T.fullDeck()) {
+    if (counts[x] > 0) counts[x]--;
+    else pool.push(x);
+  }
+  game.racks[0] = rack0.slice();
+  game.racks[1] = pool.splice(0, 14);
+  game.table = table.map((s) => s.slice());
+  game.pool = pool;
+  game.turn = 0;
+  game.melded = [true, true]; // שניהם כבר פתחו, כדי לבודד את חוק הג'וקר
+  return game;
+}
+
+// מותר להוסיף לצירוף עם ג'וקר
+{
+  const g = stagedTable([t(2, 8), t(0, 1)], [[t(2, 5), J, t(2, 7)]]);
+  const r = g.commitTurn([[t(2, 5), J, t(2, 7), t(2, 8)]], [t(0, 1)]);
+  check("מותר להוסיף אבן לצירוף שיש בו ג'וקר", r.ok);
+}
+
+// אסור לפרק צירוף עם ג'וקר
+{
+  const g = stagedTable(
+    [t(1, 5), t(1, 6), t(0, 1)],
+    [[t(2, 5), J, t(2, 7)], [t(0, 9), t(1, 9), t(2, 9)]]
+  );
+  // מנסה לגנוב את ה-7 הכחול לצירוף אחר, ולהשאיר את הג'וקר עם שתי אבנים
+  const r = g.commitTurn(
+    [[t(2, 5), J, t(2, 7)].slice(0, 2).concat([t(0, 1)]), [t(0, 9), t(1, 9), t(2, 9)]],
+    [t(1, 5), t(1, 6)]
+  );
+  check("אסור לקחת אבן מצירוף שיש בו ג'וקר", !r.ok);
+}
+
+// אסור להחזיר ג'וקר ליד
+{
+  const g = stagedTable([t(2, 6), t(0, 1)], [[t(2, 5), J, t(2, 7)]]);
+  const r = g.commitTurn([[t(2, 5), t(2, 6), t(2, 7)]], [J, t(0, 1)]);
+  check("אסור להחזיר ג'וקר מהשולחן ליד",
+    !r.ok && r.reason === 'joker-to-rack');
+}
+
+// מותר להחליף ג'וקר באבן שהוא מייצג, ולשלב אותו מיד בצירוף אחר
+{
+  const g = stagedTable(
+    [t(2, 6), t(0, 11), t(1, 11)],
+    [[t(2, 5), J, t(2, 7)]]
+  );
+  const r = g.commitTurn(
+    [[t(2, 5), t(2, 6), t(2, 7)], [t(0, 11), t(1, 11), J]],
+    []
+  );
+  check("מותר להחליף ג'וקר באבן שהוא מייצג ולשלב אותו מחדש", r.ok);
+  check('ההחלפה סיימה את המשחק כי המגש התרוקן', r.won === true);
+}
+
+// אבל לא באבן הלא נכונה
+{
+  const g = stagedTable(
+    [t(2, 9), t(0, 11), t(1, 11), t(3, 11)],
+    [[t(2, 5), J, t(2, 7)]]
+  );
+  // 9 כחול אינו מה שהג'וקר מייצג (6 כחול)
+  const r = g.commitTurn(
+    [[t(2, 5), t(2, 7), t(2, 9)], [t(0, 11), t(1, 11), J]],
+    [t(3, 11)]
+  );
+  check("החלפה באבן הלא נכונה נדחית", !r.ok);
+}
+
+// בקבוצה — כל צבע חסר תקף
+{
+  const g = stagedTable(
+    [t(2, 7), t(0, 11), t(1, 11)],
+    [[t(0, 7), t(1, 7), J]]
+  );
+  const r = g.commitTurn(
+    [[t(0, 7), t(1, 7), t(2, 7)], [t(0, 11), t(1, 11), J]],
+    []
+  );
+  check("בקבוצה אפשר להחליף ג'וקר בכל צבע חסר", r.ok);
+}
+
+/* --------------------------------------------------------------------- */
+
+section('ניקוד סופי');
+
+// ניצחון רגיל: המנצח מקבל את סכום אבני האחרים
+{
+  const g = new Rummikub({ seed: 5, players: 3 });
+  g.racks = [[], [t(0, 5), t(1, 3)], [J]];
+  g.finished = true;
+  g.winner = 0;
+  const sc = g.finalScores();
+  check('מנצח מקבל את סכום אבני כל האחרים', sc[0] === 8 + 30);
+  check('כל מפסיד מפסיד את מה שנשאר בידו', sc[1] === -8 && sc[2] === -30);
+  check('הניקוד מתאזן לאפס', sc.reduce((a, b) => a + b, 0) === 0);
+}
+
+// בריכה ריקה: סופרים את ההפרש מהמנצח, לא את המגש המלא
+{
+  const g = new Rummikub({ seed: 5, players: 3 });
+  g.racks = [[t(0, 10)], [t(0, 12)], [t(0, 4), t(0, 3)]];
+  g.finished = true;
+  g.winner = 2; // 7 נקודות — הכי מעט
+  const sc = g.finalScores();
+  check('בתיקו נספר ההפרש מהמנצח ולא המגש המלא',
+    sc[0] === -(10 - 7) && sc[1] === -(12 - 7));
+  check('המנצח בתיקו מקבל את סכום ההפרשים',
+    sc[2] === (10 - 7) + (12 - 7));
+  check('גם בתיקו הניקוד מתאזן לאפס', sc.reduce((a, b) => a + b, 0) === 0);
+}
+
+/* --------------------------------------------------------------------- */
+
 section('סידור צירוף לתצוגה');
 
 const nums = (set) => set.map((x) => (T.isJoker(x) ? '★' : T.tileNumber(x))).join(',');
@@ -553,6 +693,49 @@ function duel(levelA, levelB, games, seed0) {
   check('היו מספיק עמדות להשוואה', compared > 100);
   check('קשה אף פעם לא מניח פחות אבנים מבינוני', sameOrBetter);
   check('קשה מנצל את הסידור מחדש לפחות פעם אחת', strictlyBetter > 0);
+}
+
+/*
+ * היריב חייב לציית לחוק הג'וקר בדיוק כמו השחקן. הבדיקה עוקבת אחרי כל
+ * צירוף שיש בו ג'וקר לאורך משחקים שלמים, ומוודאת שהוא רק גדל — אף אבן
+ * לא נעלמה ממנו, ואף ג'וקר לא חזר ליד של אף אחד
+ */
+{
+  let violations = 0;
+  let jokerSetsSeen = 0;
+
+  for (const level of AI.LEVEL_ORDER) {
+    for (let s = 0; s < 6; s++) {
+      const game = new Rummikub({ players: 3, seed: 1700 + s });
+      let turns = 0;
+      while (!game.finished && turns < 600) {
+        const before = game.table.filter((x) => x.some(T.isJoker)).map((x) => x.slice());
+        const jokersInRacks = game.racks.map((r) => r.filter(T.isJoker).length);
+
+        const res = AI.playTurn(game, level);
+        turns++;
+
+        for (const set of before) {
+          jokerSetsSeen++;
+          if (!game.table.some((t) => T.containsAll(t, set))) violations++;
+        }
+        /*
+         * ג'וקר לא עובר מהשולחן ליד — אבל *כן* מותר למשוך ג'וקר מהבריכה,
+         * וזה בדיוק מה שהפיל את הבדיקה הזו בגרסתה הראשונה. הבדיקה הייתה
+         * שגויה, לא הקוד
+         */
+        if (res.action === 'meld') {
+          game.racks.forEach((r, i) => {
+            if (r.filter(T.isJoker).length > jokersInRacks[i]) violations++;
+          });
+        }
+      }
+    }
+  }
+
+  console.log(`    (נבדקו ${jokerSetsSeen} צירופים עם ג'וקר לאורך 18 משחקים)`);
+  check("היו מספיק צירופים עם ג'וקר כדי שהבדיקה תהיה משמעותית", jokerSetsSeen > 200);
+  check("היריב לעולם לא מפרק צירוף עם ג'וקר", violations === 0);
 }
 
 // מהירות: התור האיטי ביותר חייב להיבלע בתוך זמן ה"חשיבה" של הממשק

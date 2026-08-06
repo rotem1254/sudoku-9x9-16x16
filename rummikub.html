@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
   <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
   <link rel="stylesheet" href="css/theme.css?v=ca3dd4d6">
-  <link rel="stylesheet" href="css/rummikub.css?v=363442f6">
+  <link rel="stylesheet" href="css/rummikub.css?v=0486cbae">
 </head>
 <body>
 
@@ -86,6 +86,7 @@
         <button type="button" class="chip" data-sort="color">לפי צבע</button>
       </div>
     </div>
+    <p class="joker-tip" id="jokerTip" hidden></p>
     <div class="rack" id="rack" aria-label="המגש שלי"></div>
   </section>
 
@@ -192,6 +193,13 @@
       </label>
       <label class="setting">
         <span class="setting-text">
+          <span class="setting-name">סימון הזדמנות לג'וקר</span>
+          <span class="setting-desc">מסמן כשיש לך את האבן שג'וקר על השולחן מייצג</span>
+        </span>
+        <input type="checkbox" class="switch" id="optJokerHints" data-pref="jokerHints">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
           <span class="setting-name">סימון צירופים פסולים</span>
           <span class="setting-desc">מסמן באדום צירוף שאינו חוקי עוד לפני סיום התור</span>
         </span>
@@ -226,8 +234,15 @@
         30 לפחות, ואסור להיעזר באבנים שכבר על השולחן.</p>
       <p><b>אחרי הפתיחה</b> מותר לסדר את השולחן מחדש כרצונך — להוסיף,
         לפצל ולהעביר אבנים בין צירופים — ובלבד שבסוף התור כל מה שעל
-        השולחן חוקי.</p>
-      <p><b>ג'וקר</b> מחליף כל אבן. ביד הוא שווה 30 נקודות קנס.</p>
+        השולחן חוקי, ושהוספת לפחות אבן אחת מהמגש.</p>
+      <p><b>ג'וקר</b> מחליף כל אבן. ביד הוא שווה 30 נקודות קנס, ולכן לא
+        כדאי להישאר איתו.</p>
+      <p><b>צירוף שיש בו ג'וקר נעול</b> — מותר רק להוסיף לו אבנים. אי אפשר
+        לקחת ממנו דבר ואי אפשר לסדר אותו מחדש כל עוד הג'וקר בפנים.</p>
+      <p><b>איך בכל זאת לוקחים ג'וקר</b> — אם יש לך <b>ביד</b> בדיוק את
+        האבן שהוא מייצג, אפשר להחליף: שים את האבן שלך במקומו, וקח אותו.
+        הג'וקר חייב לחזור לשולחן <b>באותו תור</b> בתוך צירוף אחר — אסור
+        להשאיר אותו במגש. המשחק מסמן לך מתי זה אפשרי.</p>
       <p><b>איך מזיזים</b> — <b>גררו</b> אבן לאן שרוצים. קו כחול מראה בדיוק
         לאן היא תיכנס, כך שאפשר גם לשבץ באמצע צירוף ולא רק בסוף.</p>
       <p>אפשר גם <b>להקיש</b>: הקשה בוחרת אבן, והקשה על הצירוף מוסיפה
@@ -257,8 +272,8 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/sw-register.js?v=89122463"></script>
-<script src="js/rummikub/engine.js?v=fded0e06"></script>
-<script src="js/rummikub/ai.js?v=410fed3d"></script>
-<script src="js/rummikub/ui.js?v=d85e3486"></script>
+<script src="js/rummikub/engine.js?v=18b4f8ba"></script>
+<script src="js/rummikub/ai.js?v=ee9afb86"></script>
+<script src="js/rummikub/ui.js?v=56ca6788"></script>
 </body>
 </html>

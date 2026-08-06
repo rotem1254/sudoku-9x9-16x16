@@ -82,6 +82,7 @@
     autoSort: true,
     aiLevel: 'normal',
     tidySets: true,
+    jokerHints: true,
     turnTimer: 0, // שניות; 0 = ללא
   };
 
@@ -132,6 +133,7 @@
     logList: $('#logList'),
     btnLog: $('#btnLog'),
     logDot: $('#logDot'),
+    jokerTip: $('#jokerTip'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
     confirmModal: $('#confirmModal'),
@@ -177,6 +179,61 @@
    */
   function tidy(table) {
     return state.prefs.tidySets ? T.orderTable(table) : table;
+  }
+
+  /* --------------------------- לקיחת ג'וקר -------------------------------- */
+
+  /*
+   * המהלך הכי חזק ברמי קוב, וגם זה שהכי קל לפספס: אם יש לך ביד בדיוק את
+   * האבן שג'וקר על השולחן מייצג, מותר להחליף ולקחת את הג'וקר — ובלבד
+   * שתשלב אותו מיד בצירוף אחר.
+   *
+   * אף אחד לא סורק את השולחן ידנית כדי לגלות את זה, ולכן הממשק מסמן.
+   *
+   * @returns {Array<{setIndex:number, jokerAt:number, rackIndex:number, tile:number}>}
+   */
+  function jokerChances() {
+    const out = [];
+    state.workTable.forEach((set, si) => {
+      if (!set.some(T.isJoker)) return;
+      const options = T.jokerSubstitutes(set);
+      if (!options.length) return;
+
+      // options[n] מתאר את הג'וקר ה-n בצירוף, לפי סדר הופעתו
+      const jokerPositions = [];
+      set.forEach((t, i) => { if (T.isJoker(t)) jokerPositions.push(i); });
+
+      const taken = new Set();
+      options.forEach((choices, nth) => {
+        for (const want of choices) {
+          const ri = state.workRack.findIndex((t, i) =>
+            !taken.has(i) && !T.isJoker(t) &&
+            T.tileColorIndex(t) === want.color && T.tileNumber(t) === want.number);
+          if (ri < 0) continue;
+          taken.add(ri);
+          out.push({
+            setIndex: si,
+            jokerAt: jokerPositions[nth],
+            rackIndex: ri,
+            tile: state.workRack[ri],
+          });
+          break;
+        }
+      });
+    });
+    return out;
+  }
+
+  function renderJokerTip() {
+    if (!chances.length) {
+      el.jokerTip.hidden = true;
+      return;
+    }
+    const c = chances[0];
+    el.jokerTip.hidden = false;
+    el.jokerTip.textContent = chances.length > 1
+      ? 'יש לך אבנים שמחליפות ' + chances.length + " ג'וקרים על השולחן — החלף וקח אותם"
+      : 'יש לך ' + tileText(c.tile) + " — אפשר להחליף בו את הג'וקר ולקחת אותו";
   }
 
   /* ---------------------------- יומן ------------------------------------ */
@@ -312,13 +369,39 @@
     el.statTimerBox.classList.toggle('is-warn', timerLeft <= 10 && timerLeft > 0);
   }
 
-  /** נגמר הזמן: מה שהונח חוזר למגש, נמשכת אבן, והתור עובר. */
+  /*
+   * נגמר הזמן. החוק הרשמי: מחזירים את השולחן למצב שהיה, לוקחים בחזרה את
+   * האבנים שהונחו, ומושכים שלוש אבנים כקנס. זה חמור בכוונה — בלי קנס
+   * אמיתי הטיימר הוא רק קישוט
+   */
+  const TIME_PENALTY = 3;
+
   function timeUp() {
     if (!myTurn()) return;
     const had = state.freshTiles.length;
     if (had) resetTurn();
-    toast(had ? 'נגמר הזמן — האבנים חזרו למגש ונמשכה אבן' : 'נגמר הזמן — נמשכה אבן');
-    forceDraw();
+
+    const g = state.game;
+
+    /*
+     * הקנס הוא שלוש אבנים, אבל drawTile מושך אחת *ומעביר את התור*. לכן
+     * שתי אבני הקנס הראשונות נלקחות ישירות, והשלישית עוברת דרך forceDraw
+     * שגם מסיים את התור וגם מטפל בבריכה ריקה
+     */
+    const drawn = [];
+    while (drawn.length < TIME_PENALTY - 1 && g.poolCount() > 1) {
+      const tile = g.pool.pop();
+      g.racks[0].push(tile);
+      drawn.push(tile);
+    }
+
+    toast(had
+      ? 'נגמר הזמן — האבנים חזרו למגש, וקנס של ' + tileCount(TIME_PENALTY)
+      : 'נגמר הזמן — קנס של ' + tileCount(TIME_PENALTY));
+
+    // שורת יומן אחת לכל הקנס, כולל האבן שנמשכת בסיום התור
+    // ביומן השם מופיע לפני הטקסט, ולכן זו חייבת להיות צורת פועל
+    forceDraw({ text: 'חרגתי מהזמן — קנס של ' + tileCount(TIME_PENALTY), tiles: drawn });
   }
 
   const openModal = (n) => { n.hidden = false; };
@@ -361,10 +444,15 @@
     return d;
   }
 
+  /* ההזדמנויות מחושבות פעם אחת לציור ומשותפות לשולחן ולמגש */
+  let chances = [];
+
   function render() {
+    chances = state.prefs.jokerHints && myTurn() ? jokerChances() : [];
     renderOpponents();
     renderTable();
     renderRack();
+    renderJokerTip();
     updateStatus();
   }
 
@@ -427,6 +515,7 @@
   function renderTable() {
     el.table.textContent = '';
     const mark = state.prefs.markInvalid;
+    const hotJoker = new Set(chances.map((c) => c.setIndex + ':' + c.jokerAt));
 
     state.workTable.forEach((set, si) => {
       const box = document.createElement('div');
@@ -438,6 +527,7 @@
         const fresh = state.freshTiles.includes(tile);
         let cls = fresh ? 'is-fresh' : '';
         if (justPlayed.includes(tile)) cls += ' is-played';
+        if (hotJoker.has(si + ':' + ti)) cls += ' can-take';
         const t = makeTileEl(tile, cls);
         t.dataset.set = String(si);
         t.dataset.index = String(ti);
@@ -459,8 +549,9 @@
 
   function renderRack() {
     el.rack.textContent = '';
+    const swap = new Set(chances.map((c) => c.rackIndex));
     state.workRack.forEach((tile, i) => {
-      const t = makeTileEl(tile);
+      const t = makeTileEl(tile, swap.has(i) ? 'can-swap' : '');
       t.dataset.rack = String(i);
       if (isSelected('rack', -1, i)) t.classList.add('is-selected');
       el.rack.appendChild(t);
@@ -938,6 +1029,11 @@
         return 'הפתיחה חייבת להיות 30 לפחות — יש לך ' + (res.meldValue || 0);
       case 'meld-touches-table':
         return 'בפתיחה אסור להיעזר באבנים שכבר על השולחן';
+      case 'joker-locked':
+        return "אי אפשר לפרק צירוף שיש בו ג'וקר. אפשר רק להוסיף לו — או להחליף "
+          + "את הג'וקר באבן שהוא מייצג";
+      case 'joker-to-rack':
+        return "ג'וקר שלקחת מהשולחן חייב לחזור לשולחן באותו תור, לא למגש";
       case 'tiles-mismatch': return 'משהו השתבש בספירת האבנים';
       default: return 'לא ניתן לסיים את התור';
     }
@@ -954,14 +1050,24 @@
     forceDraw();
   }
 
-  /** משיכה בפועל, בלי לשאול. משמש גם כשנגמר הזמן. */
-  function forceDraw() {
+  /**
+   * משיכה בפועל, בלי לשאול. משמש גם כשנגמר הזמן.
+   *
+   * @param {{text:string, tiles:number[]}} [penalty] כשהמשיכה היא חלק
+   *   מקנס זמן, כדי שהיומן יראה שורה אחת נכונה ולא שתיים חלקיות
+   */
+  function forceDraw(penalty) {
     const g = state.game;
     stopTimer();
 
     const d = g.drawTile();
-    logMove(0, d.empty ? 'לא משכתי — הבריכה ריקה' : 'משכתי אבן',
-      d.tile != null ? [d.tile] : null);
+    if (penalty) {
+      const all = penalty.tiles.concat(d.tile != null ? [d.tile] : []);
+      logMove(0, penalty.text, all);
+    } else {
+      logMove(0, d.empty ? 'לא משכתי — הבריכה ריקה' : 'משכתי אבן',
+        d.tile != null ? [d.tile] : null);
+    }
     if (d.stalemate) { saveGame(); return endGame(); }
     if (d.empty) toast('הבריכה ריקה — התור עובר');
     if (state.prefs.autoSort) {
