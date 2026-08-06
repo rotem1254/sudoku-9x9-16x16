@@ -357,6 +357,68 @@ check('השולחן נשאר חוקי לאורך כל משחק', legalTables);
 
 /* --------------------------------------------------------------------- */
 
+section('סידור צירוף לתצוגה');
+
+const nums = (set) => set.map((x) => (T.isJoker(x) ? '★' : T.tileNumber(x))).join(',');
+const cols = (set) => set.map((x) => (T.isJoker(x) ? '★' : T.tileColor(x))).join(',');
+
+check('סדרה מבולגנת מסתדרת לפי המספר',
+  nums(T.orderSet([t(2, 6), t(2, 4), t(2, 5)])) === '4,5,6');
+check('סדרה ארוכה מסתדרת',
+  nums(T.orderSet([t(1, 5), t(1, 2), t(1, 4), t(1, 3), t(1, 1)])) === '1,2,3,4,5');
+
+// ג'וקר יושב במקום שהוא באמת מייצג, ולא נדחף לסוף
+check("ג'וקר בפער נכנס לאמצע",
+  nums(T.orderSet([t(2, 6), J, t(2, 4)])) === '4,★,6');
+check("ג'וקר בקצה נדחף למעלה, כמו בניקוד",
+  nums(T.orderSet([t(2, 5), J, t(2, 6)])) === '5,6,★');
+check("שני ג'וקרים בשני פערים",
+  nums(T.orderSet([t(2, 7), J, t(2, 3), J, t(2, 5)])) === '3,★,5,★,7');
+// 12,13 + שני ג'וקרים = 10,11,12,13 — אין מקום למעלה
+check("ג'וקרים יורדים למטה כשאין מקום למעלה",
+  nums(T.orderSet([t(2, 12), t(2, 13), J, J])) === '★,★,12,13');
+
+check('קבוצה מסתדרת לפי סדר הצבעים',
+  cols(T.orderSet([t(2, 7), t(0, 7), t(3, 7)])) === 'black,blue,orange');
+check("ג'וקר בקבוצה הולך לסוף",
+  cols(T.orderSet([J, t(2, 9), t(0, 9)])) === 'black,blue,★');
+
+check('צירוף פסול נשאר בדיוק כמו שהוא',
+  nums(T.orderSet([t(0, 3), t(1, 8)])) === '3,8');
+check('הסידור אינו משנה את המערך המקורי', (() => {
+  const src = [t(2, 6), t(2, 4), t(2, 5)];
+  T.orderSet(src);
+  return nums(src) === '6,4,5';
+})());
+
+// הסידור חייב לשמר את הצירוף עצמו — אותן אבנים, אותה חוקיות, אותו ניקוד
+{
+  let preserved = true;
+  const samples = [
+    [t(2, 6), J, t(2, 4)], [t(2, 12), t(2, 13), J, J],
+    [t(0, 7), t(1, 7), t(2, 7)], [J, t(0, 4), t(1, 4)],
+    [t(1, 11), t(1, 13), J, t(1, 12)],
+  ];
+  for (const s of samples) {
+    const o = T.orderSet(s);
+    if (!T.sameMultiset(s, o)) preserved = false;
+    if (T.isValidSet(s) !== T.isValidSet(o)) preserved = false;
+    if (T.setValue(s) !== T.setValue(o)) preserved = false;
+  }
+  check('הסידור שומר על האבנים, החוקיות והניקוד', preserved);
+}
+
+// orderTable על שולחן שלם
+{
+  const table = [[t(2, 6), t(2, 4), t(2, 5)], [t(3, 9), t(0, 9), t(1, 9)]];
+  const ordered = T.orderTable(table);
+  check('orderTable מסדר את כל הצירופים',
+    nums(ordered[0]) === '4,5,6' && cols(ordered[1]) === 'black,red,orange');
+  check('orderTable אינו נוגע במקור', nums(table[0]) === '6,4,5');
+}
+
+/* --------------------------------------------------------------------- */
+
 section('רמות היריב');
 
 check('שלוש רמות מוגדרות', AI.LEVEL_ORDER.length === 3

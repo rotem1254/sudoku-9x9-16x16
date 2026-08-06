@@ -183,6 +183,54 @@
     return sum;
   }
 
+  /**
+   * מסדר צירוף לסדר התצוגה הטבעי שלו.
+   *
+   *   סדרה  — לפי המספר, כולל הג'וקרים שיושבים בדיוק במקום שהם מייצגים
+   *   קבוצה — לפי סדר הצבעים הקבוע, וג'וקרים בסוף
+   *
+   * צירוף שאינו חוקי מוחזר כמו שהוא: באמצע התור השחקן מסדר אבנים ועדיין
+   * לא בנה צירוף, ואסור לקפוץ לו על הידיים.
+   *
+   * שיבוץ הג'וקרים חייב להסכים עם setValue, אחרת אבן תוצג במקום אחד
+   * ותיספר כמשהו אחר.
+   *
+   * @param {number[]} tiles
+   * @returns {number[]} מערך חדש
+   */
+  function orderSet(tiles) {
+    if (!isValidSet(tiles)) return tiles.slice();
+
+    const real = tiles.filter((t) => !isJoker(t));
+    let jokers = tiles.length - real.length;
+
+    if (isGroup(tiles)) {
+      const sorted = real.slice().sort((a, b) => tileColorIndex(a) - tileColorIndex(b));
+      while (jokers-- > 0) sorted.push(JOKER);
+      return sorted;
+    }
+
+    // סדרה: קובעים את הטווח בדיוק כמו ב-setValue
+    const byNumber = new Map();
+    real.forEach((t) => byNumber.set(tileNumber(t), t));
+    const numbers = real.map(tileNumber).sort((a, b) => a - b);
+    let low = numbers[0];
+    let high = numbers[numbers.length - 1];
+    let spare = jokers - (high - low + 1 - real.length);
+
+    while (spare > 0 && high < MAX_NUMBER) { high++; spare--; }
+    while (spare > 0 && low > MIN_NUMBER) { low--; spare--; }
+
+    const out = [];
+    for (let n = low; n <= high; n++) {
+      out.push(byNumber.has(n) ? byNumber.get(n) : JOKER);
+    }
+    return out;
+  }
+
+  /** מסדר את כל צירופי השולחן. */
+  const orderTable = (table) => table.map(orderSet);
+
   /** סכום האבנים ביד — הקנס בסוף משחק. ג'וקר נספר 30. */
   function rackValue(tiles) {
     return tiles.reduce((sum, t) => sum + (isJoker(t) ? 30 : tileNumber(t)), 0);
@@ -515,6 +563,8 @@
     isRun,
     isValidSet,
     setValue,
+    orderSet,
+    orderTable,
     rackValue,
     validateTable,
     sameMultiset,

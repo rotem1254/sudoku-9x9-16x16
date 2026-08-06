@@ -215,6 +215,19 @@ a.logo:active .logo-back { transform: translateX(3px); color: var(--accent); }
   transition: transform .12s var(--ease), background .16s, color .16s, border-color .16s;
 }
 .icon-btn:active { transform: scale(.94); }
+
+/* נקודה קטנה על כפתור, לסימון שיש משהו חדש שלא נקרא */
+.icon-btn { position: relative; }
+.icon-dot {
+  position: absolute;
+  top: 7px;
+  inset-inline-end: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--surface);
+}
 @media (hover: hover) {
   .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
 }

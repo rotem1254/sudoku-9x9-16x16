@@ -81,6 +81,8 @@
     markInvalid: true,
     autoSort: true,
     aiLevel: 'normal',
+    tidySets: true,
+    turnTimer: 0, // שניות; 0 = ללא
   };
 
   /* --------------------------------------------------------------------- */
@@ -123,6 +125,13 @@
     btnSettings: $('#btnSettings'),
     optPlayers: $('#optPlayers'),
     optAiLevel: $('#optAiLevel'),
+    optTurnTimer: $('#optTurnTimer'),
+    statTimerBox: $('#statTimerBox'),
+    statTimer: $('#statTimer'),
+    logModal: $('#logModal'),
+    logList: $('#logList'),
+    btnLog: $('#btnLog'),
+    logDot: $('#logDot'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
     confirmModal: $('#confirmModal'),
@@ -142,12 +151,174 @@
   let lastActor = -1; // מי שיחק אחרון, כדי להציג מה קרה גם אחרי החשיבה
   let justPlayed = []; // אבנים שיריב הרגע הניח, לצורך הבהוב על השולחן
 
+  /* יומן המהלכים — החדש ביותר בסוף המערך */
+  let moveLog = [];
+  let logUnread = 0;
+  const LOG_MAX = 60;
+
+  /* טיימר התור */
+  let timerLeft = 0;
+  let timerId = null;
+
   let toastTimer = null;
   function toast(msg) {
     el.toast.textContent = msg;
     el.toast.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { el.toast.hidden = true; }, 2400);
+  }
+
+  /* ------------------------- סידור צירופים ------------------------------ */
+
+  /*
+   * מסדר כל צירוף חוקי על השולחן לסדר הטבעי שלו. צירוף שעדיין לא חוקי
+   * נשאר בדיוק כמו שהוא — באמצע התור השחקן בונה משהו, ואסור לקפוץ לו
+   * על הידיים באמצע.
+   */
+  function tidy(table) {
+    return state.prefs.tidySets ? T.orderTable(table) : table;
+  }
+
+  /* ---------------------------- יומן ------------------------------------ */
+
+  /** "אבן אחת" ולא "1 אבן" — זה ההבדל בין טקסט מתורגם לטקסט כתוב. */
+  const tileCount = (n) => (n === 1 ? 'אבן אחת' : n + ' אבנים');
+
+  /** תיאור אבן בעברית, לצורך היומן. */
+  function tileText(tile) {
+    return T.isJoker(tile)
+      ? "ג'וקר"
+      : T.tileNumber(tile) + ' ' + T.COLOR_LABEL[T.tileColor(tile)];
+  }
+
+  /**
+   * מוסיף שורה ליומן.
+   * @param {number} p מושב השחקן, 0 = אני
+   * @param {string} text מה קרה
+   * @param {number[]} [tiles] אבנים לפירוט
+   */
+  function logMove(p, text, tiles) {
+    moveLog.push({
+      p,
+      text,
+      tiles: tiles && tiles.length ? tiles.slice() : null,
+      turn: state.game ? state.game.moves : 0,
+    });
+    if (moveLog.length > LOG_MAX) moveLog.splice(0, moveLog.length - LOG_MAX);
+    if (p !== 0) {
+      logUnread++;
+      el.logDot.hidden = false;
+    }
+    saveLog();
+  }
+
+  const saveLog = () =>
+    store.write(SAVE_KEY + '.log', { entries: moveLog, unread: logUnread });
+
+  function loadLog() {
+    const d = store.read(SAVE_KEY + '.log', null);
+    if (!d || !Array.isArray(d.entries)) return;
+    moveLog = d.entries;
+    logUnread = d.unread || 0;
+    el.logDot.hidden = !logUnread;
+  }
+
+  function renderLog() {
+    el.logList.textContent = '';
+    if (!moveLog.length) {
+      const li = document.createElement('li');
+      li.className = 'log-empty';
+      li.textContent = 'עוד לא קרה כלום. התחל לשחק.';
+      el.logList.appendChild(li);
+      return;
+    }
+    // מהאחרון לראשון — מה שקרה עכשיו הוא מה שמעניין
+    for (let i = moveLog.length - 1; i >= 0; i--) {
+      const entry = moveLog[i];
+      const who = entry.p === 0 ? { name: 'אני', color: 'var(--accent)' } : oppInfo(entry.p);
+
+      const li = document.createElement('li');
+      li.className = 'log-row' + (entry.p === 0 ? ' is-me' : '');
+      li.style.setProperty('--opp-color', who.color);
+
+      const av = document.createElement('span');
+      av.className = 'log-av';
+      av.textContent = who.name.charAt(0);
+
+      const body = document.createElement('span');
+      body.className = 'log-body';
+
+      const head = document.createElement('span');
+      head.className = 'log-head';
+      head.textContent = who.name + ' ' + entry.text;
+      body.appendChild(head);
+
+      if (entry.tiles) {
+        const tiles = document.createElement('span');
+        tiles.className = 'log-tiles';
+        // האבנים עצמן לעין, ותיאור מילולי אחד לקורא מסך במקום 5 תוויות
+        tiles.setAttribute('aria-label', entry.tiles.map(tileText).join(', '));
+        entry.tiles.forEach((t) => {
+          const chip = makeTileEl(t, 'is-mini');
+          chip.setAttribute('aria-hidden', 'true');
+          chip.removeAttribute('aria-label');
+          tiles.appendChild(chip);
+        });
+        body.appendChild(tiles);
+      }
+
+      li.appendChild(av);
+      li.appendChild(body);
+      el.logList.appendChild(li);
+    }
+  }
+
+  /* --------------------------- טיימר התור -------------------------------- */
+
+  /*
+   * הטיימר רץ רק בתור שלי. היריבים משחקים בתוך שנייה וחצי ממילא, ושעון
+   * שרץ עליהם היה רק רעש על המסך.
+   */
+  function stopTimer() {
+    if (timerId) { clearInterval(timerId); timerId = null; }
+    el.statTimerBox.hidden = !state.prefs.turnTimer;
+    if (!state.prefs.turnTimer) el.statTimer.textContent = '—';
+  }
+
+  function startTimer() {
+    stopTimer();
+    const total = Number(state.prefs.turnTimer) || 0;
+    if (!total || !myTurn()) return;
+
+    timerLeft = total;
+    el.statTimerBox.hidden = false;
+    paintTimer();
+    timerId = setInterval(() => {
+      timerLeft--;
+      paintTimer();
+      if (timerLeft <= 0) {
+        stopTimer();
+        timeUp();
+      }
+    }, 1000);
+  }
+
+  function paintTimer() {
+    const m = Math.floor(timerLeft / 60);
+    const sec = timerLeft % 60;
+    el.statTimer.textContent = m > 0
+      ? m + ':' + String(sec).padStart(2, '0')
+      : String(Math.max(0, timerLeft));
+    el.statTimerBox.classList.toggle('is-warn', timerLeft <= 10 && timerLeft > 0);
+  }
+
+  /** נגמר הזמן: מה שהונח חוזר למגש, נמשכת אבן, והתור עובר. */
+  function timeUp() {
+    if (!myTurn()) return;
+    const had = state.freshTiles.length;
+    if (had) resetTurn();
+    toast(had ? 'נגמר הזמן — האבנים חזרו למגש ונמשכה אבן' : 'נגמר הזמן — נמשכה אבן');
+    forceDraw();
   }
 
   const openModal = (n) => { n.hidden = false; };
@@ -444,6 +615,13 @@
       if (src.from === 'rack') state.freshTiles.push(src.tile);
     }
 
+    /*
+     * ברגע שצירוף נהיה חוקי הוא נכנס לסדר מעצמו. זה קורה כאן ולא בזמן
+     * הציור, כי הסדר הוא של הנתונים עצמם — אחרת האינדקסים שהגרירה
+     * עובדת מולם היו מתייחסים למשהו אחר ממה שרואים
+     */
+    state.workTable = tidy(state.workTable);
+
     clearSelection();
     buzz(12);
     render();
@@ -711,11 +889,12 @@
   /** מתחיל תור אנושי: עותק עבודה נקי. */
   function beginTurn() {
     undoStack.length = 0;
-    state.workTable = state.game.snapshotTable();
+    state.workTable = tidy(state.game.snapshotTable());
     state.workRack = state.game.currentRack.slice();
     state.freshTiles = [];
     clearSelection();
     render();
+    startTimer();
   }
 
   function resetTurn() {
@@ -737,6 +916,11 @@
       return;
     }
 
+    stopTimer();
+    logMove(0, 'הנחתי ' + tileCount(state.freshTiles.length), state.freshTiles);
+
+    g.table = tidy(g.table);
+    state.workTable = g.snapshotTable();
     state.freshTiles = [];
     clearSelection();
     saveGame();
@@ -760,31 +944,43 @@
   }
 
   function drawAndPass() {
-    const g = state.game;
     if (state.freshTiles.length) {
       confirmAction('משיכה תחזיר את כל מה שהנחת בתור הזה. להמשיך?', () => {
         resetTurn();
-        doDraw();
+        forceDraw();
       });
       return;
     }
-    doDraw();
+    forceDraw();
+  }
 
-    function doDraw() {
-      const d = g.drawTile();
-      if (d.stalemate) { saveGame(); return endGame(); }
-      if (d.empty) toast('הבריכה ריקה — התור עובר');
-      if (state.prefs.autoSort) {
-        g.racks[0].sort((a, b) => {
-          const na = T.isJoker(a) ? 99 : T.tileNumber(a);
-          const nb = T.isJoker(b) ? 99 : T.tileNumber(b);
-          return na - nb || T.tileColorIndex(a) - T.tileColorIndex(b);
-        });
-      }
-      saveGame();
-      render();
-      runOpponents();
+  /** משיכה בפועל, בלי לשאול. משמש גם כשנגמר הזמן. */
+  function forceDraw() {
+    const g = state.game;
+    stopTimer();
+
+    const d = g.drawTile();
+    logMove(0, d.empty ? 'לא משכתי — הבריכה ריקה' : 'משכתי אבן',
+      d.tile != null ? [d.tile] : null);
+    if (d.stalemate) { saveGame(); return endGame(); }
+    if (d.empty) toast('הבריכה ריקה — התור עובר');
+    if (state.prefs.autoSort) {
+      g.racks[0].sort((a, b) => {
+        const na = T.isJoker(a) ? 99 : T.tileNumber(a);
+        const nb = T.isJoker(b) ? 99 : T.tileNumber(b);
+        return na - nb || T.tileColorIndex(a) - T.tileColorIndex(b);
+      });
     }
+    /*
+     * המשיכה כבר העבירה את התור, ולכן currentRack הוא כבר של היריב.
+     * בלי העדכון הזה מונה "ביד" היה מציג את המצב שלפני המשיכה עד שהתור
+     * חוזר אליי — האבן שנמשכה פשוט לא נראתה
+     */
+    state.workRack = g.racks[0].slice();
+
+    saveGame();
+    render();
+    runOpponents();
   }
 
   /** מריץ את תורות היריבים אחד אחרי השני, עם השהיה. */
@@ -812,17 +1008,25 @@
       lastActor = who;
       justPlayed = result.action === 'meld' ? result.placed.slice() : [];
       lastMove[who] = result.action === 'meld'
-        ? v.placed + ' ' + result.placed.length
-          + (result.placed.length === 1 ? ' אבן' : ' אבנים')
+        ? v.placed + ' ' + tileCount(result.placed.length)
         : v.drew;
 
+      g.table = tidy(g.table);
       state.workTable = g.snapshotTable();
+
+      if (result.action === 'meld') {
+        logMove(who, v.placed + ' ' + tileCount(result.placed.length), result.placed);
+      } else {
+        logMove(who, before === g.racks[who].length
+          ? v.cannot + ' — הבריכה ריקה' : v.drew,
+          result.tile != null ? [result.tile] : null);
+      }
+
       render();
       saveGame();
 
       if (result.action === 'meld') {
-        toast(name + ' ' + v.placed + ' ' + result.placed.length
-          + (result.placed.length === 1 ? ' אבן' : ' אבנים')
+        toast(name + ' ' + v.placed + ' ' + tileCount(result.placed.length)
           + ' · ' + v.leftHim + ' ' + g.racks[who].length);
       } else if (before === g.racks[who].length) {
         toast(name + ' ' + v.cannot + ' — הבריכה ריקה');
@@ -856,6 +1060,9 @@
   function endGame() {
     const g = state.game;
     state.aiRunning = false;
+    stopTimer();
+    logMove(g.winner === 0 ? 0 : g.winner,
+      g.winner === 0 ? 'סיימתי ראשון — ניצחתי' : verbs(g.winner).finishedFirst);
     const scores = g.finalScores();
     const iWon = g.winner === 0;
 
@@ -949,6 +1156,11 @@
     lastMove.length = 0;
     thinkingFor = -1;
     lastActor = -1;
+    moveLog = [];
+    logUnread = 0;
+    el.logDot.hidden = true;
+    saveLog();
+    stopTimer();
     justPlayed = [];
     state.game = new Rummikub({ players: Number(state.prefs.players) || 2 });
     state.aiRunning = false;
@@ -995,12 +1207,20 @@
 
   el.btnHelp.addEventListener('click', () => openModal(el.helpModal));
 
+  el.btnLog.addEventListener('click', () => {
+    logUnread = 0;
+    el.logDot.hidden = true;
+    renderLog();
+    openModal(el.logModal);
+  });
+
   el.btnSettings.addEventListener('click', () => {
     el.settingsModal.querySelectorAll('[data-pref]').forEach((i) => {
       i.checked = !!state.prefs[i.dataset.pref];
     });
     el.optPlayers.value = String(state.prefs.players);
     el.optAiLevel.value = state.prefs.aiLevel;
+    el.optTurnTimer.value = String(state.prefs.turnTimer);
     openModal(el.settingsModal);
   });
 
@@ -1009,7 +1229,18 @@
     if (input) {
       state.prefs[input.dataset.pref] = input.checked;
       savePrefs();
+      if (input.dataset.pref === 'tidySets') {
+        state.workTable = tidy(state.workTable);
+        clearSelection();
+      }
       render();
+      return;
+    }
+    if (e.target === el.optTurnTimer) {
+      state.prefs.turnTimer = Number(el.optTurnTimer.value);
+      savePrefs();
+      // מתחיל לספור מיד אם זה התור שלי, ונעלם אם כובה
+      if (myTurn()) startTimer(); else stopTimer();
       return;
     }
     if (e.target === el.optAiLevel) {
@@ -1049,6 +1280,15 @@
     m.addEventListener('click', (e) => { if (e.target === m) closeModal(m); });
   });
 
+  /*
+   * טיימר שממשיך לרוץ כשהמסך כבוי הוא רק דרך להפסיד בלי לדעת. כשחוזרים
+   * ללשונית הוא מתחיל את הספירה מחדש
+   */
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopTimer();
+    else if (myTurn()) startTimer();
+  });
+
   window.addEventListener('pagehide', () => { saveGame(); saveDraft(); });
   window.addEventListener('beforeunload', () => { saveGame(); saveDraft(); });
 
@@ -1066,9 +1306,11 @@
     if (g && !g.finished) {
       state.game = g;
       state.prefs.players = g.playerCount;
+      loadLog();
       if (!loadDraft()) beginTurn();
       render();
       if (g.turn !== 0) runOpponents();
+      else startTimer();
     } else {
       newGame();
     }

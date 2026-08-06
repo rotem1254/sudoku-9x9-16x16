@@ -437,6 +437,83 @@
 .help-body li { margin-bottom: 3px; }
 .help-body b { color: var(--text); }
 
+/* ---------------------------- יומן הפעולות ------------------------------ */
+
+.log-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  max-height: 52vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: start;
+}
+
+.log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 9px 4px;
+  border-top: 1px solid var(--line);
+}
+.log-row:first-child { border-top: 0; }
+
+.log-av {
+  flex: none;
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--opp-color, var(--accent));
+  color: #fff;
+  font-weight: 800;
+  font-size: .74rem;
+  line-height: 1;
+}
+
+.log-body { flex: 1 1 auto; min-width: 0; }
+.log-head {
+  display: block;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.log-row.is-me .log-head { color: var(--accent); }
+
+/* האבנים עצמן, בקטן — לראות *מה* הונח ולא רק כמה */
+.log-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 5px;
+}
+.tile.is-mini {
+  --tile-w: 22px;
+  cursor: default;
+  touch-action: auto;
+}
+.tile.is-mini::after { display: none; }
+
+.log-empty {
+  padding: 18px 4px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .82rem;
+}
+
+/* ----------------------------- טיימר התור ------------------------------- */
+
+.stat-timer .stat-value { font-variant-numeric: tabular-nums; }
+.stat-timer.is-warn .stat-value { color: var(--error); }
+.stat-timer.is-warn { animation: timerPulse .9s var(--ease) infinite; }
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat-timer.is-warn { animation: none; }
+}
+
 /* --------------------------- התאמות רספונסיביות ------------------------- */
 
 @media (max-width: 430px) {

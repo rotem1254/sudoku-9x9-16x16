@@ -14,8 +14,8 @@
   <link rel="icon" href="icon.svg?v=12c2056b" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
   <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
-  <link rel="stylesheet" href="css/theme.css?v=1bf06a28">
-  <link rel="stylesheet" href="css/rummikub.css?v=cb2cfcd9">
+  <link rel="stylesheet" href="css/theme.css?v=ca3dd4d6">
+  <link rel="stylesheet" href="css/rummikub.css?v=363442f6">
 </head>
 <body>
 
@@ -30,6 +30,10 @@
     <div class="topbar-actions">
       <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnLog" aria-label="יומן הפעולות" title="מה קרה עד עכשיו">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 10h16M4 15h11M4 20h7"/></svg>
+        <span class="icon-dot" id="logDot" hidden></span>
       </button>
       <button type="button" class="icon-btn" id="btnHelp" aria-label="חוקי המשחק" title="חוקים">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
@@ -60,6 +64,10 @@
     <div class="stat">
       <span class="stat-label">פתיחה</span>
       <span class="stat-value" id="statMeld">—</span>
+    </div>
+    <div class="stat stat-timer" id="statTimerBox" hidden>
+      <span class="stat-label">זמן לתור</span>
+      <span class="stat-value" id="statTimer">—</span>
     </div>
   </div>
 
@@ -124,6 +132,18 @@
   </div>
 </div>
 
+<!-- ==================== יומן פעולות ==================== -->
+<div class="modal" id="logModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="logTitle">
+    <h2 class="modal-title" id="logTitle">מה קרה עד עכשיו</h2>
+    <p class="modal-sub">כל מהלך במשחק, מהאחרון לראשון</p>
+    <ol class="log-list" id="logList"></ol>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== הגדרות ==================== -->
 <div class="modal" id="settingsModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
@@ -150,6 +170,25 @@
           <option value="normal">בינוני</option>
           <option value="hard">קשה</option>
         </select>
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">זמן לתור</span>
+          <span class="setting-desc">חל על התור שלך. כשהזמן נגמר מה שהנחת חוזר למגש ונמשכת אבן</span>
+        </span>
+        <select class="select" id="optTurnTimer">
+          <option value="0">ללא</option>
+          <option value="30">30 שניות</option>
+          <option value="60">דקה</option>
+          <option value="120">שתי דקות</option>
+        </select>
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">סידור אוטומטי של צירופים</span>
+          <span class="setting-desc">צירוף חוקי מסתדר לפי המספר או הצבע במקום להישאר מבולגן</span>
+        </span>
+        <input type="checkbox" class="switch" id="optTidySets" data-pref="tidySets">
       </label>
       <label class="setting">
         <span class="setting-text">
@@ -218,8 +257,8 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/sw-register.js?v=89122463"></script>
-<script src="js/rummikub/engine.js?v=771546fc"></script>
+<script src="js/rummikub/engine.js?v=fded0e06"></script>
 <script src="js/rummikub/ai.js?v=410fed3d"></script>
-<script src="js/rummikub/ui.js?v=d419165a"></script>
+<script src="js/rummikub/ui.js?v=d85e3486"></script>
 </body>
 </html>
