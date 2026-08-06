@@ -18,7 +18,7 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = '327a6e22';
+const VERSION = 'efdf6020';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
@@ -39,6 +39,7 @@ const PRECACHE = [
   'icons/icon-512.png',
   'js/core.js',
   'js/game.js',
+  'js/haptics.js',
   'js/rummikub/ai.js',
   'js/rummikub/engine.js',
   'js/rummikub/ui.js',

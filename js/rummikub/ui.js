@@ -14,6 +14,7 @@
   const Rummikub = window.Rummikub;
   const T = window.RummikubTiles;
   const AI = window.RummikubAI;
+  const H = window.Haptics;
 
   const $ = (s) => document.querySelector(s);
 
@@ -83,6 +84,7 @@
     aiLevel: 'normal',
     tidySets: true,
     jokerHints: true,
+    haptics: true,
     turnTimer: 0, // שניות; 0 = ללא
   };
 
@@ -134,6 +136,8 @@
     btnLog: $('#btnLog'),
     logDot: $('#logDot'),
     jokerTip: $('#jokerTip'),
+    optHaptics: $('#optHaptics'),
+    hapticsNote: $('#hapticsNote'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
     confirmModal: $('#confirmModal'),
@@ -350,9 +354,12 @@
     timerLeft = total;
     el.statTimerBox.hidden = false;
     paintTimer();
+    let warned = false;
     timerId = setInterval(() => {
       timerLeft--;
       paintTimer();
+      // פעם אחת בלבד, ברגע המעבר — לא בכל שנייה מכאן ואילך
+      if (!warned && timerLeft === 10) { warned = true; feel('warn'); }
       if (timerLeft <= 0) {
         stopTimer();
         timeUp();
@@ -447,13 +454,107 @@
   /* ההזדמנויות מחושבות פעם אחת לציור ומשותפות לשולחן ולמגש */
   let chances = [];
 
+  /* --------------------------- תנועת אבנים ------------------------------ */
+
+  /*
+   * הציור בונה את השולחן והמגש מחדש בכל פעם, ולכן אבן שזזה פשוט נעלמת
+   * ממקום אחד ומופיעה באחר. הטכניקה כאן היא FLIP: מודדים איפה כל אבן
+   * הייתה *לפני* הציור, מודדים איפה היא נמצאת *אחרי*, ומנפישים מההפרש
+   * לאפס. האבן אף פעם לא באמת זזה — היא רק מתחילה מוסטת ומיישרת את
+   * עצמה, וזה זול מספיק גם לשולחן מלא.
+   *
+   * המפתח כולל מונה הופעה, כי שני הג'וקרים חולקים אותו מזהה אבן.
+   */
+  const reducedMotion =
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const MOVE_MS = 240;
+
+  function tileKeys() {
+    const seen = Object.create(null);
+    const out = [];
+    collect(el.table, 'table');
+    collect(el.rack, 'rack');
+    function collect(zone, name) {
+      const box = zone.getBoundingClientRect();
+      zone.querySelectorAll('.tile').forEach((node) => {
+        const id = node.dataset.tile;
+        seen[id] = (seen[id] || 0) + 1;
+        const r = node.getBoundingClientRect();
+        out.push({
+          node,
+          key: id + '#' + seen[id],
+          zone: name,
+          // מיקום ביחס ל*תוכן* האזור: גם לא מול המסך וגם לא מושפע מגלילה
+          x: r.left - box.left + zone.scrollLeft,
+          y: r.top - box.top + zone.scrollTop,
+          // ובנוסף המיקום המוחלט, למעבר בין אזורים
+          sx: r.left,
+          sy: r.top,
+        });
+      });
+    }
+    return out;
+  }
+
+  /** איפה כל אבן יושבת עכשיו, לפני שהציור מוחק אותה. */
+  function captureTiles() {
+    if (reducedMotion) return null;
+    const map = new Map();
+    for (const item of tileKeys()) map.set(item.key, item);
+    return map;
+  }
+
+  /**
+   * מנפיש כל אבן מהמקום שבו הייתה למקום שבו היא עכשיו.
+   *
+   * המדידה היא ביחס לאזור (השולחן או המגש) ולא ביחס למסך, וזה לא פרט
+   * טכני: כשגובה המגש משתנה כל השולחן זז כמה פיקסלים, ובמדידה מול המסך
+   * *כל* אבן על השולחן הייתה מונפשת בלי שזזה באמת. מדדתי — 15 אבנים
+   * שולחן שכולן זזות בדיוק אותו הפרש. זה רעש, לא תנועה.
+   *
+   * אבן שעברה בין אזורים היא המקרה ההפוך: שם דווקא ההפרש על המסך הוא
+   * הנכון, כי שני האזורים שונים.
+   */
+  function glideTiles(before) {
+    if (!before) return;
+    const fresh = before.size > 0;
+
+    for (const item of tileKeys()) {
+      const prev = before.get(item.key);
+
+      if (!prev) {
+        // אבן חדשה על המסך — נכנסת בהתרחבות קצרה במקום להופיע פתאום
+        if (fresh) {
+          item.node.animate(
+            [{ opacity: 0, transform: 'scale(.72)' }, { opacity: 1, transform: 'none' }],
+            { duration: 180, easing: 'cubic-bezier(.2,.9,.3,1)' }
+          );
+        }
+        continue;
+      }
+
+      const sameZone = prev.zone === item.zone;
+      const dx = sameZone ? prev.x - item.x : prev.sx - item.sx;
+      const dy = sameZone ? prev.y - item.y : prev.sy - item.sy;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+
+      item.node.animate(
+        [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }],
+        { duration: MOVE_MS, easing: 'cubic-bezier(.2,.8,.25,1)' }
+      );
+    }
+  }
+
   function render() {
+    const before = captureTiles();
     chances = state.prefs.jokerHints && myTurn() ? jokerChances() : [];
     renderOpponents();
     renderTable();
     renderRack();
     renderJokerTip();
     updateStatus();
+    glideTiles(before);
   }
 
   function renderOpponents() {
@@ -640,8 +741,24 @@
   const clearSelection = () => { state.selection = null; };
 
   /** רטט קצר — המשוב שגורם להנחה להרגיש פיזית. */
-  function buzz(ms) {
-    if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (e) {} }
+  /** רעידה קצרה על אלמנט — משוב דחייה שלא תלוי ברטט. */
+  function shake(node) {
+    if (!node || reducedMotion) return;
+    node.animate(
+      [
+        { transform: 'translateX(0)' },
+        { transform: 'translateX(-6px)' },
+        { transform: 'translateX(5px)' },
+        { transform: 'translateX(-3px)' },
+        { transform: 'translateX(0)' },
+      ],
+      { duration: 260, easing: 'ease-out' }
+    );
+  }
+
+  /** משוב מישושי. עובר דרך המודול המשותף, ומכבד את ההגדרה. */
+  function feel(name) {
+    if (state.prefs.haptics) H.fire(name);
   }
 
   /**
@@ -714,7 +831,15 @@
     state.workTable = tidy(state.workTable);
 
     clearSelection();
-    buzz(12);
+
+    /*
+     * שתי תחושות שונות בכוונה: הנחה רגילה היא נקישה קלה, אבל אבן
+     * שסגרה צירוף חוקי מקבלת פעימה כפולה. היד יודעת שהצירוף נסגר עוד
+     * לפני שהעין הספיקה לבדוק
+     */
+    const dstSet = state.workTable[dst.setIndex];
+    feel(dstSet && T.isValidSet(dstSet) ? 'lock' : 'move');
+
     render();
     saveDraft();
     return true;
@@ -878,7 +1003,7 @@
     document.body.appendChild(dragGhost);
     dragSrc.node.classList.add('is-dragging');
     clearSelection();
-    buzz(8);
+    feel('pick');
     moveGhost(e.clientX, e.clientY);
   }
 
@@ -998,12 +1123,21 @@
     const res = g.commitTurn(state.workTable, state.workRack);
 
     if (!res.ok) {
+      feel('reject');
       toast(commitError(res));
+
       // מסמנים את הצירוף הבעייתי
       if (res.reason === 'invalid-set' && res.badIndex >= 0) {
         const box = el.table.children[res.badIndex];
         if (box) box.classList.add('is-invalid');
       }
+      /*
+       * הרעידה היא לא קישוט: באייפון הרטט עשוי לא לעבוד בכלל, ואז זה
+       * כל מה שמסמן שהמהלך נדחה חוץ מהטוסט
+       */
+      shake(res.reason === 'invalid-set' && res.badIndex >= 0
+        ? el.table.children[res.badIndex]
+        : el.actions.querySelector('[data-action="commit"]'));
       return;
     }
 
@@ -1061,6 +1195,7 @@
     stopTimer();
 
     const d = g.drawTile();
+    feel('draw');
     if (penalty) {
       const all = penalty.tiles.concat(d.tile != null ? [d.tile] : []);
       logMove(0, penalty.text, all);
@@ -1130,6 +1265,7 @@
 
       render();
       saveGame();
+      feel('opponent');
 
       if (result.action === 'meld') {
         toast(name + ' ' + v.placed + ' ' + tileCount(result.placed.length)
@@ -1167,6 +1303,7 @@
     const g = state.game;
     state.aiRunning = false;
     stopTimer();
+    feel(g.winner === 0 ? 'win' : 'reject');
     logMove(g.winner === 0 ? 0 : g.winner,
       g.winner === 0 ? 'סיימתי ראשון — ניצחתי' : verbs(g.winner).finishedFirst);
     const scores = g.finalScores();
@@ -1327,6 +1464,20 @@
     el.optPlayers.value = String(state.prefs.players);
     el.optAiLevel.value = state.prefs.aiLevel;
     el.optTurnTimer.value = String(state.prefs.turnTimer);
+
+    /*
+     * אומרים למשתמש מה באמת קורה במכשיר שלו. באייפון הרטט מגיע מטריק
+     * שאפל סגרה ב-iOS 26.5, ועדיף להגיד את זה מאשר להציג מתג שלא עושה
+     * כלום
+     */
+    const mode = H.supported();
+    el.hapticsNote.textContent =
+      mode === 'vibrate' ? 'משוב מישושי על הנחה, דחייה וסיום'
+      : mode === 'ios-switch'
+        ? 'באייפון הרטט מוגבל לנקישה אחידה, ובגרסאות iOS חדשות הוא עשוי לא לעבוד כלל'
+        : 'הדפדפן הזה אינו מאפשר רטט לדף. המשוב החזותי פועל כרגיל';
+    el.optHaptics.disabled = mode === 'none';
+
     openModal(el.settingsModal);
   });
 
@@ -1335,6 +1486,7 @@
     if (input) {
       state.prefs[input.dataset.pref] = input.checked;
       savePrefs();
+      if (input.dataset.pref === 'haptics') H.setEnabled(input.checked);
       if (input.dataset.pref === 'tidySets') {
         state.workTable = tidy(state.workTable);
         clearSelection();
