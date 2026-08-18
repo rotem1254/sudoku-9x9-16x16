@@ -14,7 +14,7 @@
   <link rel="icon" href="icon.svg?v=12c2056b" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
   <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
-  <link rel="stylesheet" href="css/theme.css?v=ca3dd4d6">
+  <link rel="stylesheet" href="css/theme.css?v=e20f2fcf">
   <link rel="stylesheet" href="css/rummikub.css?v=0486cbae">
 </head>
 <body>
@@ -150,6 +150,16 @@
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
     <div class="settings-list">
+      <p class="settings-head">חוקי בית</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">נעילת צירוף עם ג'וקר</span>
+          <span class="setting-desc">החוק הרשמי: אי אפשר לקחת אבן מצירוף שיש בו ג'וקר, ואת הג'וקר עצמו אפשר לקחת רק בהחלפה באבן שהוא מייצג. כבוי — הג'וקר זז חופשי ככל אבן</span>
+        </span>
+        <input type="checkbox" class="switch" id="optJokerLock" data-pref="jokerLock">
+      </label>
+
+      <p class="settings-head">משחק</p>
       <label class="setting">
         <span class="setting-text">
           <span class="setting-name">מספר שחקנים</span>
@@ -191,6 +201,7 @@
         </span>
         <input type="checkbox" class="switch" id="optTidySets" data-pref="tidySets">
       </label>
+      <p class="settings-head">תצוגה ומשוב</p>
       <label class="setting">
         <span class="setting-text">
           <span class="setting-name">רטט</span>
@@ -244,12 +255,13 @@
         השולחן חוקי, ושהוספת לפחות אבן אחת מהמגש.</p>
       <p><b>ג'וקר</b> מחליף כל אבן. ביד הוא שווה 30 נקודות קנס, ולכן לא
         כדאי להישאר איתו.</p>
-      <p><b>צירוף שיש בו ג'וקר נעול</b> — מותר רק להוסיף לו אבנים. אי אפשר
-        לקחת ממנו דבר ואי אפשר לסדר אותו מחדש כל עוד הג'וקר בפנים.</p>
-      <p><b>איך בכל זאת לוקחים ג'וקר</b> — אם יש לך <b>ביד</b> בדיוק את
-        האבן שהוא מייצג, אפשר להחליף: שים את האבן שלך במקומו, וקח אותו.
-        הג'וקר חייב לחזור לשולחן <b>באותו תור</b> בתוך צירוף אחר — אסור
-        להשאיר אותו במגש. המשחק מסמן לך מתי זה אפשרי.</p>
+      <p><b>אבן שהונחה על השולחן נשארת שם.</b> אפשר להזיז אותה בין
+        צירופים, אבל לא להחזיר אותה למגש.</p>
+      <p><b>נעילת ג'וקר</b> — חוק בית שאפשר להדליק בהגדרות, וכבוי כברירת
+        מחדל. כשהוא דלוק, צירוף שיש בו ג'וקר נעול: מותר רק להוסיף לו,
+        ואת הג'וקר אפשר לקחת רק אם יש לך <b>ביד</b> בדיוק את האבן שהוא
+        מייצג — שמים אותה במקומו, והג'וקר חייב לחזור לשולחן באותו תור.
+        כשהוא כבוי הג'וקר זז חופשי ככל אבן אחרת.</p>
       <p><b>איך מזיזים</b> — <b>גררו</b> אבן לאן שרוצים. קו כחול מראה בדיוק
         לאן היא תיכנס, כך שאפשר גם לשבץ באמצע צירוף ולא רק בסוף.</p>
       <p>אפשר גם <b>להקיש</b>: הקשה בוחרת אבן, והקשה על הצירוף מוסיפה
@@ -280,8 +292,8 @@
 
 <script src="js/sw-register.js?v=89122463"></script>
 <script src="js/haptics.js?v=88d431f4"></script>
-<script src="js/rummikub/engine.js?v=18b4f8ba"></script>
-<script src="js/rummikub/ai.js?v=ee9afb86"></script>
-<script src="js/rummikub/ui.js?v=68c39092"></script>
+<script src="js/rummikub/engine.js?v=7ef412bd"></script>
+<script src="js/rummikub/ai.js?v=142cd4fb"></script>
+<script src="js/rummikub/ui.js?v=46eb090a"></script>
 </body>
 </html>

@@ -376,8 +376,8 @@ check("צירוף בלי ג'וקר מחזיר רשימה ריקה",
   T.jokerSubstitutes([t(0, 7), t(1, 7), t(2, 7)]).length === 0);
 
 /** משחק שבו היד, השולחן והבריכה ידועים מראש. */
-function stagedTable(rack0, table) {
-  const game = new Rummikub({ seed: 11, players: 2 });
+function stagedTable(rack0, table, rules) {
+  const game = new Rummikub({ seed: 11, players: 2, rules: rules });
   const used = rack0.concat(...table);
   const pool = [];
   const counts = {};
@@ -421,7 +421,7 @@ function stagedTable(rack0, table) {
   const g = stagedTable([t(2, 6), t(0, 1)], [[t(2, 5), J, t(2, 7)]]);
   const r = g.commitTurn([[t(2, 5), t(2, 6), t(2, 7)]], [J, t(0, 1)]);
   check("אסור להחזיר ג'וקר מהשולחן ליד",
-    !r.ok && r.reason === 'joker-to-rack');
+    !r.ok && r.reason === 'table-to-rack');
 }
 
 // מותר להחליף ג'וקר באבן שהוא מייצג, ולשלב אותו מיד בצירוף אחר
@@ -463,6 +463,75 @@ function stagedTable(rack0, table) {
     []
   );
   check("בקבוצה אפשר להחליף ג'וקר בכל צבע חסר", r.ok);
+}
+
+/* --------------------------------------------------------------------- */
+
+section('חוקי בית');
+
+/*
+ * אבן שהונחה על השולחן אינה חוזרת ליד. זה **אינו** חוק בית אלא הבסיס,
+ * ולכן הוא נבדק גם כשכל שאר החוקים כבויים.
+ *
+ * הפרצה הייתה אמיתית: בדיקת שימור האבנים מוודאת שהסך נשמר, אבל העברה
+ * מהשולחן ליד שומרת על הסך בדיוק. מדדתי שאפשר היה להניח צירוף ובאותה
+ * נשימה לכייס אבן מהשולחן
+ */
+for (const lock of [true, false]) {
+  const g = stagedTable(
+    [t(0, 5), t(1, 5), t(2, 5), t(3, 9)],
+    [[t(0, 7), t(1, 7), t(2, 7), t(3, 7)]],
+    { jokerLock: lock }
+  );
+  const r = g.commitTurn(
+    [[t(0, 7), t(1, 7), t(2, 7)], [t(0, 5), t(1, 5), t(2, 5)]],
+    [t(3, 9), t(3, 7)]
+  );
+  check(`אי אפשר לקחת אבן מהשולחן ליד (נעילת ג'וקר ${lock ? 'דלוקה' : 'כבויה'})`,
+    !r.ok && r.reason === 'table-to-rack');
+}
+
+/*
+ * אותו מהלך בדיוק, שני מצבי חוק — זה מה שבאמת מבדיל ביניהם.
+ *
+ * המהלך: לוקחים את ה-8 הכחול מתוך הצירוף שיש בו ג'וקר, ומעבירים אותו
+ * לצירוף אחר. הצירוף המקורי נשאר חוקי גם בלעדיו, וכל האבנים נשארות על
+ * השולחן — ובכל זאת, תחת החוק הרשמי זו הפרה, כי לקחו אבן מצירוף שיש
+ * בו ג'וקר בלי להחליף את הג'וקר עצמו.
+ *
+ * הגרסה הראשונה של הבדיקה הזו נכשלה כי בחרתי מהלך של *הוספה* לצירוף
+ * הג'וקר, וזה חוקי גם תחת הנעילה. הבדיקה הייתה שגויה, לא הקוד
+ */
+{
+  const build = (lock) => stagedTable(
+    [t(1, 11), t(1, 12), t(1, 13)],
+    [[t(2, 5), J, t(2, 7), t(2, 8)], [t(2, 9), t(2, 10), t(2, 11)]],
+    { jokerLock: lock }
+  );
+  const move = () => [
+    [t(2, 5), J, t(2, 7)],
+    [t(2, 8), t(2, 9), t(2, 10), t(2, 11)],
+    [t(1, 11), t(1, 12), t(1, 13)],
+  ];
+
+  const locked = build(true).commitTurn(move(), []);
+  const free = build(false).commitTurn(move(), []);
+
+  check("עם נעילה — לקיחת אבן מצירוף ג'וקר נדחית",
+    !locked.ok && locked.reason === 'joker-locked');
+  check('בלי נעילה — אותו מהלך בדיוק מתקבל', free.ok === true);
+}
+
+// ברירת המחדל של המנוע היא החוק הרשמי
+check("ברירת המחדל של המנוע היא נעילת ג'וקר",
+  new Rummikub({ seed: 1, players: 2 }).rules.jokerLock === true);
+
+// החוקים שורדים שמירה ושחזור
+{
+  const g = new Rummikub({ seed: 2, players: 2, rules: { jokerLock: false } });
+  const back = Rummikub.deserialize(g.serialize());
+  check('החוקים שורדים שמירה ושחזור', back.rules.jokerLock === false);
+  check('גם clone שומר על החוקים', g.clone().rules.jokerLock === false);
 }
 
 /* --------------------------------------------------------------------- */

@@ -662,3 +662,14 @@ a.logo:active .logo-back { transform: translateX(3px); color: var(--accent); }
 .cell:focus { outline: none; }
 
 [hidden] { display: none !important; }
+
+/* כותרת קבוצה ברשימת הגדרות — מפרידה בין חוקי המשחק לבין תצוגה */
+.settings-head {
+  margin: 14px 0 2px;
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: var(--muted);
+  text-align: start;
+}
+.settings-head:first-child { margin-top: 0; }

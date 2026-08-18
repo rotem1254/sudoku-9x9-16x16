@@ -260,15 +260,19 @@
    * מסדר את השולחן מחדש יחד עם היד, כדי לשחק כמה שיותר אבנים מהיד.
    * כל אבני השולחן חייבות להישאר על השולחן — זה בדיוק mustUse.
    *
-   * **צירוף שיש בו ג'וקר יוצא מהחישוב לגמרי.** לפי החוקים אי אפשר לקחת
-   * ממנו דבר ואי אפשר לסדר אותו מחדש כל עוד הג'וקר בתוכו, ולכן הוא נשאר
-   * בצד ומוחזר כמו שהוא. בלי זה היריב היה מייצר מהלכים שהמנוע דוחה.
+   * **כשחוק נעילת הג'וקר פעיל**, צירוף שיש בו ג'וקר יוצא מהחישוב לגמרי:
+   * אי אפשר לקחת ממנו דבר ואי אפשר לסדר אותו מחדש, ולכן הוא נשאר בצד
+   * ומוחזר כמו שהוא. בלי זה היריב היה מייצר מהלכים שהמנוע דוחה.
    *
+   * כשהחוק כבוי הג'וקר הוא אבן ככל אבן אחרת, והיריב מסדר גם אותו.
+   *
+   * @param {boolean} [freezeJokers] האם חוק הנעילה פעיל
    * @returns {{table:number[][], rack:number[], placed:number[]}|null}
    */
-  function repackTable(table, rack) {
-    const frozen = table.filter((s) => s.some(T.isJoker));
-    const movable = table.filter((s) => !s.some(T.isJoker));
+  function repackTable(table, rack, freezeJokers) {
+    const lock = freezeJokers !== false;
+    const frozen = lock ? table.filter((s) => s.some(T.isJoker)) : [];
+    const movable = lock ? table.filter((s) => !s.some(T.isJoker)) : table;
 
     const tableTiles = [].concat(...movable);
     const all = tableTiles.concat(rack);
@@ -353,7 +357,7 @@
 
     // ברמה הקשה: לנסות לסדר את כל השולחן מחדש, ולקחת את זה רק אם באמת עדיף
     if (conf.repack) {
-      const rp = repackTable(game.table, rack);
+      const rp = repackTable(game.table, rack, game.rules && game.rules.jokerLock);
       if (rp && rp.placed.length > totalPlaced.length) {
         ext = rp;
         totalPlaced = rp.placed;

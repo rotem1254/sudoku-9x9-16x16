@@ -303,9 +303,22 @@
   const RACK_SIZE = 14;
   const INITIAL_MELD = 30;
 
+  /*
+   * חוקים שאפשר לשנות. ברירת המחדל היא החוק הרשמי — מי שרוצה לשחק אחרת
+   * מצהיר על כך במפורש, ולא מקבל את זה בהיסח הדעת.
+   *
+   * jokerLock — צירוף שיש בו ג'וקר נעול: אפשר רק להוסיף לו, והדרך היחידה
+   *   לשחרר את הג'וקר היא להחליף אותו באבן שהוא מייצג. יש מי שלא משחק
+   *   עם החוק הזה, ואז הג'וקר זז בחופשיות על השולחן ככל אבן אחרת.
+   *
+   * מה ש**אינו** ניתן לשינוי: אבן שהונחה על השולחן לא חוזרת ליד. זה לא
+   * גרסה של החוקים אלא הבסיס שלהם, ובלעדיו אפשר לרוקן את השולחן לכיס.
+   */
+  const DEFAULT_RULES = { jokerLock: true };
+
   class Rummikub {
     /**
-     * @param {object} [opts] { seed, players } — players הוא 2..4
+     * @param {object} [opts] { seed, players, rules } — players הוא 2..4
      */
     constructor(opts) {
       const o = opts || {};
@@ -316,6 +329,7 @@
 
       this.seed = o.seed != null ? o.seed : (Math.random() * 4294967295) >>> 0;
       this.playerCount = Math.min(4, Math.max(2, o.players || 2));
+      this.rules = Object.assign({}, DEFAULT_RULES, o.rules);
       this._deal();
     }
 
@@ -384,11 +398,26 @@
       const placed = this._placedTiles(table);
       if (!placed.length) return { ok: false, reason: 'nothing-placed' };
 
-      // 4. חוקי הג'וקר
-      const jokerCheck = this._jokerCheck(table, rack);
-      if (!jokerCheck.ok) return jokerCheck;
+      /*
+       * 4. אבן שעל השולחן נשארת על השולחן.
+       *
+       * זה לא היה נבדק בכלל: בדיקת שימור האבנים מוודאת שהסך נשמר, אבל
+       * העברה מהשולחן ליד שומרת על הסך. מדדתי — היה אפשר להניח צירוף
+       * ובאותה נשימה לכייס אבן מהשולחן. חוק הג'וקר חסם את זה במקרה,
+       * ורק לג'וקרים
+       */
+      const tableBefore = [].concat(...this.table);
+      if (!containsAll([].concat(...table), tableBefore)) {
+        return { ok: false, reason: 'table-to-rack' };
+      }
 
-      // 5. חוק הפתיחה
+      // 5. חוקי הג'וקר — ניתנים לכיבוי
+      if (this.rules.jokerLock) {
+        const jokerCheck = this._jokerCheck(table, rack);
+        if (!jokerCheck.ok) return jokerCheck;
+      }
+
+      // 6. חוק הפתיחה
       if (!this.melded[this.turn]) {
         const check2 = this._initialMeldCheck(table, placed);
         if (!check2.ok) return check2;
@@ -459,11 +488,7 @@
      * @param {number[]} rack המגש בסוף התור
      */
     _jokerCheck(table, rack) {
-      /* ג'וקר לא חוזר ליד. אם מספרם ביד גדל — מישהו לקח אחד מהשולחן */
-      const jokersBefore = this.racks[this.turn].filter(isJoker).length;
-      const jokersAfter = rack.filter(isJoker).length;
-      if (jokersAfter > jokersBefore) return { ok: false, reason: 'joker-to-rack' };
-
+      void rack; // המעבר ליד כבר נחסם ע"י החוק הכללי שמעליו
       for (const set of this.table) {
         if (!set.some(isJoker)) continue;
 
@@ -597,6 +622,7 @@
         v: 1,
         seed: this.seed,
         playerCount: this.playerCount,
+        rules: Object.assign({}, this.rules),
         racks: this.racks.map((r) => r.slice()),
         pool: this.pool.slice(),
         table: this.table.map((s) => s.slice()),
@@ -618,9 +644,15 @@
       return new Rummikub({ state: this.serialize() });
     }
 
+    /** משנה חוק תוך כדי משחק. משפיע רק על אימות מכאן והלאה. */
+    setRule(name, value) {
+      if (name in DEFAULT_RULES) this.rules[name] = value;
+    }
+
     _load(s) {
       this.seed = s.seed;
       this.playerCount = s.playerCount;
+      this.rules = Object.assign({}, DEFAULT_RULES, s.rules);
       this.racks = s.racks.map((r) => r.slice());
       this.pool = s.pool.slice();
       this.table = s.table.map((t) => t.slice());
@@ -685,6 +717,7 @@
   }
 
   Rummikub.RACK_SIZE = RACK_SIZE;
+  Rummikub.DEFAULT_RULES = DEFAULT_RULES;
   Rummikub.INITIAL_MELD = INITIAL_MELD;
   Rummikub.COLORS = COLORS;
 

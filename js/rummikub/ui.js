@@ -85,6 +85,12 @@
     tidySets: true,
     jokerHints: true,
     haptics: true,
+    /*
+     * חוק בית. ברירת המחדל של המנוע היא החוק הרשמי, אבל ברירת המחדל
+     * *כאן* היא כבוי — כך משחקים בבית הזה. מי שרוצה את החוק הרשמי
+     * מדליק אותו בהגדרות
+     */
+    jokerLock: false,
     turnTimer: 0, // שניות; 0 = ללא
   };
 
@@ -137,6 +143,7 @@
     logDot: $('#logDot'),
     jokerTip: $('#jokerTip'),
     optHaptics: $('#optHaptics'),
+    optJokerLock: $('#optJokerLock'),
     hapticsNote: $('#hapticsNote'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
@@ -548,7 +555,12 @@
 
   function render() {
     const before = captureTiles();
-    chances = state.prefs.jokerHints && myTurn() ? jokerChances() : [];
+    /*
+     * הסימון מדבר על החלפת ג'וקר, וזה מהלך שקיים רק כשחוק הנעילה דלוק.
+     * כשהוא כבוי הג'וקר זז חופשי ואין מה "לנצל"
+     */
+    chances = state.prefs.jokerHints && state.prefs.jokerLock && myTurn()
+      ? jokerChances() : [];
     renderOpponents();
     renderTable();
     renderRack();
@@ -1405,7 +1417,10 @@
     saveLog();
     stopTimer();
     justPlayed = [];
-    state.game = new Rummikub({ players: Number(state.prefs.players) || 2 });
+    state.game = new Rummikub({
+      players: Number(state.prefs.players) || 2,
+      rules: { jokerLock: !!state.prefs.jokerLock },
+    });
     state.aiRunning = false;
     store.remove(SAVE_KEY + '.draft');
     beginTurn();
@@ -1487,6 +1502,10 @@
       state.prefs[input.dataset.pref] = input.checked;
       savePrefs();
       if (input.dataset.pref === 'haptics') H.setEnabled(input.checked);
+      if (input.dataset.pref === 'jokerLock' && state.game) {
+        state.game.setRule('jokerLock', input.checked);
+        saveGame();
+      }
       if (input.dataset.pref === 'tidySets') {
         state.workTable = tidy(state.workTable);
         clearSelection();
@@ -1564,6 +1583,8 @@
     if (g && !g.finished) {
       state.game = g;
       state.prefs.players = g.playerCount;
+      // ההגדרה גוברת על מה שנשמר, אחרת שינוי חוק לא היה תופס במשחק פתוח
+      g.setRule('jokerLock', !!state.prefs.jokerLock);
       loadLog();
       if (!loadDraft()) beginTurn();
       render();
