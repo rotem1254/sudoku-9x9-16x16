@@ -11,29 +11,31 @@
 /* ------------------------------- ערכות נושא ------------------------------ */
 
 :root {
-  --bg: #eef1f8;
-  --bg-grad: radial-gradient(1200px 600px at 50% -10%, #dfe6fb 0%, #eef1f8 60%);
+  --bg: #f4f5f7;
+  /* שטוח בכוונה. ההדרגה הכחלחלה צבעה את כל הדף בגוון אחד, והלוחות
+     עצמם — הרשת, הלבד, האבנים — נאבקו בו על תשומת הלב */
+  --bg-grad: none;
   --surface: #ffffff;
-  --surface-2: #f5f7fc;
-  --surface-3: #eaeefa;
-  --text: #1b2033;
-  --text-2: #5b6480;
-  --muted: #8b93ad;
-  --line: #dbe1f0;
-  --line-strong: #9aa4c4;
+  --surface-2: #f0f1f4;
+  --surface-3: #e7e9ee;
+  --text: #16181d;
+  --text-2: #565c69;
+  --muted: #6d7280;
+  --line: #e4e6eb;
+  --line-strong: #b7bcc7;
   /* צבעי רשת הלוח — נפרדים מקווי הממשק, בשלוש דרגות היררכיה:
      קו דק בין תאים < קו מפריד בין תיבות < מסגרת חיצונית */
-  --grid-line: #c2cbe1;
-  --grid-box: #56618c;
-  --grid-edge: #56618c;
-  --accent: #4f6ef7;
+  --grid-line: #c8ccd6;
+  --grid-box: #4d545f;
+  --grid-edge: #4d545f;
+  --accent: #2f6bff;
   --accent-text: #ffffff;
-  --accent-soft: #e2e8ff;
-  --accent-soft-2: #eef1ff;
+  --accent-soft: #e4ecff;
+  --accent-soft-2: #f1f5ff;
   /* רקע התא הנבחר — גוון, לא מילוי מלא. מילוי רווי הפך את התא לבלוק
      אחיד שבו הספרה שהוזנה כמעט לא נראתה */
-  --select-bg: #b9caff;
-  --given: #1b2033;
+  --select-bg: #bacfff;
+  --given: #16181d;
   /* כחול רווי ועמוק — הערך שהשחקן הזין צריך "לקפוץ" מול הנתונים הניטרליים */
   --entered: #2246e8;
   --hint: #d9861f;
@@ -42,36 +44,40 @@
   --error-soft: #fde4e5;
   --success: #23996b;
   --success-soft: #dff5ea;
-  --shadow-sm: 0 1px 2px rgba(27, 32, 51, .06), 0 1px 3px rgba(27, 32, 51, .05);
-  --shadow-md: 0 4px 14px rgba(27, 32, 51, .09);
-  --shadow-lg: 0 18px 50px rgba(27, 32, 51, .18);
-  --radius: 14px;
-  --radius-sm: 10px;
+  /*
+   * כמעט בלי צל. המבנה נשען על קווים ועל רווח, ולא על הגבהה — כך
+   * שהדבר היחיד שבולט על המסך הוא תוכן המשחק עצמו
+   */
+  --shadow-sm: none;
+  --shadow-md: 0 1px 2px rgba(22, 24, 29, .06);
+  --shadow-lg: 0 12px 32px rgba(22, 24, 29, .14);
+  --radius: 12px;
+  --radius-sm: 8px;
   --ease: cubic-bezier(.2, .8, .3, 1);
 }
 
 :root[data-theme="dark"] {
-  --bg: #0e111a;
-  --bg-grad: radial-gradient(1200px 600px at 50% -10%, #1a2035 0%, #0e111a 60%);
-  --surface: #171c2a;
-  --surface-2: #1d2334;
-  --surface-3: #252c40;
-  --text: #e8ebf7;
-  --text-2: #a3abc6;
-  --muted: #79819c;
-  --line: #2b3247;
-  --line-strong: #5d6789;
+  --bg: #101216;
+  --bg-grad: none;
+  --surface: #191c22;
+  --surface-2: #20242c;
+  --surface-3: #282d37;
+  --text: #e9eaee;
+  --text-2: #a0a6b2;
+  --muted: #7b818e;
+  --line: #272b34;
+  --line-strong: #555b68;
   /* במצב כהה הניגודיות היא הבעיה: הקווים מוארים משמעותית מרקע התאים,
      וקווי התיבות בהירים בהרבה מהקווים הדקים כדי שהמבנה יזדקר */
-  --grid-line: #454f70;
-  --grid-box: #9aa8d6;
-  --grid-edge: #9aa8d6;
-  --accent: #6d8bff;
-  --accent-text: #0e111a;
-  --accent-soft: #26304f;
-  --accent-soft-2: #1e2438;
-  --select-bg: #44568f;
-  --given: #e8ebf7;
+  --grid-line: #454b5a;
+  --grid-box: #a2a9b8;
+  --grid-edge: #a2a9b8;
+  --accent: #5b87ff;
+  --accent-text: #101216;
+  --accent-soft: #1f2739;
+  --accent-soft-2: #1a1e28;
+  --select-bg: #3b4a75;
+  --given: #e9eaee;
   --entered: #a9c0ff;
   --hint: #e9a94e;
   --hint-soft: #3a2f1c;
@@ -79,9 +85,9 @@
   --error-soft: #3d2126;
   --success: #4ad297;
   --success-soft: #16362a;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .4);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, .45);
-  --shadow-lg: 0 18px 50px rgba(0, 0, 0, .6);
+  --shadow-sm: none;
+  --shadow-md: 0 1px 2px rgba(0, 0, 0, .5);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, .55);
 }
 
 /* --------------------------------- בסיס -------------------------------- */

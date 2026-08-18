@@ -27,7 +27,7 @@
   padding: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 12px;
   box-shadow: var(--shadow-sm);
   color: inherit;
   text-decoration: none;
@@ -36,9 +36,8 @@
 .game-card:active { transform: scale(.985); }
 @media (hover: hover) {
   .game-card:hover {
-    border-color: var(--accent);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
   }
 }
 
@@ -61,8 +60,8 @@
 .game-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 
 .tag {
-  padding: 3px 9px;
-  border-radius: 20px;
+  padding: 3px 8px;
+  border-radius: 6px;
   background: var(--surface-2);
   border: 1px solid var(--line);
   color: var(--muted);
@@ -91,16 +90,16 @@
 /* ------------------------------- איורים --------------------------------- */
 
 .game-art {
-  width: 76px;
-  height: 76px;
-  border-radius: 15px;
+  width: 72px;
+  height: 72px;
+  border-radius: 9px;
   display: grid;
   place-items: center;
   flex: 0 0 auto;
 }
 
 /* --- סודוקו: רשת 3×3 מוקטנת --- */
-.game-art-sudoku { background: linear-gradient(135deg, #4f6ef7, #6d8bff); }
+.game-art-sudoku { background: #2f6bff; }
 
 .mini-grid {
   display: grid;
@@ -120,7 +119,7 @@
 .mini-grid i:nth-child(6) { background: #fff; }
 
 /* --- סוליטר: שלושה קלפים בפריסת מניפה --- */
-.game-art-solitaire { background: linear-gradient(135deg, #1f9e6b, #3fc78d); }
+.game-art-solitaire { background: #12855c; }
 
 .mini-cards { position: relative; width: 46px; height: 46px; }
 .mc {
@@ -142,21 +141,7 @@
 .mc-2 { inset-inline-start: 11px; transform: rotate(0deg); color: #d2323c; z-index: 2; }
 .mc-3 { inset-inline-start: 22px; transform: rotate(14deg); color: #d2323c; }
 
-/* --- רמי קוב: כרטיס שעוד אינו לחיץ --- */
-.game-card.is-soon {
-  opacity: .62;
-  cursor: default;
-}
-.game-card.is-soon:active { transform: none; }
-@media (hover: hover) {
-  .game-card.is-soon:hover {
-    transform: none;
-    border-color: var(--line);
-    box-shadow: var(--shadow-sm);
-  }
-}
-
-.game-art-rummikub { background: linear-gradient(135deg, #b9461f, #e8863c); }
+.game-art-rummikub { background: #c25a24; }
 
 .mini-tiles { position: relative; width: 48px; height: 44px; }
 .mt {

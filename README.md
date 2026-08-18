@@ -39,6 +39,9 @@ js/rummikub/engine.js   מנוע רמי קוב — אבנים, צירופים, �
 js/rummikub/ai.js       יריב ממוחשב — פתרן set-packing
 js/rummikub/ui.js       ממשק רמי קוב
 js/haptics.js         משוב מישושי מדורג, עם זיהוי מה נתמך בפועל
+js/blockblast/engine.js ביטבורד 8×8, צורות, הנחה, ניקוי, ניקוד
+js/blockblast/deal.js   מחולל השלישיות + הבטחת פתירוּת
+js/blockblast/game.js   מצב משחק, קומבו, שמירה
 
 tools/make-icons.js   מייצר את האייקונים (PNG + SVG)
 tools/bump-version.js גרסאות נכסים לפי hash של התוכן
@@ -63,6 +66,10 @@ node test/test-solitaire.js
 
 ```bash
 node test/test-rummikub.js
+```
+
+```bash
+node test/test-blockblast.js
 ```
 
 ---
