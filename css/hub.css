@@ -187,3 +187,20 @@
   .game-go { display: none; }
   .game-tags { justify-content: center; }
 }
+
+/* --- בלוק בלאסט: כמה בלוקים בפריסה לא סימטרית --- */
+.game-art-blockblast { background: #6a4bd0; }
+
+.mini-blocks {
+  display: grid;
+  grid-template-columns: repeat(3, 12px);
+  grid-template-rows: repeat(3, 12px);
+  gap: 3px;
+}
+.mb { border-radius: 2px; background: rgba(255, 255, 255, .32); }
+/* שלושה מלאים בצורת L — כדי שזה ייקרא כחלק ולא כרשת */
+.mb-1 { grid-area: 1 / 1; background: #fff; }
+.mb-2 { grid-area: 2 / 1; background: #fff; }
+.mb-3 { grid-area: 3 / 1; background: #fff; }
+.mb-4 { grid-area: 3 / 2; background: #fff; }
+.mb-5 { grid-area: 1 / 3; }

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#2f6bff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="בלוק בלאסט בדפדפן — לוח 8×8, שלושה חלקים בכל סבב, ניקוי שורות וקומבו. מותאם לטלפון.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="בלוק בלאסט">
+  <title>בלוק בלאסט · מרכז המשחקים</title>
+  <link rel="icon" href="icon.svg?v=12c2056b" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
+  <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
+  <link rel="stylesheet" href="css/theme.css?v=592d7915">
+  <link rel="stylesheet" href="css/blockblast.css?v=a45cb2df">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <a class="logo" href="index.html" title="חזרה למרכז המשחקים">
+      <svg class="logo-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-text">בלוק בלאסט</span>
+    </a>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnHelp" aria-label="איך משחקים" title="איך משחקים">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="statusbar">
+    <div class="stat">
+      <span class="stat-label">ניקוד</span>
+      <span class="stat-value" id="statScore">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">שיא</span>
+      <span class="stat-value" id="statBest">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">שורות</span>
+      <span class="stat-value" id="statLines">0</span>
+    </div>
+  </div>
+
+  <main class="bb-stage">
+    <!-- מונה הקומבו — מופיע רק כשהוא פעיל -->
+    <div class="combo" id="combo" hidden aria-live="polite">
+      <span class="combo-x" id="comboX">×2</span>
+      <span class="combo-word">קומבו</span>
+    </div>
+
+    <!--
+      הלוח מוגדר LTR בכוונה: הדף כולו RTL, ורשת CSS ב-RTL מסדרת עמודות
+      מימין לשמאל — כלומר עמודה 0 של המנוע הייתה מוצגת בקצה הימני, וכל
+      צורת L הייתה מוצגת הפוכה ממה שהיא באמת
+    -->
+    <div class="board" id="board" dir="ltr" role="grid" aria-label="לוח המשחק"></div>
+  </main>
+
+  <section class="tray-wrap">
+    <div class="tray" id="tray" aria-label="החלקים שלך"></div>
+    <p class="tray-hint" id="trayHint">גררו חלק אל הלוח</p>
+  </section>
+
+  <footer class="footer">
+    <button type="button" class="link-btn" id="btnNew">משחק חדש</button>
+    <span class="footer-sep">·</span>
+    <span id="footerInfo">—</span>
+  </footer>
+</div>
+
+<!-- ==================== סוף משחק ==================== -->
+<div class="modal" id="overModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <h2 class="modal-title" id="overTitle">נגמרו המהלכים</h2>
+    <p class="modal-sub" id="overSub"></p>
+    <div class="win-stats" id="overStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>סגור</button>
+      <button type="button" class="btn btn-primary" id="btnOverNew">משחק חדש</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== הגדרות ==================== -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
+    <div class="settings-list">
+      <p class="settings-head">חוקי בית</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">תמיד יש מהלך</span>
+          <span class="setting-desc">מוודא שלכל שלישייה יש סדר הנחה שעובד. במשחק המקורי אין הבטחה כזו, ואפשר להפסיד בגלל הגרלה. שינוי מתחיל משחק חדש</span>
+        </span>
+        <input type="checkbox" class="switch" id="optGuaranteed" data-pref="guaranteed">
+      </label>
+
+      <p class="settings-head">תצוגה ומשוב</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">סימון המקום</span>
+          <span class="setting-desc">מראה בדיוק לאן החלק ייפול בזמן הגרירה</span>
+        </span>
+        <input type="checkbox" class="switch" id="optGhost" data-pref="ghost">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">רטט</span>
+          <span class="setting-desc" id="hapticsNote">משוב מישושי על הנחה, ניקוי וסיום</span>
+        </span>
+        <input type="checkbox" class="switch" id="optHaptics" data-pref="haptics">
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== איך משחקים ==================== -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
+    <div class="help-body">
+      <p><b>המטרה</b> — לשרוד כמה שיותר. בכל סבב מקבלים שלושה חלקים, וגוררים
+        אותם ללוח בכל סדר.</p>
+      <p><b>אין סיבוב.</b> החלק מונח בדיוק כפי שהוא מוצג — וזה כל האתגר.</p>
+      <p><b>ניקוי</b> — שורה או עמודה שהתמלאה לגמרי נמחקת מהלוח.</p>
+      <p><b>קומבו</b> — כל הנחה שמנקה משהו מעלה את המונה, והמונה מכפיל את
+        ניקוד הניקוי. הוא מתאפס ברגע שמניחים חלק בלי לנקות כלום.</p>
+      <p><b>הניקוד</b> — נקודה לכל תא שמניחים, ובונוס על ניקוי:</p>
+      <ul>
+        <li>שורה אחת — 10</li>
+        <li>שתיים — 20</li>
+        <li>שלוש — <b>60</b></li>
+        <li>ארבע — 120, חמש — 200, שש ומעלה — 300</li>
+        <li>ריקון הלוח כולו — 360</li>
+      </ul>
+      <p>הקפיצה בשלוש שורות היא לא טעות. שווה לבנות לקראתה.</p>
+      <p><b>המשחק נגמר</b> ברגע שאף אחד מהחלקים שנותרו אינו נכנס לשום מקום.</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="js/sw-register.js?v=89122463"></script>
+<script src="js/haptics.js?v=88d431f4"></script>
+<script src="js/blockblast/engine.js?v=9ded3782"></script>
+<script src="js/blockblast/deal.js?v=55be3462"></script>
+<script src="js/blockblast/game.js?v=06d25d56"></script>
+<script src="js/blockblast/ui.js?v=39e164b7"></script>
+</body>
+</html>

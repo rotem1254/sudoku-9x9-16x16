@@ -1,0 +1,235 @@
+/* =============================================================================
+ * blockblast.css — בלוק בלאסט
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css.
+ *
+ * הלוח והמגש מוגדרים LTR בכוונה. הדף כולו RTL, ורשת CSS ב-RTL מסדרת
+ * עמודות מימין לשמאל — כלומר עמודה 0 של המנוע הייתה נראית בקצה הימני,
+ * וכל צורת L הייתה מוצגת הפוכה ממה שהיא. הכיוון הוא עניין של טקסט, לא
+ * של לוח משחק.
+ * =========================================================================== */
+
+/* ------------------------------ צבעי המשחק ------------------------------ */
+
+:root {
+  --bb-empty: #e6e8ee;      /* תא פנוי */
+  --bb-empty-line: #d9dce4; /* קו הפרדה עדין בין תאים */
+  --bb-filled: #4b5568;     /* תא תפוס */
+  --bb-ghost: #b9c6ea;      /* סימון המקום שאליו החלק ייפול */
+  --bb-bad: #e7b6b8;        /* מקום שאינו חוקי */
+  --bb-flash: #ffffff;      /* הבזק לפני שהשורה נעלמת */
+
+  /* צבעי החלקים — נבחרים לפי גודל, כך שהעין לומדת "גדול = מסוכן" */
+  --bb-p1: #6f7688;
+  --bb-p2: #3d8f7a;
+  --bb-p3: #2f6bff;
+  --bb-p4: #b8791d;
+  --bb-p5: #c0452f;
+}
+
+:root[data-theme="dark"] {
+  --bb-empty: #1e222b;
+  --bb-empty-line: #262b36;
+  --bb-filled: #7d879e;
+  --bb-ghost: #3c4a70;
+  --bb-bad: #4d2b2e;
+  --bb-flash: #ffffff;
+
+  --bb-p1: #8189a0;
+  --bb-p2: #4aa88f;
+  --bb-p3: #5b87ff;
+  --bb-p4: #cf9134;
+  --bb-p5: #d95b43;
+}
+
+/* -------------------------------- פריסה --------------------------------- */
+
+.bb-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* --------------------------------- הלוח --------------------------------- */
+
+.board {
+  --gap: 3px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: var(--gap);
+  width: 100%;
+  max-width: 420px;
+  padding: var(--gap);
+  border-radius: 10px;
+  background: var(--bb-empty-line);
+  /* הגרירה מטופלת בקוד, ובלי זה הדפדפן גולל את הדף באמצע מהלך */
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--bb-empty);
+  transition: background-color .12s var(--ease);
+}
+
+/* תא תפוס — הצבע מגיע מהחלק שהניח אותו */
+.cell.is-on { background: var(--fill, var(--bb-filled)); }
+
+/* סימון המקום בזמן גרירה */
+.cell.is-ghost { background: var(--bb-ghost); }
+.cell.is-bad { background: var(--bb-bad); }
+
+/*
+ * הבזק לפני שהשורה נעלמת. בלי זה שורה פשוט "קופצת" לריק ואי אפשר לראות
+ * מה בדיוק נוקה — וזו הפעולה הכי חשובה במשחק
+ */
+.cell.is-clearing { animation: bbClear .26s var(--ease) forwards; }
+
+@keyframes bbClear {
+  0%   { background: var(--fill, var(--bb-filled)); transform: scale(1); }
+  38%  { background: var(--bb-flash); transform: scale(1.12); }
+  100% { background: var(--bb-empty); transform: scale(1); }
+}
+
+/* --------------------------------- המגש --------------------------------- */
+
+.tray-wrap { display: flex; flex-direction: column; gap: 7px; align-items: center; }
+
+.tray {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+  min-height: 92px;
+}
+
+.slot {
+  display: grid;
+  place-items: center;
+  padding: 8px 4px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.slot.is-empty { opacity: .4; }
+
+/* חלק שאין לו מקום על הלוח — עדיין מוצג, אבל מסומן כאבוד */
+.slot.is-stuck { opacity: .38; }
+
+.piece {
+  display: grid;
+  gap: 2px;
+  cursor: grab;
+}
+.piece i {
+  display: block;
+  width: var(--pc, 15px);
+  height: var(--pc, 15px);
+  border-radius: 3px;
+}
+.piece i.on { background: var(--fill); }
+.piece i.off { background: transparent; }
+
+.slot.is-dragging .piece { opacity: .22; }
+
+.tray-hint {
+  margin: 0;
+  font-size: .74rem;
+  color: var(--muted);
+}
+
+/* ------------------------- החלק שנגרר על המסך --------------------------- */
+
+/*
+ * הפרט שקובע אם אפשר לשחק בטלפון: החלק מוצג **מעל** נקודת המגע ולא
+ * תחתיה, אחרת האצבע מסתירה בדיוק את מה שמנסים למקם. ההרמה עצמה מחושבת
+ * ב-JS לפי גובה התא
+ */
+.drag-piece {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  gap: 3px;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .34));
+}
+.drag-piece i { display: block; border-radius: 4px; }
+.drag-piece i.on { background: var(--fill); }
+.drag-piece i.off { background: transparent; }
+
+/* -------------------------------- קומבו --------------------------------- */
+
+.combo {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 800;
+}
+.combo-x { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+.combo-word { font-size: .7rem; letter-spacing: .06em; }
+.combo.is-bump { animation: bbBump .3s var(--ease); }
+
+@keyframes bbBump {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* ------------------------- ניקוד עולה על המסך --------------------------- */
+
+/* המספר עף מהמקום שבו זה קרה — אחרת לא ברור מה בדיוק זיכה בנקודות */
+.gain {
+  position: fixed;
+  z-index: 55;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent);
+  text-shadow: 0 1px 2px var(--bg);
+  animation: bbGain .8s var(--ease) forwards;
+}
+@keyframes bbGain {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.8); }
+  22%  { opacity: 1; transform: translate(-50%, -14px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -46px) scale(1); }
+}
+
+/* ------------------------------- עזרה ----------------------------------- */
+
+.modal-wide { max-width: 420px; }
+.help-body { text-align: start; font-size: .82rem; line-height: 1.6; color: var(--text-2); }
+.help-body p { margin: 0 0 9px; }
+.help-body ul { margin: 0 0 9px; padding-inline-start: 18px; }
+.help-body li { margin-bottom: 3px; }
+.help-body b { color: var(--text); }
+
+/* --------------------------- התאמות רספונסיביות ------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .cell.is-clearing { animation-duration: .01ms; }
+  .combo.is-bump { animation: none; }
+  .gain { animation-duration: .4s; }
+}
+
+@media (max-height: 700px) {
+  .board { --gap: 2px; }
+  .tray { min-height: 78px; }
+}
+
+@media (min-width: 620px) {
+  .board { --gap: 4px; }
+}

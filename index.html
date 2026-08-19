@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
   <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
   <link rel="stylesheet" href="css/theme.css?v=592d7915">
-  <link rel="stylesheet" href="css/hub.css?v=4b3306be">
+  <link rel="stylesheet" href="css/hub.css?v=2428f78f">
 </head>
 <body>
 
@@ -72,6 +72,26 @@
         <div class="game-tags">
           <span class="tag">קלונדייק</span>
           <span class="tag" id="tagSolitaire">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
+    <!-- ==================== בלוק בלאסט ==================== -->
+    <a class="game-card" href="blockblast.html">
+      <div class="game-art game-art-blockblast" aria-hidden="true">
+        <span class="mini-blocks">
+          <i class="mb mb-1"></i><i class="mb mb-2"></i><i class="mb mb-3"></i>
+          <i class="mb mb-4"></i><i class="mb mb-5"></i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">בלוק בלאסט</h2>
+        <p class="game-desc">לוח 8×8 ושלושה חלקים בכל סבב. אין סיבוב, יש קומבו.</p>
+        <div class="game-tags">
+          <span class="tag">8×8</span>
+          <span class="tag">קומבו</span>
+          <span class="tag" id="tagBlockBlast">—</span>
         </div>
       </div>
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
@@ -187,6 +207,20 @@
     tagK.classList.add('is-live');
   } else {
     tagK.textContent = '52 קלפים';
+  }
+
+  var bb = read('blockblast.v1.save', null);
+  var bbStats = read('blockblast.v1.stats', null);
+  var tagB = document.getElementById('tagBlockBlast');
+  if (tagB) {
+    if (bb && !bb.finished && bb.moves > 0) {
+      tagB.textContent = 'ממשיכים · ' + bb.score + ' נק׳';
+      tagB.classList.add('is-live');
+    } else if (bbStats && bbStats.best) {
+      tagB.textContent = 'שיא · ' + bbStats.best;
+    } else {
+      tagB.textContent = 'חדש';
+    }
   }
 
   applyTheme();
