@@ -419,8 +419,9 @@
     forceDraw({ text: 'חרגתי מהזמן — קנס של ' + tileCount(TIME_PENALTY), tiles: drawn });
   }
 
-  const openModal = (n) => { n.hidden = false; };
-  const closeModal = (n) => { n.hidden = true; };
+  /* ניהול הפוקוס יושב ב-js/modal.js — ראו שם למה זה לא רק hidden */
+  const openModal = (n) => window.Modal.open(n);
+  const closeModal = (n) => window.Modal.close(n);
 
   function confirmAction(text, onOk) {
     el.confirmText.textContent = text;
@@ -566,6 +567,7 @@
     renderJokerTip();
     updateStatus();
     glideTiles(before);
+    if (typeof paintCursor === 'function') paintCursor();
   }
 
   function renderOpponents() {
@@ -937,6 +939,145 @@
     if (container === 'rack') applyMove(state.selection, { kind: 'rack' });
     else { clearSelection(); render(); }
   }
+
+  /* --------------------------------------------------------------------- */
+  /* מקלדת                                                                  */
+  /* --------------------------------------------------------------------- */
+
+  /*
+   * המשחק היה גרירה והקשה בלבד. המקלדת נשענת על **אותו מודל בחירה**
+   * שההקשה כבר משתמשת בו — בוחרים אבן, ואז בוחרים יעד — ולכן אין כאן
+   * מנגנון שני שצריך להישאר מסונכרן עם הראשון.
+   *
+   * cursor.zone הוא 'rack' או 'table'. במגש הוא מצביע על אבן, ובשולחן
+   * על צירוף שלם, כי זו יחידת היעד.
+   */
+  const cursor = { zone: 'rack', rack: 0, set: 0, on: false };
+
+  function cursorNode() {
+    if (cursor.zone === 'rack') {
+      return el.rack.querySelectorAll('.tile')[cursor.rack] || null;
+    }
+    return el.table.querySelectorAll('.set')[cursor.set] || null;
+  }
+
+  function paintCursor() {
+    el.rack.querySelectorAll('.is-cursor').forEach((n) => n.classList.remove('is-cursor'));
+    el.table.querySelectorAll('.is-cursor').forEach((n) => n.classList.remove('is-cursor'));
+    if (!cursor.on) return;
+    const node = cursorNode();
+    if (node) {
+      node.classList.add('is-cursor');
+      node.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }
+
+  function moveCursor(delta) {
+    if (cursor.zone === 'rack') {
+      const n = state.workRack.length;
+      if (!n) return;
+      // המגש RTL: חץ ימינה הולך לאבן הקודמת
+      cursor.rack = (cursor.rack + delta + n) % n;
+    } else {
+      const n = state.workTable.length;
+      if (!n) return;
+      cursor.set = (cursor.set + delta + n) % n;
+    }
+    paintCursor();
+  }
+
+  function switchZone(zone) {
+    if (zone === 'table' && !state.workTable.length) return;
+    cursor.zone = zone;
+    cursor.rack = Math.min(cursor.rack, Math.max(0, state.workRack.length - 1));
+    cursor.set = Math.min(cursor.set, Math.max(0, state.workTable.length - 1));
+    paintCursor();
+  }
+
+  /** מה הסמן מצביע עליו, בפורמט שה-applyMove מבין. */
+  function cursorSource() {
+    if (cursor.zone !== 'rack') return null;
+    const tile = state.workRack[cursor.rack];
+    if (tile == null) return null;
+    return { from: 'rack', setIndex: -1, tileIndex: cursor.rack, tile };
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (window.Modal && window.Modal.top()) return;
+    if (!myTurn() || state.aiRunning) return;
+    if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+
+    const key = e.key;
+
+    if (key === 'Escape') {
+      if (state.selection) { clearSelection(); render(); }
+      else { cursor.on = false; paintCursor(); }
+      return;
+    }
+
+    if (key === 'ArrowRight' || key === 'ArrowLeft') {
+      e.preventDefault();
+      if (!cursor.on) { cursor.on = true; paintCursor(); return; }
+      moveCursor(key === 'ArrowRight' ? -1 : 1);
+      return;
+    }
+
+    if (key === 'ArrowUp' || key === 'ArrowDown') {
+      e.preventDefault();
+      if (!cursor.on) { cursor.on = true; paintCursor(); return; }
+      switchZone(key === 'ArrowUp' ? 'table' : 'rack');
+      return;
+    }
+
+    if (key === 'Enter' || key === ' ') {
+      e.preventDefault();
+      if (!cursor.on) { cursor.on = true; paintCursor(); return; }
+
+      if (!state.selection) {
+        // בחירה — רק ממגש, כי משם מניחים
+        const src = cursorSource();
+        if (!src) { toast('בחרו אבן מהמגש'); return; }
+        state.selection = src;
+        render();
+        paintCursor();
+        return;
+      }
+
+      // הנחה על היעד שהסמן מצביע עליו
+      const dst = cursor.zone === 'table'
+        ? { kind: 'set', setIndex: cursor.set }
+        : { kind: 'rack' };
+      applyMove(state.selection, dst);
+      paintCursor();
+      return;
+    }
+
+    /* צירוף חדש */
+    if (key === 'n' || key === 'N') {
+      e.preventDefault();
+      if (state.selection) { applyMove(state.selection, { kind: 'new' }); paintCursor(); }
+      return;
+    }
+
+    /* קיצורים לפעולות */
+    if (key === 'Backspace' || key === 'z' || key === 'Z') {
+      e.preventDefault();
+      const btn = el.actions.querySelector('[data-action="undo"]');
+      if (btn && !btn.disabled) btn.click();
+      return;
+    }
+    if (key === 'd' || key === 'D') {
+      e.preventDefault();
+      const btn = el.actions.querySelector('[data-action="draw"]');
+      if (btn && !btn.disabled) btn.click();
+      return;
+    }
+    if (key === 'c' || key === 'C') {
+      e.preventDefault();
+      const btn = el.actions.querySelector('[data-action="commit"]');
+      if (btn && !btn.disabled) btn.click();
+    }
+  });
 
   el.table.addEventListener('click', (e) => {
     if (dragMoved) return; // סוף גרירה אינו הקשה

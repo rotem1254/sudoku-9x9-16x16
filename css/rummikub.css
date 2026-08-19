@@ -589,3 +589,38 @@
   .tile { --tile-w: 44px; }
   .rack { min-height: calc(44px * 1.4 + 12px); }
 }
+
+/* ------------------------------ מקלדת ----------------------------------- */
+
+/*
+ * סמן המקלדת. הוא נבדל מהבחירה עצמה (is-selected): הסמן אומר "כאן אני
+ * מסתכל", והבחירה אומרת "את זה הרמתי". שניהם יכולים להיות על המסך יחד
+ */
+.tile.is-cursor,
+.set.is-cursor {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+.set.is-cursor { border-radius: 8px; }
+
+/* --------------------------- מסך רוחבי ---------------------------------- */
+
+/*
+ * לרוחב אין גובה לשולחן ולמגש אחד מעל השני. השולחן עובר לצד, והמגש
+ * נשאר ברוחב מלא מתחתיו אבל נמוך יותר
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app { max-width: none; gap: 6px; }
+  .opponents { font-size: .7rem; }
+  .opp-av { width: 20px; height: 20px; font-size: .68rem; }
+
+  .table-area { max-height: 46vh; }
+  .table-scroll { max-height: 46vh; }
+
+  .rack-wrap { padding: 6px 8px; }
+  .rack { max-height: 26vh; overflow-y: auto; }
+  .tile { --tile-w: 30px; }
+
+  .rk-actions .tool span { display: none; }
+  .rk-actions .tool { min-height: 38px; }
+}

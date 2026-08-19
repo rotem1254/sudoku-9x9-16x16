@@ -149,8 +149,9 @@
     }, 2000);
   }
 
-  const openModal = (n) => { n.hidden = false; };
-  const closeModal = (n) => { n.hidden = true; };
+  /* ניהול הפוקוס יושב ב-js/modal.js — ראו שם למה זה לא רק hidden */
+  const openModal = (n) => window.Modal.open(n);
+  const closeModal = (n) => window.Modal.close(n);
 
   function confirmAction(text, onOk) {
     el.confirmText.textContent = text;

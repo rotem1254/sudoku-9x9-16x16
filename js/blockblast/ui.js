@@ -115,8 +115,9 @@
     toastTimer = setTimeout(() => { el.toast.hidden = true; }, 2200);
   }
 
-  const openModal = (n) => { n.hidden = false; };
-  const closeModal = (n) => { n.hidden = true; };
+  /* ניהול הפוקוס יושב ב-js/modal.js — ראו שם למה זה לא רק hidden */
+  const openModal = (n) => window.Modal.open(n);
+  const closeModal = (n) => window.Modal.close(n);
 
   /*
    * אישור מעוצב ולא window.confirm. החלון המקורי של הדפדפן אינו מכבד את
@@ -167,6 +168,7 @@
         cell.className = 'cell';
         cell.dataset.r = String(r);
         cell.dataset.c = String(c);
+        cell.id = 'c' + r + '-' + c;
         el.board.appendChild(cell);
       }
     }
@@ -232,6 +234,7 @@
         slot.classList.add('is-empty');
       } else {
         if (!g.canPlace(piece)) slot.classList.add('is-stuck');
+        if (kb.active && kb.index === i) slot.classList.add('is-picked');
         slot.appendChild(drawPiece(piece, trayCellSize(piece)));
       }
       el.tray.appendChild(slot);
@@ -267,6 +270,7 @@
     renderBoard();
     renderTray();
     renderStatus();
+    if (kb.active) paintCursor();
   }
 
   const stats = () => store.read(STATS_KEY, { played: 0, best: 0, bestLines: 0 });
@@ -414,6 +418,123 @@
     }
     commitMove(d.index, d.piece, d.target.row, d.target.col);
   }
+
+  /* --------------------------------------------------------------------- */
+  /* מקלדת                                                                  */
+  /* --------------------------------------------------------------------- */
+
+  /*
+   * המשחק היה גרירה בלבד, כלומר בלי עכבר או מסך מגע אי אפשר היה לשחק בו
+   * כלל. המודל כאן פשוט: בוחרים חלק במספר, מזיזים סמן בחצים, ומניחים
+   * ברווח. הסמן מצויר על הלוח בדיוק כמו הסימון של הגרירה, ולכן אין שני
+   * מנגנוני משוב שונים לאותו דבר.
+   */
+  const kb = { active: false, index: 0, row: 0, col: 0 };
+
+  function kbShow() {
+    kb.active = true;
+    paintCursor();
+    renderTray();
+  }
+
+  function kbHide() {
+    kb.active = false;
+    clearMarks();
+    el.board.removeAttribute('aria-activedescendant');
+    renderTray();
+  }
+
+  const clearMarks = () => {
+    for (const node of el.board.children) node.classList.remove('is-ghost', 'is-bad');
+  };
+
+  function kbPiece() {
+    const g = state.game;
+    if (!g.tray.length) return null;
+    if (kb.index >= g.tray.length) kb.index = 0;
+    return g.tray[kb.index];
+  }
+
+  function paintCursor() {
+    clearMarks();
+    const piece = kbPiece();
+    if (!piece || !kb.active) return;
+
+    // הסמן נשאר בתוך הלוח גם כשהחלק גדול
+    kb.row = Math.max(0, Math.min(kb.row, C.SIZE - piece.rows));
+    kb.col = Math.max(0, Math.min(kb.col, C.SIZE - piece.cols));
+
+    const spot = piece.placements.find((p) => p.row === kb.row && p.col === kb.col);
+    const legal = spot ? C.fits(state.game.board, spot.mask) : false;
+
+    for (const [dr, dc] of piece.cells) {
+      const node = cellAt(kb.row + dr, kb.col + dc);
+      if (!node) continue;
+      if (legal) node.classList.add('is-ghost');
+      else if (!node.classList.contains('is-on')) node.classList.add('is-bad');
+    }
+    el.board.setAttribute('aria-activedescendant', 'c' + kb.row + '-' + kb.col);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (window.Modal && window.Modal.top()) return; // חלון פתוח מטפל בעצמו
+    if (!state.game || state.game.finished) return;
+    if (e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+
+    const g = state.game;
+    const key = e.key;
+
+    if (key >= '1' && key <= '3') {
+      const i = Number(key) - 1;
+      if (i < g.tray.length) { kb.index = i; kbShow(); e.preventDefault(); }
+      return;
+    }
+
+    if (key === 'q' || key === 'Q') {
+      kb.index = (kb.index + 1) % Math.max(1, g.tray.length);
+      kbShow();
+      e.preventDefault();
+      return;
+    }
+
+    // הלוח מוצג LTR, ולכן חץ ימינה מזיז ימינה גם בדף RTL
+    const moves = {
+      ArrowUp: [-1, 0], ArrowDown: [1, 0],
+      ArrowLeft: [0, -1], ArrowRight: [0, 1],
+    };
+    if (moves[key]) {
+      e.preventDefault();
+      if (!kb.active) { kbShow(); return; }
+      kb.row += moves[key][0];
+      kb.col += moves[key][1];
+      paintCursor();
+      return;
+    }
+
+    if (key === 'Enter' || key === ' ') {
+      e.preventDefault();
+      if (!kb.active) { kbShow(); return; }
+      const piece = kbPiece();
+      if (!piece) return;
+      const spot = piece.placements.find((p) => p.row === kb.row && p.col === kb.col);
+      if (spot && C.fits(g.board, spot.mask)) {
+        const idx = kb.index;
+        const r = kb.row;
+        const c = kb.col;
+        kb.active = false;
+        clearMarks();
+        commitMove(idx, piece, r, c);
+        kb.index = 0;
+        setTimeout(() => { if (state.game && !state.game.finished) kbShow(); }, 80);
+      } else {
+        feel('reject');
+        toast('אי אפשר להניח כאן');
+      }
+      return;
+    }
+
+    if (key === 'Escape') kbHide();
+  });
 
   /* --------------------------------------------------------------------- */
   /* מהלך                                                                   */

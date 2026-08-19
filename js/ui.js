@@ -110,12 +110,9 @@
     }, 2200);
   }
 
-  function openModal(node) {
-    node.hidden = false;
-  }
-  function closeModal(node) {
-    node.hidden = true;
-  }
+  /* ניהול הפוקוס יושב ב-js/modal.js — ראו שם למה זה לא רק hidden */
+  const openModal = (node) => window.Modal.open(node);
+  const closeModal = (node) => window.Modal.close(node);
 
   /** מציג דיאלוג אישור לפעולה שלא ניתן לבטל. */
   function confirmAction(text, onOk) {

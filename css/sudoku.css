@@ -490,3 +490,50 @@
   .tool svg { width: 20px; height: 20px; }
 }
 
+
+/* --------------------------- מסך רוחבי ---------------------------------- */
+
+/*
+ * לרוחב הלוח עובר לצד וכל השאר לעמודה לידו. הלוח מוגבל ב**גובה** המסך
+ * ולא ברוחבו — זה מה שמשחרר את המקום.
+ *
+ * שלושה דברים שהמדידה תפסה, ואף אחד מהם לא היה ניחוש שלי:
+ *
+ *   1. .play-area ו-.pad-area, שכיוונתי אליהם בגרסה הראשונה, פשוט אינם
+ *      קיימים במבנה — כלל שלא עשה כלום
+ *   2. כשהלוח עבר לצד, כל השאר נפל מחוץ לאזורים ונערם מתחת
+ *   3. `grid-row: 2 / -1` אינו עובד כאן: אין תבנית שורות מפורשת, ו-1-
+ *      מתייחס לסוף הרשת המפורשת שאינה קיימת. לכן השורות ממוספרות ידנית
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app {
+    max-width: none;
+    display: grid;
+    /* עמודה ללוח, עמודה לכל השאר */
+    grid-template-columns: min(56vh, 44%) 1fr;
+    /* סרגל, לשוניות, קושי, מצב, מספרים, כלים */
+    grid-template-rows: auto auto auto auto 1fr auto;
+    column-gap: 12px;
+    row-gap: 5px;
+    align-content: start;
+    padding-top: 6px;
+  }
+
+  .topbar      { grid-area: 1 / 1 / 2 / 3; }
+  .board-area  { grid-area: 2 / 1 / 7 / 2; align-self: start; }
+  .tabs        { grid-area: 2 / 2; }
+  .difficulty-row { grid-area: 3 / 2; }
+  .statusbar   { grid-area: 4 / 2; }
+  .numpad-wrap { grid-area: 5 / 2; align-self: start; }
+  .tools       { grid-area: 6 / 2; }
+
+  .zoom-bar, .footer { display: none; }
+
+  /* דחיסה: בגובה 390 פיקסלים כל שורה נחשבת */
+  .tab { min-height: 32px; font-size: .78rem; }
+  .pill { min-height: 28px; font-size: .72rem; }
+  .statusbar { padding: 3px 8px; }
+  .stat-label { display: none; }
+  .tools .tool { min-height: 38px; }
+  .tools .tool span { display: none; }
+}

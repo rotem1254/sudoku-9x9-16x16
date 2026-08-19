@@ -233,3 +233,50 @@
 @media (min-width: 620px) {
   .board { --gap: 4px; }
 }
+
+/* ------------------------------ מקלדת ----------------------------------- */
+
+/* החלק שנבחר במקלדת — אותו סימון שהגרירה נותנת, רק סטטי */
+.slot.is-picked {
+  border-color: var(--accent);
+  background: var(--accent-soft-2);
+}
+
+/*
+ * הסמן על הלוח משתמש באותן מחלקות של הגרירה (is-ghost / is-bad), ולכן
+ * אין כאן שני מנגנוני משוב שונים לאותו דבר. מה שכן נוסף הוא טבעת
+ * דקה, כדי שיהיה ברור שזה סמן שנשאר ולא הצצה חולפת
+ */
+.cell.is-ghost { box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* --------------------------- מסך רוחבי ---------------------------------- */
+
+/*
+ * בסיבוב לרוחב הגובה נגמר: לוח 8×8 ומגש מתחתיו לא נכנסים אחד מעל השני.
+ * לכן הם עוברים לשבת זה לצד זה, והמגש נערם אנכית
+ */
+@media (orientation: landscape) and (max-height: 560px) {
+  .app { max-width: none; }
+
+  .bb-stage {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 14px;
+  }
+  .board { max-width: min(58vh, 420px); }
+
+  .tray-wrap {
+    position: absolute;
+    inset-inline-end: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: min(200px, 30vw);
+  }
+  .tray {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    min-height: 0;
+  }
+  .slot { padding: 6px 4px; }
+}
