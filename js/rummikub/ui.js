@@ -174,8 +174,16 @@
   let timerLeft = 0;
   let timerId = null;
 
+
+  /*
+   * כל טוסט נאמר גם לקורא מסך. הטוסט עצמו hidden כשאין מה להציג, ולכן
+   * אינו בעץ הנגישות — ההכרזה עוברת באזור חי נפרד. ראו js/announce.js
+   */
+  const say = (msg, loud) => { if (window.Announce) window.Announce.say(msg, loud); };
+
   let toastTimer = null;
   function toast(msg) {
+    say(msg);
     el.toast.textContent = msg;
     el.toast.hidden = false;
     clearTimeout(toastTimer);
@@ -1450,6 +1458,7 @@
     const g = state.game;
     state.aiRunning = false;
     stopTimer();
+    say(g.winner === 0 ? 'ניצחת!' : oppInfo(g.winner).name + ' ' + verbs(g.winner).finishedFirst, true);
     feel(g.winner === 0 ? 'win' : 'reject');
     logMove(g.winner === 0 ? 0 : g.winner,
       g.winner === 0 ? 'סיימתי ראשון — ניצחתי' : verbs(g.winner).finishedFirst);

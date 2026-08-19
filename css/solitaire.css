@@ -361,7 +361,14 @@ body {
  * מרוחבו, כך שרוחב הלוח לא יכול לעבור את 7 × (גובה פנוי / 1.4).
  */
 @media (orientation: landscape) and (max-height: 560px) {
-  .app { max-width: none; gap: 6px; padding-top: 6px; }
+  .app {
+    max-width: none;
+    gap: 6px;
+    /* השוליים העליונים והתחתונים מצטמצמים — הם היו שלושת הפיקסלים
+       האחרונים שהחזיקו את הדף בגלילה */
+    padding-top: 6px;
+    padding-bottom: calc(6px + env(safe-area-inset-bottom));
+  }
 
   .sol-board {
     gap: 6px;
@@ -373,10 +380,10 @@ body {
      *
      *     2 × 1.4·רוחב_קלף  +  5 × 0.22·רוחב_קלף  ≤  222
      *
-     * ומכאן רוחב קלף של כ-12.5vh. הניסיון הראשון נתן 30vh, הקאפ יצא רחב
+     * ומכאן רוחב קלף של כ-11.5vh. הניסיון הראשון נתן 30vh, הקאפ יצא רחב
      * מהמסך ולכן פשוט לא נכנס לתוקף — הקלף נשאר 106 והעמודה 567
      */
-    max-width: min(100%, calc(12.5vh * 7 + 52px));
+    max-width: min(100%, calc(11.5vh * 7 + 52px));
     /*
      * width מפורש הכרחי: הלוח הוא פריט ב-flex column, ו-margin אוטומטי
      * מבטל את המתיחה לרוחב מלא — הלוח התכווץ ל-64 פיקסלים והקלפים ל-2
@@ -385,10 +392,31 @@ body {
     margin-inline: auto;
   }
 
-  .statusbar { padding: 4px 8px; }
+  /*
+   * חשבון הגובה שנמדד בפועל: שורת הקושי לבדה תפסה 72 פיקסלים. לא בגלל
+   * גלישה של הגלולות אלא מפני שהיא block, ושני ילדיה — הגלולות וכפתור
+   * "משחק חדש" — יושבים זה מתחת לזה. בשורה אחת היא יורדת לכ-36
+   */
+  .difficulty-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .difficulty-row .pills {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .difficulty-row .pills::-webkit-scrollbar { display: none; }
+  .pill { min-height: 28px; padding: 0 11px; font-size: .72rem; white-space: nowrap; }
+  .btn-new { min-height: 34px; padding: 0 12px; font-size: .8rem; flex: 0 0 auto; }
+
+  .statusbar { padding: 3px 8px; }
   .stat-label { display: none; }
+  .stat-value { font-size: .95rem; }
   .sol-actions .tool span { display: none; }
-  .sol-actions .tool { min-height: 38px; }
+  .sol-actions .tool { min-height: 36px; }
   .footer { display: none; }
 }
 

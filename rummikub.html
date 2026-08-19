@@ -14,10 +14,13 @@
   <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=592d7915">
+  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
   <link rel="stylesheet" href="css/rummikub.css?v=f88f9b69">
 </head>
 <body>
+
+<a class="skip-link" href="#main">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
 
 <div class="app">
 
@@ -72,7 +75,7 @@
   </div>
 
   <!-- השולחן -->
-  <main class="table-area">
+  <main class="table-area" id="main" tabindex="-1">
     <div class="table-scroll" id="table" aria-label="השולחן"></div>
     <p class="table-empty" id="tableEmpty">השולחן ריק. הנח כאן את הצירוף הראשון שלך.</p>
   </main>
@@ -290,12 +293,13 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="js/announce.js?v=b637ed5a"></script>
 <script src="js/sw-register.js?v=89122463"></script>
 <script src="js/ui-math.js?v=28bacf43"></script>
 <script src="js/modal.js?v=66375e94"></script>
 <script src="js/haptics.js?v=88d431f4"></script>
 <script src="js/rummikub/engine.js?v=7ef412bd"></script>
 <script src="js/rummikub/ai.js?v=142cd4fb"></script>
-<script src="js/rummikub/ui.js?v=6c2d1092"></script>
+<script src="js/rummikub/ui.js?v=c5afb967"></script>
 </body>
 </html>

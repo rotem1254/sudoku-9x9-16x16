@@ -14,10 +14,13 @@
   <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=592d7915">
+  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
   <link rel="stylesheet" href="css/hub.css?v=2428f78f">
 </head>
 <body>
+
+<a class="skip-link" href="#main">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
 
 <div class="app">
 
@@ -36,7 +39,7 @@
 
   <p class="hub-intro">בחר משחק. הכול רץ בדפדפן — בלי התקנה, בלי חשבון, וההתקדמות נשמרת אצלך במכשיר.</p>
 
-  <nav class="hub-grid">
+  <nav class="hub-grid" id="main" tabindex="-1">
 
     <!-- ==================== סודוקו ==================== -->
     <a class="game-card" href="sudoku.html">
@@ -226,6 +229,7 @@
   applyTheme();
 })();
 </script>
+<script src="js/announce.js?v=b637ed5a"></script>
 <script src="js/sw-register.js?v=89122463"></script>
 </body>
 </html>

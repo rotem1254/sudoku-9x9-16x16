@@ -107,8 +107,16 @@
   /* עזרים                                                                  */
   /* --------------------------------------------------------------------- */
 
+
+  /*
+   * כל טוסט נאמר גם לקורא מסך. הטוסט עצמו hidden כשאין מה להציג, ולכן
+   * אינו בעץ הנגישות — ההכרזה עוברת באזור חי נפרד. ראו js/announce.js
+   */
+  const say = (msg, loud) => { if (window.Announce) window.Announce.say(msg, loud); };
+
   let toastTimer = null;
   function toast(msg) {
+    say(msg);
     el.toast.textContent = msg;
     el.toast.hidden = false;
     clearTimeout(toastTimer);
@@ -570,6 +578,13 @@
 
     showGain(res.gained, row, col);
 
+    /* מה בדיוק קרה: כמה נוקה, כמה נוסף, ומה הקומבו */
+    say(
+      (res.cleared ? 'נוקו ' + res.cleared + (res.cleared === 1 ? ' שורה. ' : ' שורות. ') : '') +
+      'הרווחת ' + res.gained + '. סך הכול ' + g.score +
+      (res.combo >= 2 ? '. קומבו כפול ' + res.combo : '')
+    );
+
     const delay = res.cleared > 0 && !reducedMotion ? 260 : 0;
     setTimeout(() => {
       // תאים שנמחקו מאבדים את צבעם
@@ -634,6 +649,7 @@
 
     feel('reject');
 
+    say((isBest ? 'שיא חדש! ' : 'נגמרו המהלכים. ') + 'ניקוד ' + g.score, true);
     el.overTitle.textContent = isBest ? 'שיא חדש!' : 'נגמרו המהלכים';
     el.overSub.textContent = isBest
       ? 'זה הניקוד הגבוה ביותר שלך'

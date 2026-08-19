@@ -28,10 +28,13 @@
   <!-- מאפשר "הוספה למסך הבית" — במצב standalone נחסך סרגל הדפדפן,
        וכל המשחק נכנס במסך הטלפון בלי גלילה -->
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=592d7915">
+  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
   <link rel="stylesheet" href="css/sudoku.css?v=4cd494f5">
 </head>
 <body>
+
+<a class="skip-link" href="#main">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
 
 <div class="app">
 
@@ -109,7 +112,7 @@
   </div>
 
   <!-- ==================== הלוח ==================== -->
-  <main class="board-area">
+  <main class="board-area" id="main" tabindex="-1">
     <div class="board-viewport" id="boardViewport">
       <div class="board-stage" id="boardStage">
         <!-- dir=ltr: סדר העמודות בלוח נשאר משמאל לימין גם בממשק RTL -->
@@ -289,11 +292,12 @@
 <!-- הודעות קצרות (toast) -->
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="js/announce.js?v=b637ed5a"></script>
 <script src="js/sw-register.js?v=89122463"></script>
 <script src="js/modal.js?v=66375e94"></script>
 <script src="js/core.js?v=f5955143"></script>
 <script src="js/storage.js?v=b399d4d7"></script>
 <script src="js/game.js?v=9c424b10"></script>
-<script src="js/ui.js?v=1680eef2"></script>
+<script src="js/ui.js?v=9ec5578d"></script>
 </body>
 </html>

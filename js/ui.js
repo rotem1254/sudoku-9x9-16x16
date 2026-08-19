@@ -101,7 +101,14 @@
   }
 
   let toastTimer = null;
+  /*
+   * כל טוסט נאמר גם לקורא מסך. הטוסט עצמו hidden כשאין מה להציג, ולכן
+   * אינו בעץ הנגישות — ההכרזה עוברת באזור חי נפרד. ראו js/announce.js
+   */
+  const say = (msg, loud) => { if (window.Announce) window.Announce.say(msg, loud); };
+
   function toast(message) {
+    say(message);
     el.toast.textContent = message;
     el.toast.hidden = false;
     clearTimeout(toastTimer);

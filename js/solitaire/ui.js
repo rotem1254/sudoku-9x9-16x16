@@ -139,8 +139,16 @@
 
   const formatTime = (seconds) => M.formatClock(seconds);
 
+
+  /*
+   * כל טוסט נאמר גם לקורא מסך. הטוסט עצמו hidden כשאין מה להציג, ולכן
+   * אינו בעץ הנגישות — ההכרזה עוברת באזור חי נפרד. ראו js/announce.js
+   */
+  const say = (msg, loud) => { if (window.Announce) window.Announce.say(msg, loud); };
+
   let toastTimer = null;
   function toast(msg) {
+    say(msg);
     el.toast.textContent = msg;
     el.toast.hidden = false;
     clearTimeout(toastTimer);
@@ -466,6 +474,12 @@
     const g = state.game;
     const res = g.move(from, to);
     if (!res.ok) return res;
+
+    /*
+     * מהלך מוצלח מוכרז בקצרה. בלי זה שחקן שמנווט במקלדת אינו יודע אם
+     * הקלף זז בכלל — הלוח כולו ויזואלי
+     */
+    say('הועבר ל' + (to.zone === 'foundation' ? 'ערימת סיום' : 'עמודה ' + (to.pile + 1)));
 
     clearSelection();
     render();

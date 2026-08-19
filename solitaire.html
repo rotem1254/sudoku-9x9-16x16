@@ -14,10 +14,13 @@
   <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=592d7915">
-  <link rel="stylesheet" href="css/solitaire.css?v=52f82fd9">
+  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
+  <link rel="stylesheet" href="css/solitaire.css?v=4a1fe0ba">
 </head>
 <body>
+
+<a class="skip-link" href="#board">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
 
 <div class="app">
 
@@ -77,7 +80,7 @@
     </button>
   </div>
 
-  <main class="sol-board" id="board">
+  <main class="sol-board" id="board" tabindex="-1">
     <!-- שורה עליונה: חפיסה, נמשכים, ואז ארבע ערימות הסיום -->
     <div class="sol-row sol-top">
       <div class="pile stock" id="pileStock" data-zone="stock"></div>
@@ -213,10 +216,11 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="js/announce.js?v=b637ed5a"></script>
 <script src="js/sw-register.js?v=89122463"></script>
 <script src="js/ui-math.js?v=28bacf43"></script>
 <script src="js/modal.js?v=66375e94"></script>
 <script src="js/solitaire/engine.js?v=a02fad77"></script>
-<script src="js/solitaire/ui.js?v=6bc6a3ae"></script>
+<script src="js/solitaire/ui.js?v=f1d7b887"></script>
 </body>
 </html>

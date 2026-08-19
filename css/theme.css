@@ -679,3 +679,48 @@ a.logo:active .logo-back { transform: translateX(3px); color: var(--accent); }
   text-align: start;
 }
 .settings-head:first-child { margin-top: 0; }
+
+/* ------------------------------- נגישות --------------------------------- */
+
+/*
+ * טקסט לקוראי מסך בלבד. לא display:none ולא visibility:hidden — שניהם
+ * מוציאים את האלמנט מעץ הנגישות, וזו בדיוק הסיבה שהטוסטים לא הוכרזו
+ * באמינות: הם היו hidden כשלא היה מה להציג
+ */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * קישור הדילוג. מוסתר עד שמגיעים אליו ב-Tab, ואז קופץ לפינה — הדבר
+ * הראשון שמקבל פוקוס בכל דף
+ */
+.skip-link {
+  position: fixed;
+  top: 8px;
+  inset-inline-start: 8px;
+  z-index: 200;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+  font-size: .88rem;
+  text-decoration: none;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-160%);
+  transition: transform .16s var(--ease);
+}
+.skip-link:focus { transform: translateY(0); }
+
+/* יעד הדילוג אינו אמור לצייר טבעת פוקוס — הוא רק נקודת נחיתה */
+[id="main"]:focus, .sol-board:focus { outline: none; }

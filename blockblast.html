@@ -14,10 +14,13 @@
   <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=592d7915">
+  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
   <link rel="stylesheet" href="css/blockblast.css?v=96db6ca5">
 </head>
 <body>
+
+<a class="skip-link" href="#main">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
 
 <div class="app">
 
@@ -56,7 +59,7 @@
     </div>
   </div>
 
-  <main class="bb-stage">
+  <main class="bb-stage" id="main" tabindex="-1">
     <!-- מונה הקומבו — מופיע רק כשהוא פעיל -->
     <div class="combo" id="combo" hidden aria-live="polite">
       <span class="combo-x" id="comboX">×2</span>
@@ -175,6 +178,7 @@
 
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script src="js/announce.js?v=b637ed5a"></script>
 <script src="js/sw-register.js?v=89122463"></script>
 <script src="js/ui-math.js?v=28bacf43"></script>
 <script src="js/modal.js?v=66375e94"></script>
@@ -182,6 +186,6 @@
 <script src="js/blockblast/engine.js?v=9ded3782"></script>
 <script src="js/blockblast/deal.js?v=55be3462"></script>
 <script src="js/blockblast/game.js?v=06d25d56"></script>
-<script src="js/blockblast/ui.js?v=52bb4f43"></script>
+<script src="js/blockblast/ui.js?v=9302b28a"></script>
 </body>
 </html>
