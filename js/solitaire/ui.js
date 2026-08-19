@@ -10,6 +10,7 @@
 
   const Solitaire = window.Solitaire;
   const Cards = window.SolitaireCards;
+  const M = window.UIMath;
 
   const $ = (s) => document.querySelector(s);
 
@@ -136,14 +137,7 @@
   /* עזרים                                                                  */
   /* --------------------------------------------------------------------- */
 
-  function formatTime(seconds) {
-    const s = Math.max(0, Math.floor(seconds));
-    const h = Math.floor(s / 3600);
-    const m = Math.floor((s % 3600) / 60);
-    const sec = s % 60;
-    const pad = (n) => String(n).padStart(2, '0');
-    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${pad(m)}:${pad(sec)}`;
-  }
+  const formatTime = (seconds) => M.formatClock(seconds);
 
   let toastTimer = null;
   function toast(msg) {
@@ -275,18 +269,18 @@
     const availablePx = Math.max(120, window.innerHeight - top - reserved);
     const availableCqw = (availablePx / colW) * 100;
 
-    // הערימה ה"יקרה" ביותר: הכי הרבה קלפים גלויים מעל קלפים הפוכים
-    let worst = 0;
+    const piles = [];
     for (let i = 0; i < Solitaire.TABLEAU_COUNT; i++) {
       const total = g.tableau[i].length;
       if (!total) continue;
       const up = Math.min(g.faceUp[i], total);
-      const down = total - up;
-      // (up - 1) כי הקלף האחרון תופס גובה קלף מלא, לא היסט
-      worst = Math.max(worst, (availableCqw - CARD_H - down * OFFSET_DOWN) / Math.max(1, up - 1));
+      piles.push({ up, down: total - up });
     }
 
-    offsetUp = Math.round(Math.min(OFFSET_UP_MAX, Math.max(OFFSET_UP_MIN, worst)));
+    offsetUp = M.fanOffset({
+      availableCqw, cardH: CARD_H, offsetDown: OFFSET_DOWN, piles,
+      min: OFFSET_UP_MIN, max: OFFSET_UP_MAX,
+    });
   }
 
   function render() {

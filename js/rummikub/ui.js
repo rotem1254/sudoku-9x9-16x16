@@ -15,6 +15,7 @@
   const T = window.RummikubTiles;
   const AI = window.RummikubAI;
   const H = window.Haptics;
+  const M = window.UIMath;
 
   const $ = (s) => document.querySelector(s);
 
@@ -541,13 +542,11 @@
         continue;
       }
 
-      const sameZone = prev.zone === item.zone;
-      const dx = sameZone ? prev.x - item.x : prev.sx - item.sx;
-      const dy = sameZone ? prev.y - item.y : prev.sy - item.sy;
-      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue;
+      const d = M.flipDelta(prev, item);
+      if (!d.moved) continue;
 
       item.node.animate(
-        [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }],
+        [{ transform: 'translate(' + d.dx + 'px,' + d.dy + 'px)' }, { transform: 'none' }],
         { duration: MOVE_MS, easing: 'cubic-bezier(.2,.8,.25,1)' }
       );
     }
@@ -900,15 +899,10 @@
 
   /** כמה אבנים נמצאות "לפני" הנקודה. ב-RTL הכיוון הפוך. */
   function insertIndex(container, x) {
-    const tiles = [...container.querySelectorAll('.tile')].filter(
-      (n) => !n.classList.contains('is-dragging')
-    );
-    let i = 0;
-    for (const t of tiles) {
-      const r = t.getBoundingClientRect();
-      if (x < r.left + r.width / 2) i++;
-    }
-    return i;
+    const rects = [...container.querySelectorAll('.tile')]
+      .filter((n) => !n.classList.contains('is-dragging'))
+      .map((n) => n.getBoundingClientRect());
+    return M.insertIndex(rects, x, true);
   }
 
   /* ------------------------------ הקשה ---------------------------------- */

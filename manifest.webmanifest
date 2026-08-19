@@ -1,15 +1,15 @@
 {
   "name": "מרכז המשחקים",
   "short_name": "משחקים",
-  "description": "מרכז משחקים בדפדפן — סודוקו 9x9 ו-16x16 וסוליטר קלונדייק. בלי התקנה ובלי חשבון.",
+  "description": "מרכז משחקים בדפדפן — סודוקו 9×9 ו-16×16, סוליטר קלונדייק, רמי קוב ובלוק בלאסט. בלי התקנה ובלי חשבון.",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#eef1f8",
-  "theme_color": "#4f6ef7",
+  "background_color": "#f4f5f7",
+  "theme_color": "#16181d",
   "categories": [
     "games",
     "puzzle"

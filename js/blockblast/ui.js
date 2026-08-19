@@ -18,6 +18,7 @@
   const C = window.BlockBlastCore;
   const BlockBlast = window.BlockBlast;
   const H = window.Haptics;
+  const M = window.UIMath;
 
   const $ = (s) => document.querySelector(s);
 
@@ -97,6 +98,9 @@
     btnHelp: $('#btnHelp'),
     btnTheme: $('#btnTheme'),
     btnNew: $('#btnNew'),
+    confirmModal: $('#confirmModal'),
+    confirmText: $('#confirmText'),
+    btnConfirmOk: $('#btnConfirmOk'),
   };
 
   /* --------------------------------------------------------------------- */
@@ -113,6 +117,18 @@
 
   const openModal = (n) => { n.hidden = false; };
   const closeModal = (n) => { n.hidden = true; };
+
+  /*
+   * אישור מעוצב ולא window.confirm. החלון המקורי של הדפדפן אינו מכבד את
+   * ערכת הנושא, שובר את פריסת ה-RTL, ונראה כמו התראה של אתר ולא כמו חלק
+   * מהמשחק — ושלושת המשחקים האחרים כבר עושים את זה נכון
+   */
+  let confirmAction = null;
+  function askConfirm(text, onOk) {
+    el.confirmText.textContent = text;
+    confirmAction = onOk;
+    openModal(el.confirmModal);
+  }
 
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -335,41 +351,28 @@
 
     const m = boardMetrics();
 
-    const w = drag.piece.cols * m.step - m.gap;
-    const h = drag.piece.rows * m.step - m.gap;
+    /* כל החישוב יושב ב-UIMath, ולכן הוא נבדק ב-Node ולא רק בדפדפן */
+    const at = M.dragPlacement({
+      pointerX: x, pointerY: y,
+      boardLeft: m.rect.left, boardTop: m.rect.top,
+      pad: m.pad, step: m.step, gap: m.gap,
+      rows: drag.piece.rows, cols: drag.piece.cols,
+      clearance: m.step * CLEARANCE_CELLS,
+      size: C.SIZE,
+    });
 
-    /*
-     * תחתית החלק יושבת תמיד CLEARANCE_CELLS מעל האצבע, יהיה גובהו אשר
-     * יהיה. הטרנספורם ב-CSS ממרכז את האלמנט, ולכן מה שנקבע כאן הוא
-     * המרכז — והמרכז הוא התחתית פחות חצי גובה
-     */
-    const clearance = m.step * CLEARANCE_CELLS;
-    const centerY = y - clearance - h / 2;
+    drag.ghost.style.left = at.centerX + 'px';
+    drag.ghost.style.top = at.centerY + 'px';
 
-    drag.ghost.style.left = x + 'px';
-    drag.ghost.style.top = centerY + 'px';
-
-    /*
-     * היעד נקבע לפי הפינה השמאלית-עליונה של החלק ולא לפי האצבע —
-     * זה מה שגורם לחלק "לשבת" איפה שרואים אותו
-     */
-    const left = x - w / 2;
-    const top = centerY - h / 2;
-
-    const col = Math.round((left - m.rect.left - m.pad) / m.step);
-    const row = Math.round((top - m.rect.top - m.pad) / m.step);
-
-    const inRange =
-      row >= 0 && col >= 0 &&
-      row + drag.piece.rows <= C.SIZE && col + drag.piece.cols <= C.SIZE;
-
-    const spot = inRange
+    const row = at.row;
+    const col = at.col;
+    const spot = at.inRange
       ? drag.piece.placements.find((p) => p.row === row && p.col === col)
       : null;
     const legal = spot ? C.fits(state.game.board, spot.mask) : false;
 
     drag.target = legal ? { row, col } : null;
-    paintGhost(inRange ? { row, col } : null, legal);
+    paintGhost(at.inRange ? { row, col } : null, legal);
   }
 
   /** מסמן על הלוח לאן החלק ייפול. */
@@ -586,9 +589,17 @@
 
   el.btnNew.addEventListener('click', () => {
     if (state.game && !state.game.finished && state.game.moves > 3) {
-      if (!window.confirm('להתחיל משחק חדש? ההתקדמות תימחק.')) return;
+      askConfirm('להתחיל משחק חדש? ההתקדמות תימחק.', newGame);
+      return;
     }
     newGame();
+  });
+
+  el.btnConfirmOk.addEventListener('click', () => {
+    closeModal(el.confirmModal);
+    const fn = confirmAction;
+    confirmAction = null;
+    if (fn) fn();
   });
   el.btnOverNew.addEventListener('click', newGame);
 

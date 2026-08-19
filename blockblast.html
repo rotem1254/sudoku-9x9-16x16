@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#2f6bff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
   <meta name="description" content="בלוק בלאסט בדפדפן — לוח 8×8, שלושה חלקים בכל סבב, ניקוי שורות וקומבו. מותאם לטלפון.">
   <meta name="mobile-web-app-capable" content="yes">
@@ -11,9 +11,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="בלוק בלאסט">
   <title>בלוק בלאסט · מרכז המשחקים</title>
-  <link rel="icon" href="icon.svg?v=12c2056b" type="image/svg+xml">
-  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=16463c00">
-  <link rel="manifest" href="manifest.webmanifest?v=03f8e3c0">
+  <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
+  <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=592d7915">
   <link rel="stylesheet" href="css/blockblast.css?v=a45cb2df">
 </head>
@@ -161,13 +161,26 @@
   </div>
 </div>
 
+<!-- ==================== אישור ==================== -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+    <h2 class="modal-title" id="confirmTitle">רגע</h2>
+    <p class="modal-sub" id="confirmText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmOk">אישור</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="js/sw-register.js?v=89122463"></script>
+<script src="js/ui-math.js?v=28bacf43"></script>
 <script src="js/haptics.js?v=88d431f4"></script>
 <script src="js/blockblast/engine.js?v=9ded3782"></script>
 <script src="js/blockblast/deal.js?v=55be3462"></script>
 <script src="js/blockblast/game.js?v=06d25d56"></script>
-<script src="js/blockblast/ui.js?v=39e164b7"></script>
+<script src="js/blockblast/ui.js?v=9b408cc5"></script>
 </body>
 </html>

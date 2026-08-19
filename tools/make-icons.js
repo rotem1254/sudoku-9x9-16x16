@@ -8,8 +8,11 @@
  *   לגרור תלות בספריית גרפיקה, הסקריפט מקודד PNG בעצמו — zlib מובנה ב-Node,
  *   וכל מה שנשאר זה CRC32 ומבנה ה-chunks. אין תלויות חיצוניות בכלל.
  *
- * העיצוב גיאומטרי בכוונה (רשת + תאים מלאים, בלי ספרות): אייקון במסך הבית
- * מוצג בסביבות 60px, וספרות בגודל כזה נמרחות ללא קריאוּת.
+ * העיצוב: ארבעה ריבועים, אחד לכל משחק, בצבע שלו. קודם הייתה כאן רשת
+ * סודוקו — וזה הפסיק להיות נכון ברגע שנוספו עוד שלושה משחקים.
+ *
+ * גיאומטרי בכוונה ובלי ספרות או אותיות: אייקון במסך הבית מוצג בסביבות
+ * 60 פיקסלים, וכל פרט קטן יותר נמרח.
  * =========================================================================== */
 'use strict';
 
@@ -83,54 +86,67 @@ const FILLED = [
   [1, 6], [3, 7], [6, 8],
 ];
 
-function render(S) {
+/* ------------------------------- העיצוב --------------------------------- */
+
+/*
+ * ארבעה ריבועים בפריסת 2×2, אחד לכל משחק. הרקע כהה כדי שהצבעים יקבלו
+ * נוכחות, והוא גם תואם את הרקע הכהה של האתר עצמו.
+ */
+const GROUND = [22, 24, 29]; // #16181d
+const TILES = [
+  [0, 0, [47, 107, 255]],  // סודוקו   #2f6bff
+  [1, 0, [18, 133, 92]],   // סוליטר   #12855c
+  [0, 1, [194, 90, 36]],   // רמי קוב  #c25a24
+  [1, 1, [106, 75, 208]],  // בלוק בלאסט #6a4bd0
+];
+
+/** יחסי הפריסה, משותפים ל-PNG ול-SVG כדי ששניהם לא יסטו זה מזה. */
+function layout(S) {
+  const pad = S * 0.17;
+  const gap = S * 0.055;
+  const tile = (S - pad * 2 - gap) / 2;
+  return { pad, gap, tile, radius: tile * 0.22 };
+}
+
+function render(size) {
+  const S = size;
   const buf = Buffer.alloc(S * S * 3);
 
   const put = (x, y, c) => {
     if (x < 0 || y < 0 || x >= S || y >= S) return;
-    const o = (y * S + x) * 3;
-    buf[o] = c[0];
-    buf[o + 1] = c[1];
-    buf[o + 2] = c[2];
+    const i = (y * S + x) * 3;
+    buf[i] = c[0]; buf[i + 1] = c[1]; buf[i + 2] = c[2];
   };
-
   const rect = (x, y, w, h, c) => {
     const x0 = Math.round(x), y0 = Math.round(y);
     const x1 = Math.round(x + w), y1 = Math.round(y + h);
     for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) put(xx, yy, c);
   };
 
-  // מיזוג צבע עם הרקע — מאפשר "קווים דקים" בהירים בלי ערוץ אלפא
-  const blend = (c, a) => [
-    Math.round(BLUE[0] + (c[0] - BLUE[0]) * a),
-    Math.round(BLUE[1] + (c[1] - BLUE[1]) * a),
-    Math.round(BLUE[2] + (c[2] - BLUE[2]) * a),
-  ];
+  /* ריבוע עם פינות מעוגלות — נבדק לפי מרחק מהמרכז של רבע המעגל */
+  const roundRect = (x, y, w, h, r, c) => {
+    const x0 = Math.round(x), y0 = Math.round(y);
+    const x1 = Math.round(x + w), y1 = Math.round(y + h);
+    for (let yy = y0; yy < y1; yy++) {
+      for (let xx = x0; xx < x1; xx++) {
+        // כמה רחוק הפיקסל מהפינה הקרובה אליו
+        const dx = Math.max(x0 + r - xx - 0.5, xx + 0.5 - (x1 - r), 0);
+        const dy = Math.max(y0 + r - yy - 0.5, yy + 0.5 - (y1 - r), 0);
+        if (dx * dx + dy * dy <= r * r) put(xx, yy, c);
+      }
+    }
+  };
 
   // רקע מלא, בלי פינות מעוגלות: iOS ממסך את האייקון בעצמו
-  rect(0, 0, S, S, BLUE);
+  rect(0, 0, S, S, GROUND);
 
-  const pad = S * 0.135;
-  const inner = S - pad * 2;
-  const cell = inner / 9;
-  const thin = Math.max(1, Math.round(S / 180));
-  const thick = Math.max(2, Math.round((S / 180) * 3));
-
-  // תאים מלאים — מצוירים לפני הקווים כדי שהרשת תישאר למעלה
-  const soft = blend(WHITE, 0.92);
-  FILLED.forEach(([cx, cy]) => {
-    const g = cell * 0.16;
-    rect(pad + cx * cell + g, pad + cy * cell + g, cell - g * 2, cell - g * 2, soft);
-  });
-
-  // קווים דקים (בין תאים) ואז עבים (בין תיבות ומסגרת)
-  for (let i = 0; i <= 9; i++) {
-    const isBox = i % 3 === 0;
-    const w = isBox ? thick : thin;
-    const c = isBox ? WHITE : blend(WHITE, 0.45);
-    const p = pad + i * cell - w / 2;
-    rect(p, pad - thick / 2, w, inner + thick, c);        // אנכי
-    rect(pad - thick / 2, p, inner + thick, w, c);        // אופקי
+  const L = layout(S);
+  for (const [cx, cy, color] of TILES) {
+    roundRect(
+      L.pad + cx * (L.tile + L.gap),
+      L.pad + cy * (L.tile + L.gap),
+      L.tile, L.tile, L.radius, color
+    );
   }
 
   return encodePNG(S, S, buf);
@@ -138,38 +154,30 @@ function render(S) {
 
 /* --------------------------------- SVG --------------------------------- */
 
-/** גרסת SVG של אותו עיצוב, לפאביקון ולמאניפסט. */
+/** אותו עיצוב בדיוק, לפאביקון ולמאניפסט. */
 function renderSVG() {
   const S = 512;
-  const pad = S * 0.135;
-  const inner = S - pad * 2;
-  const cell = inner / 9;
+  const L = layout(S);
   const r = (n) => +n.toFixed(2);
+  const hex = (c) => '#' + c.map((n) => n.toString(16).padStart(2, '0')).join('');
 
-  let out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${S}" width="${S}" height="${S}">\n`;
-  out += `  <rect width="${S}" height="${S}" fill="#4f6ef7"/>\n`;
+  const lines = [
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + S + ' ' + S +
+      '" width="' + S + '" height="' + S + '">',
+    '  <rect width="' + S + '" height="' + S + '" fill="' + hex(GROUND) + '"/>',
+  ];
 
-  out += '  <g fill="#ffffff" opacity=".92">\n';
-  FILLED.forEach(([cx, cy]) => {
-    const g = cell * 0.16;
-    out += `    <rect x="${r(pad + cx * cell + g)}" y="${r(pad + cy * cell + g)}" width="${r(cell - g * 2)}" height="${r(cell - g * 2)}" rx="${r(cell * 0.14)}"/>\n`;
-  });
-  out += '  </g>\n';
+  for (const [cx, cy, color] of TILES) {
+    lines.push(
+      '  <rect x="' + r(L.pad + cx * (L.tile + L.gap)) +
+      '" y="' + r(L.pad + cy * (L.tile + L.gap)) +
+      '" width="' + r(L.tile) + '" height="' + r(L.tile) +
+      '" rx="' + r(L.radius) + '" fill="' + hex(color) + '"/>'
+    );
+  }
 
-  const lines = (step, width, opacity) => {
-    let s = `  <g stroke="#ffffff" stroke-width="${width}" opacity="${opacity}">\n`;
-    for (let i = 0; i <= 9; i += 1) {
-      if (step === 3 ? i % 3 !== 0 : i % 3 === 0) continue;
-      const p = r(pad + i * cell);
-      s += `    <path d="M${p} ${r(pad)}V${r(pad + inner)}M${r(pad)} ${p}H${r(pad + inner)}"/>\n`;
-    }
-    return s + '  </g>\n';
-  };
-
-  out += lines(1, r(S / 180), '.45');
-  out += lines(3, r((S / 180) * 3), '1');
-  out += '</svg>\n';
-  return out;
+  lines.push('</svg>', '');
+  return lines.join('\n');
 }
 
 /* --------------------------------- main -------------------------------- */
