@@ -34,6 +34,9 @@
       <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
       </button>
+      <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
       <button type="button" class="icon-btn" id="btnHelp" aria-label="איך משחקים" title="איך משחקים">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
       </button>
@@ -136,6 +139,18 @@
   </div>
 </div>
 
+<!-- ==================== סטטיסטיקות ==================== -->
+<div class="modal" id="statsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <h2 class="modal-title" id="statsTitle">סטטיסטיקות</h2>
+    <div class="stats-table" id="statsTable"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="btnClearStats">איפוס נתונים</button>
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== איך משחקים ==================== -->
 <div class="modal" id="helpModal" hidden>
   <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
@@ -157,6 +172,13 @@
       </ul>
       <p>הקפיצה בשלוש שורות היא לא טעות. שווה לבנות לקראתה.</p>
       <p><b>המשחק נגמר</b> ברגע שאף אחד מהחלקים שנותרו אינו נכנס לשום מקום.</p>
+      <p><b>אפשר לשחק גם במקלדת:</b></p>
+      <ul>
+        <li><b>1</b>–<b>3</b> — בחירת חלק, <b>Q</b> — החלק הבא</li>
+        <li><b>חצים</b> — הזזת הסמן על הלוח</li>
+        <li><b>Enter</b> או <b>רווח</b> — הנחה</li>
+        <li><b>Esc</b> — ביטול</li>
+      </ul>
     </div>
     <div class="modal-actions">
       <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
@@ -186,6 +208,6 @@
 <script src="js/blockblast/engine.js?v=9ded3782"></script>
 <script src="js/blockblast/deal.js?v=55be3462"></script>
 <script src="js/blockblast/game.js?v=06d25d56"></script>
-<script src="js/blockblast/ui.js?v=9302b28a"></script>
+<script src="js/blockblast/ui.js?v=82ecfd4e"></script>
 </body>
 </html>

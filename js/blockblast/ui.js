@@ -96,6 +96,10 @@
     hapticsNote: $('#hapticsNote'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
+    statsModal: $('#statsModal'),
+    statsTable: $('#statsTable'),
+    btnStats: $('#btnStats'),
+    btnClearStats: $('#btnClearStats'),
     btnTheme: $('#btnTheme'),
     btnNew: $('#btnNew'),
     confirmModal: $('#confirmModal'),
@@ -281,7 +285,9 @@
     if (kb.active) paintCursor();
   }
 
-  const stats = () => store.read(STATS_KEY, { played: 0, best: 0, bestLines: 0 });
+  const stats = () => store.read(STATS_KEY, {
+    played: 0, best: 0, bestLines: 0, totalScore: 0, totalLines: 0,
+  });
   const bestScore = () => Math.max(stats().best || 0, state.game ? state.game.score : 0);
 
   /* --------------------------------------------------------------------- */
@@ -645,6 +651,9 @@
     const isBest = g.score > (s.best || 0);
     if (isBest) s.best = g.score;
     if (g.linesCleared > (s.bestLines || 0)) s.bestLines = g.linesCleared;
+    /* צבירה לצורך ממוצע — בלי זה "ממוצע" היה ניחוש */
+    s.totalScore = (s.totalScore || 0) + g.score;
+    s.totalLines = (s.totalLines || 0) + g.linesCleared;
     store.write(STATS_KEY, s);
 
     feel('reject');
@@ -690,6 +699,50 @@
   });
 
   el.btnHelp.addEventListener('click', () => openModal(el.helpModal));
+
+  /* --------------------------------------------------------------------- */
+  /* סטטיסטיקות                                                             */
+  /* --------------------------------------------------------------------- */
+
+  /*
+   * הנתונים נצברו כבר קודם אבל לא הוצגו בשום מקום חוץ ממסך הסיום — כלומר
+   * השיא היה נעלם מהעין ברגע שסוגרים אותו. שני המשחקים האחרים כבר מציגים
+   * מסך כזה, וזו הייתה הפער האחרון בהשוואה אליהם
+   */
+  function renderStats() {
+    const s = stats();
+    const avg = s.played ? Math.round((s.totalScore || 0) / s.played) : 0;
+    const avgLines = s.played ? Math.round((s.totalLines || 0) / s.played) : 0;
+
+    const rows = [
+      ['משחקים', String(s.played || 0)],
+      ['הניקוד הגבוה ביותר', String(s.best || 0)],
+      ['ניקוד ממוצע', s.played ? String(avg) : '—'],
+      ['הכי הרבה שורות במשחק', String(s.bestLines || 0)],
+      ['שורות בממוצע', s.played ? String(avgLines) : '—'],
+    ];
+
+    el.statsTable.innerHTML = rows
+      .map(([name, value]) =>
+        '<div class="stats-row"><span class="name">' + name +
+        '</span><span class="best">' + value + '</span></div>')
+      .join('');
+  }
+
+  el.btnStats.addEventListener('click', () => {
+    renderStats();
+    openModal(el.statsModal);
+  });
+
+  el.btnClearStats.addEventListener('click', () => {
+    askConfirm('לאפס את כל הסטטיסטיקות? אי אפשר לשחזר.', () => {
+      store.remove(STATS_KEY);
+      renderStats();
+      renderStatus();
+      toast('הנתונים אופסו');
+    });
+  });
+
 
   el.btnSettings.addEventListener('click', () => {
     el.settingsModal.querySelectorAll('[data-pref]').forEach((i) => {
