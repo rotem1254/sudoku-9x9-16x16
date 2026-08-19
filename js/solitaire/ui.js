@@ -547,13 +547,176 @@
     pressStart = null;
   }
 
+  /* -------------------------- גרירה בעכבר ---------------------------- */
+
+  /*
+   * גרירה **לעכבר ולעט בלבד**, ולא למגע. זו לא עצלנות אלא אותה הכרעה
+   * שהובילה מלכתחילה להקשה: על מסך מגע קטן הגרירה פחות מדויקת, מתנגשת
+   * עם גלילת הדף, והאצבע מכסה את הקלף. עם עכבר אין אף אחת מהבעיות האלה,
+   * והגרירה היא מה שכל שחקן סוליטר מצפה לו.
+   *
+   * ההקשה נשארת בדיוק כפי שהיא — גרירה שלא עברה את הסף מסתיימת בלחיצה
+   * רגילה, ולכן שתי הדרכים חיות זו לצד זו בלי שאף אחת מהן משתנה.
+   */
+  const DRAG_MIN = 6;
+  let drag = null;
+  let dragCandidate = null;
+
+  const isPreciseInput = (e) => e.pointerType === 'mouse' || e.pointerType === 'pen';
+
+  /*
+   * rect נלכד ב-pointerdown ולא כאן, ובכוונה: לפני תחילת הגרירה מתבצע
+   * ציור מחדש שמוחק את אלמנט הקלף, ומדידה שלו אחריו מחזירה אפסים —
+   * הרוח קפצה לפינה השמאלית העליונה. נמדד: סטייה של 380 פיקסלים
+   */
+  function beginDrag(cardEl, loc, cards, x, y, rect, grab) {
+    const step = Math.round(rect.width * (offsetUp / 100));
+
+    const ghost = document.createElement('div');
+    ghost.className = 'drag-stack';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = ((cards.length - 1) * step + rect.height) + 'px';
+
+    /* הרצף כולו נגרר, ולכן הוא גם מוצג כולו */
+    cards.forEach((card, i) => {
+      const node = makeCardEl(card, true);
+      node.style.top = (i * step) + 'px';
+      node.style.height = rect.height + 'px';
+      ghost.appendChild(node);
+    });
+
+    document.body.appendChild(ghost);
+
+    drag = {
+      loc: loc,
+      cards: cards,
+      ghost: ghost,
+      cardEl: cardEl,
+      grabX: grab.x,
+      grabY: grab.y,
+      moved: false,
+    };
+
+    // הקלפים שנגררים דוהים במקומם, כדי שיהיה ברור מה עף ומה נשאר
+    liftDragged(true);
+    moveDrag(x, y);
+  }
+
+  /*
+   * מאתרים לפי ערך הקלף ולא לפי הפניה לאלמנט: הציור מחדש מחליף את כל
+   * הצמתים, וההפניה שנשמרה בתחילת הגרירה כבר אינה מחוברת ל-DOM
+   */
+  function liftDragged(on) {
+    if (!drag) return;
+    for (const node of el.board.querySelectorAll('.card')) {
+      if (drag.cards.indexOf(Number(node.dataset.card)) >= 0) {
+        node.classList.toggle('is-lifted', on);
+      }
+    }
+  }
+
+  /** האלמנט החי של קלף נתון, גם אחרי ציור מחדש. */
+  const liveCard = (card) =>
+    el.board.querySelector('.card[data-card="' + card + '"]');
+
+  function moveDrag(x, y) {
+    if (!drag) return;
+    drag.ghost.style.left = (x - drag.grabX) + 'px';
+    drag.ghost.style.top = (y - drag.grabY) + 'px';
+
+    document.querySelectorAll('.pile.is-over').forEach((n) => n.classList.remove('is-over'));
+    const pile = pileUnder(x, y);
+    if (pile) pile.classList.add('is-over');
+  }
+
+  /** הערימה שמתחת לנקודה. הרוח הנגררת שקופה לאירועים ולכן אינה מפריעה. */
+  function pileUnder(x, y) {
+    const node = document.elementFromPoint(x, y);
+    if (!node || !node.closest) return null;
+    const pile = node.closest('.pile');
+    if (!pile) return null;
+    const zone = pile.dataset.zone;
+    return zone === 'tableau' || zone === 'foundation' ? pile : null;
+  }
+
+  /** מסמן את היעדים החוקיים לרצף שנגרר. */
+  function markDragTargets(on) {
+    document.querySelectorAll('.pile.is-target').forEach((n) => n.classList.remove('is-target'));
+    if (!on || !drag || !state.prefs.showTargets) return;
+
+    const g = state.game;
+    const cards = drag.cards;
+
+    if (cards.length === 1) {
+      const f = g.foundationFor(cards[0]);
+      if (g.canPlaceOnFoundation(cards[0], f)) {
+        const node = document.querySelector('.pile.foundation[data-pile="' + f + '"]');
+        if (node) node.classList.add('is-target');
+      }
+    }
+    for (let i = 0; i < Solitaire.TABLEAU_COUNT; i++) {
+      if (drag.loc.zone === 'tableau' && drag.loc.pile === i) continue;
+      if (g.canPlaceOnTableau(cards[0], i)) el.tableau.children[i].classList.add('is-target');
+    }
+  }
+
+  function endDrag(x, y) {
+    if (!drag) return;
+    const d = drag;
+
+    markDragTargets(false);
+    liftDragged(false);
+    drag = null;
+
+    d.ghost.remove();
+    document.querySelectorAll('.pile.is-over').forEach((n) => n.classList.remove('is-over'));
+
+    if (!d.moved) return; // לא זזה — ה-click יטפל בזה כרגיל
+
+    suppressClick = true; // גרירה אינה הקשה
+    const pile = pileUnder(x, y);
+    if (!pile) { render(); return; }
+
+    const res = doMove(d.loc, { zone: pile.dataset.zone, pile: Number(pile.dataset.pile) });
+    if (!res.ok) {
+      rejectAnimation(liveCard(d.cards[0]));
+      render();
+    }
+  }
+
   el.board.addEventListener('pointerdown', (e) => {
     const g = state.game;
     if (!g || state.paused || g.finished) return;
-    if (!state.prefs.tapToMove) return; // במצב הישן ההקשה כבר בוחרת
+
+    /*
+     * דגל ההשתקה נאפס בתחילת כל אינטראקציה חדשה. הוא נועד לבלוע את
+     * ה-click שהדפדפן שולח מיד אחרי גרירה, אבל כשה-click הזה לא הגיע
+     * (למשל כשהשחרור היה מעל אלמנט אחר) הוא נשאר דלוק — ובלע את
+     * ההקשה *הבאה*, האמיתית. נמדד: אחרי גרירה מוצלחת הלחיצה הבאה על
+     * החפיסה לא עשתה כלום
+     */
+    suppressClick = false;
 
     const cardEl = e.target.closest('.card');
     if (!cardEl || cardEl.classList.contains('is-dead')) return;
+
+    /* מועמד לגרירה. היא תתחיל רק אחרי תזוזה, ולכן אינה גוזלת את ההקשה */
+    if (isPreciseInput(e) && e.button === 0) {
+      const loc = locOf(cardEl);
+      const cards = loc && g._takeableCards(loc);
+      if (cards && cards.length) {
+        const rect = cardEl.getBoundingClientRect();
+        dragCandidate = {
+          cardEl: cardEl, loc: loc, cards: cards,
+          x: e.clientX, y: e.clientY,
+          rect: rect,
+          // איפה בדיוק נתפס הקלף — כך הוא "נדבק" לסמן במקום שנתפס
+          grab: { x: e.clientX - rect.left, y: e.clientY - rect.top },
+        };
+      }
+    }
+
+    if (!state.prefs.tapToMove) return; // במצב הישן ההקשה כבר בוחרת
 
     pressStart = { x: e.clientX, y: e.clientY };
     pressTimer = setTimeout(() => {
@@ -567,7 +730,33 @@
     }, LONG_PRESS_MS);
   });
 
-  el.board.addEventListener('pointermove', (e) => {
+  /*
+   * המאזינים על החלון ולא על הלוח: הגרירה יוצאת מגבולות הקלף ולעיתים
+   * מהלוח כולו, ומאזין על הלוח היה מאבד אותה באוויר
+   */
+  window.addEventListener('pointermove', (e) => {
+    if (drag) {
+      moveDrag(e.clientX, e.clientY);
+      if (e.cancelable) e.preventDefault();
+      return;
+    }
+
+    if (dragCandidate) {
+      const dx = Math.abs(e.clientX - dragCandidate.x);
+      const dy = Math.abs(e.clientY - dragCandidate.y);
+      if (dx > DRAG_MIN || dy > DRAG_MIN) {
+        const c = dragCandidate;
+        dragCandidate = null;
+        cancelPress();
+        clearSelection();
+        render();
+        beginDrag(c.cardEl, c.loc, c.cards, e.clientX, e.clientY, c.rect, c.grab);
+        drag.moved = true;
+        markDragTargets(true);
+        return;
+      }
+    }
+
     // גלילה או תזוזה מבטלות את הלחיצה הארוכה
     if (!pressStart) return;
     if (Math.abs(e.clientX - pressStart.x) > 10 || Math.abs(e.clientY - pressStart.y) > 10) {
@@ -575,8 +764,17 @@
     }
   });
 
-  el.board.addEventListener('pointerup', cancelPress);
-  el.board.addEventListener('pointercancel', cancelPress);
+  window.addEventListener('pointerup', (e) => {
+    dragCandidate = null;
+    if (drag) endDrag(e.clientX, e.clientY);
+    cancelPress();
+  });
+
+  window.addEventListener('pointercancel', () => {
+    dragCandidate = null;
+    if (drag) endDrag(-1, -1);
+    cancelPress();
+  });
 
   el.board.addEventListener('click', (e) => {
     const g = state.game;
