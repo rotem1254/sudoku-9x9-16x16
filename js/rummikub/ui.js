@@ -148,6 +148,10 @@
     hapticsNote: $('#hapticsNote'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
+    statsModal: $('#statsModal'),
+    statsTable: $('#statsTable'),
+    btnStats: $('#btnStats'),
+    btnClearStats: $('#btnClearStats'),
     confirmModal: $('#confirmModal'),
     confirmText: $('#confirmText'),
     btnConfirmOk: $('#btnConfirmOk'),
@@ -1465,10 +1469,20 @@
     const scores = g.finalScores();
     const iWon = g.winner === 0;
 
-    const stats = store.read(STATS_KEY, { played: 0, won: 0, best: 0 });
+    const stats = readStats();
     stats.played += 1;
     if (iWon) stats.won += 1;
     if (scores[0] > (stats.best || 0)) stats.best = scores[0];
+
+    /*
+     * צבירה לצורך ממוצע, ורצף הניצחונות הנוכחי. בלי הצבירה "ממוצע" היה
+     * ניחוש, ובלי הרצף אין שום מדד שמתאפס — וזה מה שגורם למשחק הבא
+     * להיות מעניין
+     */
+    stats.totalScore = (stats.totalScore || 0) + scores[0];
+    stats.streak = iWon ? (stats.streak || 0) + 1 : 0;
+    if ((stats.streak || 0) > (stats.bestStreak || 0)) stats.bestStreak = stats.streak;
+
     store.write(STATS_KEY, stats);
 
     el.overTitle.textContent = iWon ? 'ניצחת!' : 'המשחק נגמר';
@@ -1608,6 +1622,49 @@
   });
 
   el.btnHelp.addEventListener('click', () => openModal(el.helpModal));
+
+  /* --------------------------------------------------------------------- */
+  /* סטטיסטיקות                                                             */
+  /* --------------------------------------------------------------------- */
+
+  const readStats = () => store.read(STATS_KEY, {
+    played: 0, won: 0, best: 0, totalScore: 0, streak: 0, bestStreak: 0,
+  });
+
+  function renderStats() {
+    const s = readStats();
+    const rate = s.played ? Math.round((s.won / s.played) * 100) : 0;
+    const avg = s.played ? Math.round((s.totalScore || 0) / s.played) : 0;
+
+    const rows = [
+      ['משחקים', String(s.played || 0)],
+      ['ניצחונות', s.played ? s.won + ' (' + rate + '%)' : '0'],
+      ['הניקוד הגבוה ביותר', String(s.best || 0)],
+      ['ניקוד ממוצע', s.played ? String(avg) : '—'],
+      ['רצף ניצחונות נוכחי', String(s.streak || 0)],
+      ['הרצף הארוך ביותר', String(s.bestStreak || 0)],
+    ];
+
+    el.statsTable.innerHTML = rows
+      .map(([name, value]) =>
+        '<div class="stats-row"><span class="name">' + name +
+        '</span><span class="best">' + value + '</span></div>')
+      .join('');
+  }
+
+  el.btnStats.addEventListener('click', () => {
+    renderStats();
+    openModal(el.statsModal);
+  });
+
+  el.btnClearStats.addEventListener('click', () => {
+    confirmAction('לאפס את כל הסטטיסטיקות? אי אפשר לשחזר.', () => {
+      store.remove(STATS_KEY);
+      renderStats();
+      toast('הנתונים אופסו');
+    });
+  });
+
 
   el.btnLog.addEventListener('click', () => {
     logUnread = 0;
