@@ -18,34 +18,46 @@
 /* ------------------------------ צבעי המשחק ------------------------------ */
 
 :root {
-  --bb-empty: #e6e8ee;      /* תא פנוי */
+  --bb-panel: #cfd6ea;      /* פאנל הלוח שמאחורי התאים */
+  --bb-empty: #eef1f8;      /* תא פנוי (באר שקועה) */
   --bb-empty-line: #d9dce4; /* קו הפרדה עדין בין תאים */
-  --bb-filled: #4b5568;     /* תא תפוס */
-  --bb-ghost: #b9c6ea;      /* סימון המקום שאליו החלק ייפול */
-  --bb-bad: #e7b6b8;        /* מקום שאינו חוקי */
+  --bb-filled: #4b5568;     /* תא תפוס — ברירת מחדל אם אין צבע */
+  --bb-ghost: #93a7e6;      /* סימון המקום שאליו החלק ייפול */
+  --bb-bad: #e79295;        /* מקום שאינו חוקי */
   --bb-flash: #ffffff;      /* הבזק לפני שהשורה נעלמת */
 
-  /* צבעי החלקים — נבחרים לפי גודל, כך שהעין לומדת "גדול = מסוכן" */
-  --bb-p1: #6f7688;
-  --bb-p2: #3d8f7a;
-  --bb-p3: #2f6bff;
-  --bb-p4: #b8791d;
-  --bb-p5: #c0452f;
+  /*
+   * צבעי החלקים — פלטה חיה בסגנון המשחק המקורי. כל צורה מקבלת צבע קבוע
+   * משלה (ראו pieceColor ב-ui.js), כך שהמגש נראה כמו קשת ולא כמו גוון אחד.
+   * הברק והתלת-מימד נבנים ב-CSS מעל הצבע הזה, ולכן הצבע כאן שטוח בכוונה.
+   */
+  --bb-p1: #4d7cfe;   /* כחול   */
+  --bb-p2: #2ec27e;   /* ירוק   */
+  --bb-p3: #ff9f1c;   /* כתום   */
+  --bb-p4: #ff5a5f;   /* אדום   */
+  --bb-p5: #9b5de5;   /* סגול   */
+  --bb-p6: #22c3e6;   /* טורקיז */
+  --bb-p7: #f4c430;   /* צהוב   */
+  --bb-p8: #ff6bcb;   /* ורוד   */
 }
 
 :root[data-theme="dark"] {
-  --bb-empty: #1e222b;
-  --bb-empty-line: #262b36;
+  --bb-panel: #191d26;
+  --bb-empty: #232833;
+  --bb-empty-line: #2b313d;
   --bb-filled: #7d879e;
-  --bb-ghost: #3c4a70;
-  --bb-bad: #4d2b2e;
+  --bb-ghost: #43508a;
+  --bb-bad: #5a2f32;
   --bb-flash: #ffffff;
 
-  --bb-p1: #8189a0;
-  --bb-p2: #4aa88f;
-  --bb-p3: #5b87ff;
-  --bb-p4: #cf9134;
-  --bb-p5: #d95b43;
+  --bb-p1: #5b87ff;
+  --bb-p2: #35cf88;
+  --bb-p3: #ffab3d;
+  --bb-p4: #ff6b70;
+  --bb-p5: #ab72ee;
+  --bb-p6: #37cfef;
+  --bb-p7: #f6cf4c;
+  --bb-p8: #ff81d3;
 }
 
 /* -------------------------------- פריסה --------------------------------- */
@@ -61,45 +73,79 @@
 /* --------------------------------- הלוח --------------------------------- */
 
 .board {
-  --gap: 3px;
+  --gap: 5px;
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: var(--gap);
   width: 100%;
   max-width: 420px;
-  padding: var(--gap);
-  border-radius: 10px;
-  background: var(--bb-empty-line);
+  padding: calc(var(--gap) + 2px);
+  border-radius: 16px;
+  /* פאנל עם עומק עדין — הלוח יושב על משטח ולא צף בריק */
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, .10), rgba(0, 0, 0, .10)),
+    var(--bb-panel);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, .14),
+    0 6px 18px rgba(0, 0, 0, .12);
   /* הגרירה מטופלת בקוד, ובלי זה הדפדפן גולל את הדף באמצע מהלך */
   touch-action: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
+/* תא פנוי — "באר" שקועה קלה */
 .cell {
   aspect-ratio: 1;
-  border-radius: 4px;
+  border-radius: 22%;
   background: var(--bb-empty);
-  transition: background-color .12s var(--ease);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .10);
+  transition: background-color .12s var(--ease), box-shadow .12s var(--ease);
 }
 
-/* תא תפוס — הצבע מגיע מהחלק שהניח אותו */
-.cell.is-on { background: var(--fill, var(--bb-filled)); }
+/*
+ * תא תפוס — בלוק תלת-מימדי מבריק. הצבע (var(--fill)) מגיע מהחלק שהניח
+ * אותו, והברק והבָּלֶט נבנים כאן מעליו כך שכל צבע מקבל את אותו מראה:
+ *   - שכבת גרדיאנט: אור למעלה, צל למטה (הברק)
+ *   - inset box-shadow: קצה עליון בהיר וקצה תחתון כהה (העומק)
+ *   - צל חיצוני קטן שמנתק את הבלוק מהתא
+ */
+.cell.is-on {
+  background-color: var(--fill, var(--bb-filled));
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, .34) 0%,
+    rgba(255, 255, 255, .06) 42%,
+    rgba(0, 0, 0, .16) 100%
+  );
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .45),
+    inset 0 -3px 0 rgba(0, 0, 0, .22),
+    inset 2px 0 0 rgba(255, 255, 255, .12),
+    inset -2px 0 0 rgba(0, 0, 0, .14),
+    0 2px 3px rgba(0, 0, 0, .18);
+}
 
-/* סימון המקום בזמן גרירה */
-.cell.is-ghost { background: var(--bb-ghost); }
-.cell.is-bad { background: var(--bb-bad); }
+/* סימון המקום בזמן גרירה — תצוגה מקדימה שקופה-למחצה */
+.cell.is-ghost {
+  background: var(--bb-ghost);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .30);
+}
+.cell.is-bad {
+  background: var(--bb-bad);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25);
+}
 
 /*
  * הבזק לפני שהשורה נעלמת. בלי זה שורה פשוט "קופצת" לריק ואי אפשר לראות
  * מה בדיוק נוקה — וזו הפעולה הכי חשובה במשחק
  */
-.cell.is-clearing { animation: bbClear .26s var(--ease) forwards; }
+.cell.is-clearing { animation: bbClear .3s var(--ease) forwards; }
 
 @keyframes bbClear {
-  0%   { background: var(--fill, var(--bb-filled)); transform: scale(1); }
-  38%  { background: var(--bb-flash); transform: scale(1.12); }
-  100% { background: var(--bb-empty); transform: scale(1); }
+  0%   { background: var(--fill, var(--bb-filled)); box-shadow: none; transform: scale(1); }
+  35%  { background: var(--bb-flash); transform: scale(1.16); }
+  100% { background: var(--bb-empty); box-shadow: inset 0 1px 2px rgba(0, 0, 0, .10); transform: scale(1); }
 }
 
 /* --------------------------------- המגש --------------------------------- */
@@ -142,9 +188,21 @@
   display: block;
   width: var(--pc, 15px);
   height: var(--pc, 15px);
-  border-radius: 3px;
+  border-radius: 22%;
 }
-.piece i.on { background: var(--fill); }
+.piece i.on {
+  background-color: var(--fill);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, .34) 0%,
+    rgba(255, 255, 255, .06) 42%,
+    rgba(0, 0, 0, .16) 100%
+  );
+  box-shadow:
+    inset 0 1.5px 0 rgba(255, 255, 255, .45),
+    inset 0 -2px 0 rgba(0, 0, 0, .22),
+    0 1px 2px rgba(0, 0, 0, .16);
+}
 .piece i.off { background: transparent; }
 
 .slot.is-dragging .piece { opacity: .22; }
@@ -173,8 +231,20 @@
   transform: translate(-50%, -50%);
   filter: drop-shadow(0 6px 14px rgba(0, 0, 0, .34));
 }
-.drag-piece i { display: block; border-radius: 4px; }
-.drag-piece i.on { background: var(--fill); }
+.drag-piece i { display: block; border-radius: 22%; }
+.drag-piece i.on {
+  background-color: var(--fill);
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, .34) 0%,
+    rgba(255, 255, 255, .06) 42%,
+    rgba(0, 0, 0, .16) 100%
+  );
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, .45),
+    inset 0 -3px 0 rgba(0, 0, 0, .22),
+    0 2px 3px rgba(0, 0, 0, .18);
+}
 .drag-piece i.off { background: transparent; }
 
 /* -------------------------------- קומבו --------------------------------- */
