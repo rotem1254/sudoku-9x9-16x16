@@ -60,26 +60,32 @@
  * 6 ל-9 כשמסתכלים מהצד השני של השולחן.
  */
 .tile {
-  --tile-w: 36px;
+  --tile-w: 42px;
   position: relative;
   flex: 0 0 auto;
   width: var(--tile-w);
-  height: calc(var(--tile-w) * 1.4);
-  border-radius: calc(var(--tile-w) * 0.17);
+  height: calc(var(--tile-w) * 1.42);
+  border-radius: calc(var(--tile-w) * 0.2);
+  /*
+   * פני האבן: ברק עדין בפינה השמאלית-עליונה, גוף שנהב, ושוליים תחתונים
+   * מעט כהים — כמו פיסת פלסטיק עבה באפליקציה האמיתית.
+   */
   background:
-    linear-gradient(168deg, #fffdf6 0%, var(--tile-face) 46%, #eadfc7 100%);
+    radial-gradient(120% 80% at 28% 18%, rgba(255, 255, 255, .9), transparent 46%),
+    linear-gradient(168deg, #fffdf6 0%, var(--tile-face) 48%, #e7dcc2 100%);
   box-shadow:
-    inset 0 1.5px 0 rgba(255, 255, 255, .95),
-    inset 1.5px 0 0 rgba(255, 255, 255, .55),
-    inset -1.5px 0 0 rgba(0, 0, 0, .1),
-    inset 0 -2.5px 0 rgba(0, 0, 0, .16),
-    0 2px 3px var(--tile-shadow);
+    inset 0 2px 0 rgba(255, 255, 255, .95),
+    inset 2px 0 0 rgba(255, 255, 255, .6),
+    inset -2px 0 0 rgba(0, 0, 0, .12),
+    inset 0 -3.5px 0 rgba(0, 0, 0, .2),
+    inset 0 -6px 5px rgba(0, 0, 0, .08),
+    0 3px 5px var(--tile-shadow);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--tile-w) * 0.06);
-  font-size: calc(var(--tile-w) * 0.62);
+  gap: calc(var(--tile-w) * 0.07);
+  font-size: calc(var(--tile-w) * 0.66);
   font-weight: 800;
   line-height: .9;
   letter-spacing: -.03em;
@@ -90,14 +96,14 @@
   transition: transform .13s var(--ease), box-shadow .13s;
 }
 
-/* העיגול הקטן מתחת למספר */
+/* העיגול הקטן מתחת למספר — בולט יותר, בצבע המספר, כמו במשחק האמיתי */
 .tile::after {
   content: "";
-  width: calc(var(--tile-w) * 0.15);
-  height: calc(var(--tile-w) * 0.15);
+  width: calc(var(--tile-w) * 0.18);
+  height: calc(var(--tile-w) * 0.18);
   border-radius: 50%;
   background: currentColor;
-  opacity: .5;
+  opacity: .65;
 }
 .tile.is-joker::after { display: none; }
 
@@ -405,7 +411,7 @@
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 3px;
-  min-height: calc(36px * 1.4 + 12px);
+  min-height: calc(42px * 1.42 + 12px);
   padding: 6px 5px;
   border-radius: 9px;
   background: linear-gradient(180deg, rgba(0, 0, 0, .34), rgba(0, 0, 0, .16));
@@ -575,9 +581,14 @@
 /* --------------------------- התאמות רספונסיביות ------------------------- */
 
 @media (max-width: 430px) {
-  .tile { --tile-w: 33px; }
-  .rack { min-height: calc(33px * 1.4 + 12px); }
+  .tile { --tile-w: 39px; }
+  .rack { min-height: calc(39px * 1.42 + 12px); }
   .table-scroll { max-height: 38vh; }
+}
+
+@media (max-width: 360px) {
+  .tile { --tile-w: 35px; }
+  .rack { min-height: calc(35px * 1.42 + 12px); }
 }
 
 @media (max-height: 720px) {
@@ -586,8 +597,8 @@
 }
 
 @media (min-width: 620px) {
-  .tile { --tile-w: 44px; }
-  .rack { min-height: calc(44px * 1.4 + 12px); }
+  .tile { --tile-w: 52px; }
+  .rack { min-height: calc(52px * 1.42 + 12px); }
 }
 
 /* ------------------------------ מקלדת ----------------------------------- */
@@ -619,7 +630,7 @@
 
   .rack-wrap { padding: 6px 8px; }
   .rack { max-height: 26vh; overflow-y: auto; }
-  .tile { --tile-w: 30px; }
+  .tile { --tile-w: 34px; }
 
   .rk-actions .tool span { display: none; }
   .rk-actions .tool { min-height: 38px; }
