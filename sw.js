@@ -18,17 +18,19 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = '1557f04e';
+const VERSION = '97c34f22';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
 const PRECACHE = [
   './',
+  '2048.html',
   'blockblast.html',
   'index.html',
   'rummikub.html',
   'solitaire.html',
   'sudoku.html',
+  'css/2048.css',
   'css/blockblast.css',
   'css/hub.css',
   'css/rummikub.css',
@@ -39,6 +41,8 @@ const PRECACHE = [
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
   'icons/icon-512.png',
+  'js/2048/engine.js',
+  'js/2048/ui.js',
   'js/announce.js',
   'js/blockblast/deal.js',
   'js/blockblast/engine.js',

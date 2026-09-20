@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=e8da7068">
-  <link rel="stylesheet" href="css/hub.css?v=2428f78f">
+  <link rel="stylesheet" href="css/hub.css?v=e6464f8b">
 </head>
 <body>
 
@@ -115,6 +115,26 @@
         <div class="game-tags">
           <span class="tag">106 אבנים</span>
           <span class="tag" id="tagRummikub">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
+    <!-- ==================== 2048 ==================== -->
+    <a class="game-card" href="2048.html">
+      <div class="game-art game-art-2048" aria-hidden="true">
+        <span class="mini-2048">
+          <i class="m2 m2-a">2</i>
+          <i class="m2 m2-b">4</i>
+          <i class="m2 m2-c">8</i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">2048</h2>
+        <p class="game-desc">מחליקים אריחים, ממזגים זוגות ומטפסים ל-2048. החלקה במגע או בחצים.</p>
+        <div class="game-tags">
+          <span class="tag">4×4</span>
+          <span class="tag" id="tag2048">—</span>
         </div>
       </div>
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
@@ -223,6 +243,21 @@
       tagB.textContent = 'שיא · ' + bbStats.best;
     } else {
       tagB.textContent = 'חדש';
+    }
+  }
+
+  var g2 = read('g2048.v1.save', null);
+  var g2Stats = read('g2048.v1.stats', null);
+  var tag2 = document.getElementById('tag2048');
+  if (tag2) {
+    if (g2 && Array.isArray(g2.grid) && g2.moves > 0 &&
+        g2.grid.filter(Boolean).length < g2.grid.length) {
+      tag2.textContent = 'ממשיכים · ' + g2.score + ' נק׳';
+      tag2.classList.add('is-live');
+    } else if (g2Stats && g2Stats.best) {
+      tag2.textContent = 'שיא · ' + g2Stats.best;
+    } else {
+      tag2.textContent = 'חדש';
     }
   }
 

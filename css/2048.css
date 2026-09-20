@@ -1,0 +1,171 @@
+/* =============================================================================
+ * 2048.css — 2048
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css.
+ *
+ * הלוח מוגדר LTR (ראו ה-HTML): הדף כולו RTL, אבל אריחים מוצבים לפי
+ * offsetLeft של תאי הרקע, וההחלקה חייבת ללכת שמאל=עמודה 0 כמו בלוגיקה.
+ *
+ * צבעי האריחים הם הפלטה הקלאסית של המשחק, ולכן הם זהים באור ובחושך —
+ * רק פאנל הלוח והתאים הריקים מתאימים את עצמם לערכת הנושא.
+ * =========================================================================== */
+
+/* ------------------------------ צבעי המשחק ------------------------------ */
+
+:root {
+  --g2-panel: #bbada0;        /* פאנל הלוח */
+  --g2-empty: rgba(238, 228, 218, .45); /* תא ריק */
+  --g2-text-dark: #776e65;    /* טקסט על אריחים בהירים (2, 4) */
+  --g2-text-light: #f9f6f2;   /* טקסט על אריחים כהים */
+}
+
+:root[data-theme="dark"] {
+  --g2-panel: #2b2723;
+  --g2-empty: rgba(255, 255, 255, .06);
+}
+
+/* -------------------------------- פריסה --------------------------------- */
+
+.g2-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* --------------------------------- הלוח --------------------------------- */
+
+.board {
+  --gap: 10px;
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 1;
+  padding: var(--gap);
+  border-radius: 12px;
+  background: var(--g2-panel);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .16);
+  /* ההחלקה מטופלת בקוד, ובלי זה המגע גולל את הדף באמצע מהלך */
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* רשת תאי הרקע — 16 בארות ריקות, מתחת לשכבת האריחים */
+.grid-bg {
+  position: absolute;
+  inset: var(--gap);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: var(--gap);
+}
+.grid-bg .cell {
+  border-radius: 8px;
+  background: var(--g2-empty);
+}
+
+/* שכבת האריחים — כל אריח ממוקם אבסולוטית לפי תא הרקע */
+.tiles {
+  position: absolute;
+  inset: var(--gap);
+  pointer-events: none;
+}
+
+/* ------------------------------- אריח ---------------------------------- */
+
+.tile {
+  position: absolute;
+  top: 0;
+  right: auto;
+  left: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--g2-text-light);
+  background: #cdc1b4;
+  /* translate מגיע מה-JS (מיקום התא). הזזה מונפשת, הופעה/מיזוג מונפשים */
+  transition: transform .1s ease-in-out;
+  will-change: transform;
+}
+
+/* מונע הבהוב בטעינה ובשינוי גודל — מיקום בלי אנימציה */
+.board.no-anim .tile { transition: none; }
+
+/* צבעי הערכים — הפלטה הקלאסית */
+.tile[data-val="2"]    { background: #eee4da; color: var(--g2-text-dark); }
+.tile[data-val="4"]    { background: #ede0c8; color: var(--g2-text-dark); }
+.tile[data-val="8"]    { background: #f2b179; }
+.tile[data-val="16"]   { background: #f59563; }
+.tile[data-val="32"]   { background: #f67c5f; }
+.tile[data-val="64"]   { background: #f65e3b; }
+.tile[data-val="128"]  { background: #edcf72; }
+.tile[data-val="256"]  { background: #edcc61; }
+.tile[data-val="512"]  { background: #edc850; }
+.tile[data-val="1024"] { background: #edc53f; }
+.tile[data-val="2048"] { background: #edc22e; }
+/* מעבר ל-2048 — גוון כהה אחיד */
+.tile.is-super { background: #3c3a32; }
+
+/* אריחים גבוהים זוהרים מעט, כמו במקור */
+.tile[data-val="128"],
+.tile[data-val="256"],
+.tile[data-val="512"] { box-shadow: 0 0 16px rgba(243, 215, 116, .35); }
+.tile[data-val="1024"],
+.tile[data-val="2048"] { box-shadow: 0 0 22px rgba(237, 194, 46, .55); }
+
+/* הופעת אריח חדש */
+.tile.is-new { animation: g2Appear .16s ease-in-out; }
+@keyframes g2Appear {
+  0% { transform: translate(var(--tx), var(--ty)) scale(0); }
+  100% { transform: translate(var(--tx), var(--ty)) scale(1); }
+}
+
+/* קפיצת מיזוג — האריח שנוצר מזוג "פועם" */
+.tile.is-merged { animation: g2Pop .16s ease-in-out; }
+@keyframes g2Pop {
+  0% { transform: translate(var(--tx), var(--ty)) scale(1); }
+  50% { transform: translate(var(--tx), var(--ty)) scale(1.18); }
+  100% { transform: translate(var(--tx), var(--ty)) scale(1); }
+}
+
+/* ------------------------- ניקוד עולה על המסך --------------------------- */
+
+/* התוספת עפה מעל הניקוד — אחרת לא ברור כמה המהלך זיכה */
+.gain {
+  position: fixed;
+  z-index: 55;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent);
+  text-shadow: 0 1px 2px var(--bg);
+  animation: g2Gain .8s var(--ease) forwards;
+}
+@keyframes g2Gain {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.8); }
+  22%  { opacity: 1; transform: translate(-50%, -14px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -46px) scale(1); }
+}
+
+/* ------------------------------ עזרה / רמז ------------------------------ */
+
+.g2-hint { margin: 0; font-size: .78rem; color: var(--muted); }
+
+.modal-wide { max-width: 440px; }
+.help-body { text-align: start; font-size: .82rem; line-height: 1.6; color: var(--text-2); }
+.help-body p { margin: 0 0 9px; }
+.help-body ul { margin: 0 0 9px; padding-inline-start: 18px; }
+.help-body li { margin-bottom: 3px; }
+.help-body b { color: var(--text); }
+
+/* --------------------------- התאמות תנועה ------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .tile { transition: none; }
+  .tile.is-new, .tile.is-merged { animation: none; }
+  .gain { animation-duration: .4s; }
+}

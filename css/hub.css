@@ -204,3 +204,24 @@
 .mb-3 { grid-area: 3 / 1; background: #fff; }
 .mb-4 { grid-area: 3 / 2; background: #fff; }
 .mb-5 { grid-area: 1 / 3; }
+
+/* --- 2048: שלושה אריחים מטפסים בצבעי המשחק --- */
+.game-art-2048 { background: #edc22e; }
+
+.mini-2048 { position: relative; width: 52px; height: 44px; }
+.m2 {
+  position: absolute;
+  top: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  font-size: .82rem;
+  font-style: normal;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .28);
+}
+.m2-a { inset-inline-start: 0;  top: 12px; background: #eee4da; color: #776e65; transform: rotate(-6deg); }
+.m2-b { inset-inline-start: 15px; background: #f2b179; color: #f9f6f2; z-index: 2; }
+.m2-c { inset-inline-start: 30px; top: 12px; background: #f65e3b; color: #f9f6f2; transform: rotate(6deg); }

@@ -23,10 +23,15 @@ if (!fs.existsSync(HOOKS)) {
   process.exit(1);
 }
 
+/*
+ * מוסיפים מחדש את *כל* דפי ה-HTML ואת sw.js. רשימה קשיחה כבר פספסה דפים
+ * חדשים (blockblast, rummikub, 2048) והשאירה את ה-?v= שלהם לא מסונכרן —
+ * בדיוק סוג התחזוקה שה-hook הזה נועד לבטל. '*.html' מכסה כל דף עתידי.
+ */
 const hook = `#!/bin/sh
 # נוצר ע"י tools/install-hooks.js — מסנכרן את ?v= לתוכן הקבצים
 node tools/bump-version.js || exit 1
-git add index.html sudoku.html solitaire.html sw.js
+git add *.html sw.js
 `;
 
 const target = path.join(HOOKS, 'pre-commit');

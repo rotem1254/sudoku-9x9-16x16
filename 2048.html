@@ -5,17 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="בלוק בלאסט בדפדפן — לוח 8×8, שלושה חלקים בכל סבב, ניקוי שורות וקומבו. מותאם לטלפון.">
+  <meta name="description" content="2048 בדפדפן — מחליקים אריחים, ממזגים זוגות ומגיעים ל-2048. מקלדת והחלקה, מותאם לטלפון.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="בלוק בלאסט">
-  <title>בלוק בלאסט · מרכז המשחקים</title>
+  <meta name="apple-mobile-web-app-title" content="2048">
+  <title>2048 · מרכז המשחקים</title>
   <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=e8da7068">
-  <link rel="stylesheet" href="css/blockblast.css?v=9524acd1">
+  <link rel="stylesheet" href="css/2048.css?v=291dd2ed">
 </head>
 <body>
 
@@ -28,7 +28,7 @@
     <a class="logo" href="index.html" title="חזרה למרכז המשחקים">
       <svg class="logo-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
       <span class="logo-mark" aria-hidden="true"></span>
-      <span class="logo-text">בלוק בלאסט</span>
+      <span class="logo-text">2048</span>
     </a>
     <div class="topbar-actions">
       <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
@@ -57,30 +57,19 @@
       <span class="stat-value" id="statBest">0</span>
     </div>
     <div class="stat">
-      <span class="stat-label">שורות</span>
-      <span class="stat-value" id="statLines">0</span>
+      <span class="stat-label">אריח גבוה</span>
+      <span class="stat-value" id="statTop">0</span>
     </div>
   </div>
 
-  <main class="bb-stage" id="main" tabindex="-1">
-    <!-- מונה הקומבו — מופיע רק כשהוא פעיל -->
-    <div class="combo" id="combo" hidden aria-live="polite">
-      <span class="combo-x" id="comboX">×2</span>
-      <span class="combo-word">קומבו</span>
-    </div>
-
+  <main class="g2-stage" id="main" tabindex="-1">
     <!--
-      הלוח מוגדר LTR בכוונה: הדף כולו RTL, ורשת CSS ב-RTL מסדרת עמודות
-      מימין לשמאל — כלומר עמודה 0 של המנוע הייתה מוצגת בקצה הימני, וכל
-      צורת L הייתה מוצגת הפוכה ממה שהיא באמת
+      הלוח מוגדר LTR בכוונה: הדף כולו RTL, אבל ההחלקה חייבת ללכת
+      שמאל=עמודה 0 כמו בלוגיקת המנוע, והאריחים ממוקמים לפי תאי הרקע.
     -->
     <div class="board" id="board" dir="ltr" role="grid" aria-label="לוח המשחק"></div>
+    <p class="g2-hint">מחליקים באצבע או בחצים · מטרה: אריח 2048</p>
   </main>
-
-  <section class="tray-wrap">
-    <div class="tray" id="tray" aria-label="החלקים שלך"></div>
-    <p class="tray-hint" id="trayHint">גררו חלק אל הלוח</p>
-  </section>
 
   <footer class="footer">
     <button type="button" class="link-btn" id="btnNew">משחק חדש</button>
@@ -103,32 +92,29 @@
   </div>
 </div>
 
+<!-- ==================== ניצחון (הגעה ל-2048) ==================== -->
+<div class="modal" id="winModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <h2 class="modal-title" id="winTitle">הגעת ל-2048!</h2>
+    <p class="modal-sub">אפשר לעצור כאן — או להמשיך ולנסות להגדיל עוד.</p>
+    <div class="win-stats" id="winStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="btnWinNew">משחק חדש</button>
+      <button type="button" class="btn btn-primary" id="btnWinContinue">ממשיכים</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== הגדרות ==================== -->
 <div class="modal" id="settingsModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
     <div class="settings-list">
-      <p class="settings-head">חוקי בית</p>
-      <label class="setting">
-        <span class="setting-text">
-          <span class="setting-name">תמיד יש מהלך</span>
-          <span class="setting-desc">מוודא שלכל שלישייה יש סדר הנחה שעובד. במשחק המקורי אין הבטחה כזו, ואפשר להפסיד בגלל הגרלה. שינוי מתחיל משחק חדש</span>
-        </span>
-        <input type="checkbox" class="switch" id="optGuaranteed" data-pref="guaranteed">
-      </label>
-
       <p class="settings-head">תצוגה ומשוב</p>
       <label class="setting">
         <span class="setting-text">
-          <span class="setting-name">סימון המקום</span>
-          <span class="setting-desc">מראה בדיוק לאן החלק ייפול בזמן הגרירה</span>
-        </span>
-        <input type="checkbox" class="switch" id="optGhost" data-pref="ghost">
-      </label>
-      <label class="setting">
-        <span class="setting-text">
           <span class="setting-name">רטט</span>
-          <span class="setting-desc" id="hapticsNote">משוב מישושי על הנחה, ניקוי וסיום</span>
+          <span class="setting-desc" id="hapticsNote">משוב מישושי על מהלך, מיזוג וסיום</span>
         </span>
         <input type="checkbox" class="switch" id="optHaptics" data-pref="haptics">
       </label>
@@ -156,28 +142,17 @@
   <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
     <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
     <div class="help-body">
-      <p><b>המטרה</b> — לשרוד כמה שיותר. בכל סבב מקבלים שלושה חלקים, וגוררים
-        אותם ללוח בכל סדר.</p>
-      <p><b>אין סיבוב.</b> החלק מונח בדיוק כפי שהוא מוצג — וזה כל האתגר.</p>
-      <p><b>ניקוי</b> — שורה או עמודה שהתמלאה לגמרי נמחקת מהלוח.</p>
-      <p><b>קומבו</b> — כל הנחה שמנקה משהו מעלה את המונה, והמונה מכפיל את
-        ניקוד הניקוי. הוא מתאפס ברגע שמניחים חלק בלי לנקות כלום.</p>
-      <p><b>הניקוד</b> — נקודה לכל תא שמניחים, ובונוס על ניקוי:</p>
+      <p><b>המטרה</b> — למזג אריחים עד שמגיעים לאריח <b>2048</b>.</p>
+      <p><b>מהלך</b> — כל החלקה מזיזה את <b>כל</b> האריחים לאותו כיוון, עד הקצה.</p>
+      <p><b>מיזוג</b> — שני אריחים שווים שנפגשים מתאחדים לאריח כפול, והערך שלו
+        מתווסף לניקוד.</p>
+      <p><b>אריח חדש</b> — אחרי כל מהלך מופיע אריח 2 (לפעמים 4) בתא ריק אקראי.</p>
+      <p><b>שימו לב:</b> כל אריח מתמזג פעם אחת בלבד בכל מהלך.</p>
+      <p><b>המשחק נגמר</b> כשהלוח מלא ואין אף זוג שכן שאפשר למזג.</p>
+      <p><b>שליטה:</b></p>
       <ul>
-        <li>שורה אחת — 10</li>
-        <li>שתיים — 20</li>
-        <li>שלוש — <b>60</b></li>
-        <li>ארבע — 120, חמש — 200, שש ומעלה — 300</li>
-        <li>ריקון הלוח כולו — 360</li>
-      </ul>
-      <p>הקפיצה בשלוש שורות היא לא טעות. שווה לבנות לקראתה.</p>
-      <p><b>המשחק נגמר</b> ברגע שאף אחד מהחלקים שנותרו אינו נכנס לשום מקום.</p>
-      <p><b>אפשר לשחק גם במקלדת:</b></p>
-      <ul>
-        <li><b>1</b>–<b>3</b> — בחירת חלק, <b>Q</b> — החלק הבא</li>
-        <li><b>חצים</b> — הזזת הסמן על הלוח</li>
-        <li><b>Enter</b> או <b>רווח</b> — הנחה</li>
-        <li><b>Esc</b> — ביטול</li>
+        <li>טלפון — <b>החלקה</b> באצבע לכל כיוון</li>
+        <li>מקלדת — <b>חצים</b> או <b>W A S D</b></li>
       </ul>
     </div>
     <div class="modal-actions">
@@ -202,12 +177,9 @@
 
 <script src="js/announce.js?v=b637ed5a"></script>
 <script src="js/sw-register.js?v=89122463"></script>
-<script src="js/ui-math.js?v=28bacf43"></script>
 <script src="js/modal.js?v=66375e94"></script>
 <script src="js/haptics.js?v=88d431f4"></script>
-<script src="js/blockblast/engine.js?v=9ded3782"></script>
-<script src="js/blockblast/deal.js?v=55be3462"></script>
-<script src="js/blockblast/game.js?v=06d25d56"></script>
-<script src="js/blockblast/ui.js?v=f5ec59b7"></script>
+<script src="js/2048/engine.js?v=941fe738"></script>
+<script src="js/2048/ui.js?v=8759ba08"></script>
 </body>
 </html>
