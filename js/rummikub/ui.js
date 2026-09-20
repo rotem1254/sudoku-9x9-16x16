@@ -1124,7 +1124,21 @@
   let dragGhost = null;
   let dragMoved = false;
   let dragStart = null;
+  let dragPointerId = null;
   const DRAG_THRESHOLD = 6;
+
+  /*
+   * הגרירה מתעדכנת פעם אחת לכל פריים (requestAnimationFrame) ולא בכל
+   * אירוע pointermove. בלי זה נעשית עבודה כפולה כשהדפדפן שולח כמה אירועים
+   * בין ציור לציור — וזו אחת הסיבות לקרטוע. lastPointer מחזיק את המיקום
+   * האחרון, ו-flushDrag מצייר אותו.
+   */
+  let dragRaf = null;
+  let lastPointer = null;
+  /* מפתח היעד האחרון — קו ההכנסה נבנה מחדש רק כשהיעד באמת השתנה, ולא
+   * בכל פריים. הכנסת האלמנט לרשת מזיזה את כל האבנים, ולעשות זאת שישים
+   * פעם בשנייה זה מה שגרם לאבנים "לרקוד". */
+  let lastDropKey = null;
 
   function onPointerDown(e) {
     if (!myTurn() || state.aiRunning) return;
@@ -1135,6 +1149,7 @@
     dragSrc = { node, loc: sourceOf(node) };
     dragStart = { x: e.clientX, y: e.clientY };
     dragMoved = false;
+    dragPointerId = e.pointerId;
   }
 
   function onPointerMove(e) {
@@ -1148,8 +1163,16 @@
       beginGhost(e);
     }
     e.preventDefault();
-    moveGhost(e.clientX, e.clientY);
-    highlightDrop(e.clientX, e.clientY);
+    lastPointer = { x: e.clientX, y: e.clientY };
+    if (dragRaf == null) dragRaf = requestAnimationFrame(flushDrag);
+  }
+
+  /** מצייר את המצב האחרון פעם אחת בפריים. */
+  function flushDrag() {
+    dragRaf = null;
+    if (!dragGhost || !lastPointer) return;
+    moveGhost(lastPointer.x, lastPointer.y);
+    highlightDrop(lastPointer.x, lastPointer.y);
   }
 
   function beginGhost(e) {
@@ -1161,24 +1184,37 @@
     dragGhost.style.height = rect.height + 'px';
     document.body.appendChild(dragGhost);
     dragSrc.node.classList.add('is-dragging');
+    /* לוכדים את המצביע כך שהאירועים ממשיכים להגיע גם אם האצבע יוצאת
+     * מהאבן — מונע "נפילת" גרירה באמצע תנועה מהירה */
+    try { dragSrc.node.setPointerCapture(dragPointerId); } catch (err) {}
     clearSelection();
+    lastDropKey = null;
     feel('pick');
     moveGhost(e.clientX, e.clientY);
   }
 
   function moveGhost(x, y) {
     if (!dragGhost) return;
-    dragGhost.style.left = x + 'px';
-    dragGhost.style.top = y + 'px';
+    /* transform בלבד — ללא left/top — כדי שלא יופעל layout בכל תזוזה.
+     * הסקאלה והסיבוב עדינים כדי שהתחושה תהיה חלקה ולא "קופצת". */
+    dragGhost.style.transform =
+      'translate3d(' + x + 'px,' + y + 'px,0) translate(-50%,-50%) scale(1.06) rotate(-2deg)';
   }
 
-  /** מסמן את היעד ומצייר קו הכנסה במקום המדויק שאליו האבן תיכנס. */
+  /** מסמן את היעד ומצייר קו הכנסה — רק כשהיעד השתנה מהפריים הקודם. */
   function highlightDrop(x, y) {
+    const dst = dropTargetAt(x, y);
+    const key = dst
+      ? dst.kind + ':' + (dst.setIndex != null ? dst.setIndex : '') + ':' +
+        (dst.insertAt != null ? dst.insertAt : '')
+      : 'none';
+    if (key === lastDropKey) return; // שום דבר לא השתנה — לא נוגעים ב-DOM
+    lastDropKey = key;
+
     document.querySelectorAll('.is-target').forEach((n) => n.classList.remove('is-target'));
     const old = document.querySelector('.drop-caret');
     if (old) old.remove();
 
-    const dst = dropTargetAt(x, y);
     if (!dst) return;
 
     if (dst.kind === 'new') {
@@ -1207,6 +1243,12 @@
     if (!dragSrc) return;
     const src = dragSrc.loc;
     const wasDrag = dragMoved;
+
+    if (dragRaf != null) { cancelAnimationFrame(dragRaf); dragRaf = null; }
+    lastPointer = null;
+    lastDropKey = null;
+    try { dragSrc.node.releasePointerCapture(dragPointerId); } catch (err) {}
+    dragPointerId = null;
 
     if (dragGhost) { dragGhost.remove(); dragGhost = null; }
     dragSrc.node.classList.remove('is-dragging');

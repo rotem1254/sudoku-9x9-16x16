@@ -140,17 +140,20 @@
 /* האבן שנגררת כרגע — נשארת במקומה כרוח רפאים */
 .tile.is-dragging { opacity: .28; }
 
-/* העותק שעף עם האצבע */
+/* העותק שעף עם האצבע. הזזה ב-transform בלבד (ללא left/top) כדי שלא יופעל
+ * layout בכל פריים — זה מה שהופך את הגרירה לחלקה. */
 .drag-ghost {
   position: fixed;
+  left: 0;
+  top: 0;
   z-index: 999;
   margin: 0;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(1.18) rotate(-3deg);
+  will-change: transform;
   box-shadow:
     inset 0 1.5px 0 rgba(255, 255, 255, .95),
     inset 0 -2.5px 0 rgba(0, 0, 0, .16),
-    0 12px 22px rgba(0, 0, 0, .45);
+    0 14px 26px rgba(0, 0, 0, .45);
   transition: none;
 }
 
