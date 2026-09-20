@@ -1294,9 +1294,56 @@
     render();
   }
 
+  /*
+   * סידור חכם: מפרק את היד לצירופים החוקיים הטובים ביותר (אותו מנוע
+   * שה-AI וה"רמז" משתמשים בו), מקבץ כל צירוף יחד ומסדר אותו לסדר הטבעי,
+   * ואז מניח את השאר ממוין לפי מספר. כך רואים מיד מה אפשר לשחק — בדיוק
+   * כמו הסידור החכם באפליקציה.
+   */
+  function arrangeMelds() {
+    const rack = state.workRack;
+    if (rack.length < 3) { sortRack('number'); return; }
+
+    const packing = AI.bestPacking(rack, { maxNodes: AI.REPACK_NODES });
+    if (!packing.sets.length) {
+      sortRack('number');
+      toast('אין צירוף שלם ביד — סודר לפי מספר');
+      return;
+    }
+
+    // צירוף גדול קודם, כדי שהמגש ייראה מסודר מהגדול לקטן
+    const sets = packing.sets.slice().sort((a, b) => b.length - a.length);
+    const used = new Set();
+    const groups = [];
+    for (const set of sets) {
+      set.forEach((i) => used.add(i));
+      groups.push(T.orderSet(set.map((i) => rack[i])));
+    }
+
+    // מה שלא נכנס לאף צירוף — ממוין לפי מספר ואז צבע, ג'וקר בסוף
+    const leftovers = rack.filter((_, i) => !used.has(i));
+    leftovers.sort((a, b) => {
+      if (T.isJoker(a)) return 1;
+      if (T.isJoker(b)) return -1;
+      return T.tileNumber(a) - T.tileNumber(b) || T.tileColorIndex(a) - T.tileColorIndex(b);
+    });
+
+    state.workRack = [].concat.apply([], groups).concat(leftovers);
+    clearSelection();
+    feel('pick');
+    render();
+
+    const inSets = groups.reduce((s, g) => s + g.length, 0);
+    toast(groups.length === 1
+      ? 'סודר צירוף אחד (' + inSets + ' אבנים)'
+      : 'סודרו ' + groups.length + ' צירופים (' + inSets + ' אבנים)');
+  }
+
   document.querySelector('.rack-sorts').addEventListener('click', (e) => {
     const btn = e.target.closest('[data-sort]');
-    if (btn) sortRack(btn.dataset.sort);
+    if (!btn) return;
+    if (btn.dataset.sort === 'melds') arrangeMelds();
+    else sortRack(btn.dataset.sort);
   });
 
   /* --------------------------------------------------------------------- */

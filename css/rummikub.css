@@ -409,6 +409,14 @@
 }
 .chip:active { transform: scale(.95); }
 
+/* הסידור החכם — בולט מעט מהשאר כי זו הפעולה המומלצת */
+.chip-smart {
+  background: rgba(255, 255, 255, .92);
+  color: #4a2f12;
+  border-color: rgba(255, 255, 255, .9);
+  font-weight: 800;
+}
+
 .rack {
   display: flex;
   flex-wrap: wrap;
