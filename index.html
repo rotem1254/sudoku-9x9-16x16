@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="מרכז משחקים — סודוקו 9x9 ו-16x16 וסוליטר קלונדייק. הכול בדפדפן, בלי התקנה ובלי חשבון.">
+  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048 ובאבלס. הכול בדפדפן, בלי התקנה ובלי חשבון.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=e8da7068">
-  <link rel="stylesheet" href="css/hub.css?v=e6464f8b">
+  <link rel="stylesheet" href="css/hub.css?v=581a6cb9">
 </head>
 <body>
 
@@ -140,6 +140,25 @@
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
     </a>
 
+    <!-- ==================== באבלס ==================== -->
+    <a class="game-card" href="bubbles.html">
+      <div class="game-art game-art-bubbles" aria-hidden="true">
+        <span class="mini-bubbles">
+          <i class="mbb mbb-1"></i><i class="mbb mbb-2"></i><i class="mbb mbb-3"></i>
+          <i class="mbb mbb-4"></i><i class="mbb mbb-5"></i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">באבלס</h2>
+        <p class="game-desc">יורים בועות, מחברים שלוש באותו צבע ומפילים ענפים שלמים לפני שהלוח יורד לקו.</p>
+        <div class="game-tags">
+          <span class="tag">6 צבעים</span>
+          <span class="tag" id="tagBubbles">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
   </nav>
 
   <footer class="footer hub-footer">
@@ -258,6 +277,20 @@
       tag2.textContent = 'שיא · ' + g2Stats.best;
     } else {
       tag2.textContent = 'חדש';
+    }
+  }
+
+  var bu = read('bubbles.v1.save', null);
+  var buStats = read('bubbles.v1.stats', null);
+  var tagBu = document.getElementById('tagBubbles');
+  if (tagBu) {
+    if (bu && !bu.over && bu.shots > 0) {
+      tagBu.textContent = 'ממשיכים · ' + bu.score + ' נק׳';
+      tagBu.classList.add('is-live');
+    } else if (buStats && buStats.best) {
+      tagBu.textContent = 'שיא · ' + buStats.best;
+    } else {
+      tagBu.textContent = 'חדש';
     }
   }
 

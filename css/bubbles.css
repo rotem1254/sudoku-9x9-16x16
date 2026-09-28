@@ -1,0 +1,89 @@
+/* =============================================================================
+ * bubbles.css — באבלס
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css.
+ *
+ * כל המשחק מצויר על canvas אחד (ראו bubbles/ui.js). כאן רק המסגרת: פאנל
+ * הלוח בעיצוב הקלאסי — לבנדר עם מסגרת כחולה — והרמז שמתחתיו. העיצוב
+ * כמעט זהה באור ובחושך, כמו במשחק המקורי.
+ * =========================================================================== */
+
+:root {
+  --bb-panel: #c4c4fb;     /* הלבנדר של המשחק המקורי */
+  --bb-frame: #2aaeea;     /* המסגרת הכחולה סביבו */
+}
+
+/* בחושך — אותו עיצוב, רק מעט עמום כדי שלא יסנוור */
+:root[data-theme="dark"] {
+  --bb-panel: #b4b4ec;
+  --bb-frame: #1f8fc4;
+}
+
+/* -------------------------------- פריסה --------------------------------- */
+
+.bb-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.bubble-board {
+  position: relative;
+  width: 100%;
+  /* 17 בועות לרוחב — הלוח מקבל את כל רוחב הדף */
+  max-width: 600px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--bb-panel);
+  border: 6px solid var(--bb-frame);
+  border-inline-end-width: 14px; /* הפס הכחול העבה בצד, כמו במקור */
+  box-shadow: 0 8px 22px rgba(0, 0, 0, .18);
+  /* הכיוון מטופל בקוד, ובלי זה גרירה גוללת את הדף באמצע כיוון */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bubble-board canvas {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+}
+
+.bubble-board.is-over canvas { cursor: default; }
+
+/* התוספת לניקוד עפה מעל נקודת הפיצוץ */
+.gain {
+  position: fixed;
+  z-index: 55;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--accent);
+  text-shadow: 0 1px 2px var(--bg);
+  animation: bbGain .9s var(--ease) forwards;
+}
+.gain.is-big { font-size: 1.35rem; }
+@keyframes bbGain {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.8); }
+  22%  { opacity: 1; transform: translate(-50%, -14px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50px) scale(1); }
+}
+
+/* ------------------------------ עזרה / רמז ------------------------------ */
+
+.bb-hint { margin: 0; font-size: .78rem; color: var(--muted); text-align: center; }
+
+.modal-wide { max-width: 440px; }
+.help-body { text-align: start; font-size: .82rem; line-height: 1.6; color: var(--text-2); }
+.help-body p { margin: 0 0 9px; }
+.help-body ul { margin: 0 0 9px; padding-inline-start: 18px; }
+.help-body li { margin-bottom: 3px; }
+.help-body b { color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .gain { animation-duration: .4s; }
+}

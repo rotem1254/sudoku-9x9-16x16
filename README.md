@@ -11,6 +11,8 @@
 | סוליטר (קלונדייק) | `solitaire.html` |
 | רמי קוב | `rummikub.html` |
 | בלוק בלאסט | `blockblast.html` |
+| 2048 | `2048.html` |
+| באבלס | `bubbles.html` |
 
 ## הפעלה
 
@@ -46,6 +48,8 @@ js/blockblast/engine.js ביטבורד 8×8, צורות, הנחה, ניקוי, �
 js/blockblast/deal.js   מחולל השלישיות + הבטחת פתירוּת
 js/blockblast/game.js   מצב משחק, קומבו, שמירה
 js/blockblast/ui.js     גרירה, ציור, שמירה
+js/bubbles/engine.js    רשת משושים, מסלול עם קפיצות, פיצוץ ונפילה
+js/bubbles/ui.js        ציור על canvas, כיוון, הנפשות, שמירה
 
 tools/make-icons.js   מייצר את האייקונים (PNG + SVG)
 tools/bump-version.js גרסאות נכסים לפי hash של התוכן
