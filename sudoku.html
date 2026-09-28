@@ -28,7 +28,7 @@
   <!-- מאפשר "הוספה למסך הבית" — במצב standalone נחסך סרגל הדפדפן,
        וכל המשחק נכנס במסך הטלפון בלי גלילה -->
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
+  <link rel="stylesheet" href="css/theme.css?v=ca789140">
   <link rel="stylesheet" href="css/sudoku.css?v=c875a3b0">
 </head>
 <body>
@@ -52,6 +52,9 @@
       </button>
       <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnHelp" aria-label="איך משחקים" title="איך משחקים">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
       </button>
       <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
@@ -222,6 +225,46 @@
   </div>
 </div>
 
+<!-- ==================== איך משחקים ==================== -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
+    <div class="help-body">
+      <p><b>המטרה</b> — למלא את כל הלוח כך שבכל <b>שורה</b>, בכל <b>עמודה</b> ובכל
+        <b>ריבוע</b> מודגש כל ספרה מ-1 עד 9 מופיעה <b>פעם אחת בדיוק</b>.</p>
+      <p><b>סוגי לוח:</b></p>
+      <ul>
+        <li><b>9×9</b> — הקלאסי: ריבועים של 3×3, ספרות 1–9</li>
+        <li><b>16×16</b> — ריבועים של 4×4, ספרות 1–9 ואותיות A–G (A=10 … G=16).
+          אפשר להגדיל את הלוח בצביטה</li>
+        <li><b>אלכסון</b> — כמו 9×9, ובנוסף שני <b>האלכסונים הצבועים</b> (מפינה
+          לפינה) חייבים גם הם להכיל כל ספרה פעם אחת</li>
+      </ul>
+      <p><b>איך ממלאים</b> — נוגעים בתא ואז בספרה בשורת המספרים שלמטה. המספר הקטן
+        מתחת לכל ספרה מראה כמה פעמים היא עוד חסרה בלוח.</p>
+      <p><b>פתקים</b> — במצב <b>פתקים</b> הספרות נרשמות קטן בתוך התא, כדי לזכור מה
+        עוד אפשרי שם. <b>מלא</b> ממלא לבד את כל הפתקים האפשריים בכל התאים.</p>
+      <p><b>כלים:</b> <b>בטל</b> ו<b>שוב</b> · <b>מחק</b> מנקה תא · <b>רמז</b> ממלא
+        תא אחד נכון (עד 3 לכל משחק) · <b>פתור</b> מראה את כל הפתרון.</p>
+      <p><b>שגיאות</b> — ספרה שמתנגשת עם ספרה זהה בשורה, בעמודה, בריבוע (או
+        באלכסון) נצבעת באדום ונספרת כשגיאה.</p>
+      <p><b>סוף</b> — כשנשארים 6 תאים או פחות, הלוח מושלם לבד (אפשר לכבות
+        בהגדרות). השעון נעצר בניצחון, והשיא נשמר לכל רמה.</p>
+      <p><b>טיפ</b> — חפשו שורה, עמודה או ריבוע שחסרה בהם ספרה אחת בלבד, או ספרה
+        שיש לה מקום אפשרי אחד בלבד בתוך ריבוע.</p>
+      <p><b>מקלדת:</b></p>
+      <ul>
+        <li><b>חצים</b> — מעבר בין תאים · <b>1–9</b> (ו-<b>A–G</b> ב-16×16) — הזנה</li>
+        <li><b>Backspace</b> או <b>Delete</b> — מחיקה · <b>N</b> — פתקים · <b>H</b> — רמז</li>
+        <li><b>Ctrl+Z</b> — ביטול</li>
+      </ul>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
+    </div>
+  </div>
+</div>
+
 <!-- ==================== סטטיסטיקות ==================== -->
 <div class="modal" id="statsModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
@@ -299,9 +342,10 @@
 <script src="js/announce.js?v=b637ed5a"></script>
 <script src="js/sw-register.js?v=89122463"></script>
 <script src="js/modal.js?v=66375e94"></script>
+<script src="js/howto.js?v=1ebd845d"></script>
 <script src="js/core.js?v=6a3fd900"></script>
 <script src="js/storage.js?v=7fa51a44"></script>
 <script src="js/game.js?v=3607adb9"></script>
-<script src="js/ui.js?v=5c6f7649"></script>
+<script src="js/ui.js?v=83dba41a"></script>
 </body>
 </html>

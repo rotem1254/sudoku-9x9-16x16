@@ -14,7 +14,7 @@
   <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
+  <link rel="stylesheet" href="css/theme.css?v=ca789140">
   <link rel="stylesheet" href="css/solitaire.css?v=4a1fe0ba">
 </head>
 <body>
@@ -36,6 +36,9 @@
       </button>
       <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnHelp" aria-label="איך משחקים" title="איך משחקים">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
       </button>
       <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
         <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
@@ -191,6 +194,43 @@
 </div>
 
 <!-- ==================== סטטיסטיקות ==================== -->
+<!-- ==================== איך משחקים ==================== -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
+    <div class="help-body">
+      <p><b>המטרה</b> — להעביר את כל 52 הקלפים לארבע <b>ערימות הסיום</b> שלמעלה:
+        כל צורה (♠ ♥ ♦ ♣) בערימה משלה, מהאס ועד המלך, לפי הסדר.</p>
+      <p><b>הלוח</b> — שבע עמודות. בכל עמודה רק הקלפים העליונים גלויים; כשמזיזים
+        את הקלף הגלוי האחרון, הקלף שמתחתיו נהפך.</p>
+      <p><b>בעמודות</b> — מניחים קלף על קלף <b>גבוה ממנו באחד</b> ו<b>בצבע ההפוך</b>:
+        8 אדום על 9 שחור, מלכה שחורה על מלך אדום. אפשר להזיז גם רצף גלוי שלם.</p>
+      <p><b>עמודה ריקה</b> — רק <b>מלך</b> (או רצף שמתחיל במלך) יכול להיכנס אליה.</p>
+      <p><b>החפיסה</b> — נגיעה בחפיסה (משמאל למעלה) פותחת קלף חדש. כשהיא נגמרת,
+        נגיעה נוספת מחזירה את הקלפים שנפתחו לחפיסה.</p>
+      <p><b>רמות:</b></p>
+      <ul>
+        <li><b>קל</b> — קלף אחד בכל משיכה, ופריסה שמובטח שאפשר לפתור</li>
+        <li><b>בינוני</b> — קלף אחד בכל משיכה</li>
+        <li><b>קשה</b> — שלושה קלפים בכל משיכה, ורק העליון זמין</li>
+        <li><b>מומחה</b> — שלושה קלפים, ואפשר להחזיר את החפיסה פעם אחת בלבד</li>
+      </ul>
+      <p><b>איך מזיזים</b> — נגיעה בקלף שולחת אותו לבד למקום הטוב ביותר. כדי לבחור
+        לאן בעצמכם: לחיצה ארוכה על הקלף ואז נגיעה ביעד (אפשר לשנות בהגדרות).</p>
+      <p><b>כלים:</b> <b>בטל</b> ו<b>שוב</b> · <b>רמז</b> מסמן מהלך אפשרי · <b>אסוף</b>
+        שולח לערימות הסיום כל קלף שאפשר — וכשכל הקלפים גלויים הוא הופך ל<b>סיים</b>
+        ומשלים את המשחק לבד.</p>
+      <p><b>ניקוד:</b> 10 לכל קלף בערימת סיום · 5 על חשיפת קלף בעמודה · מינוס 10
+        על החזרת קלף מערימת סיום · מינוס 20 על כל סיבוב חפיסה (במשיכה של קלף אחד).</p>
+      <p><b>מקלדת:</b> <b>רווח</b> או <b>Enter</b> — משיכה · <b>H</b> — רמז · <b>A</b> —
+        איסוף · <b>Ctrl+Z</b> — ביטול · <b>Esc</b> — ביטול בחירה</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="statsModal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
     <h2 class="modal-title" id="statsTitle">סטטיסטיקות</h2>
@@ -220,7 +260,8 @@
 <script src="js/sw-register.js?v=89122463"></script>
 <script src="js/ui-math.js?v=28bacf43"></script>
 <script src="js/modal.js?v=66375e94"></script>
+<script src="js/howto.js?v=1ebd845d"></script>
 <script src="js/solitaire/engine.js?v=a02fad77"></script>
-<script src="js/solitaire/ui.js?v=f1d7b887"></script>
+<script src="js/solitaire/ui.js?v=9a1c4f8f"></script>
 </body>
 </html>

@@ -124,6 +124,8 @@
     pills: $('#difficultyPills'),
     btnNew: $('#btnNew'),
     statsModal: $('#statsModal'),
+    helpModal: $('#helpModal'),
+    btnHelp: $('#btnHelp'),
     statsTable: $('#statsTable'),
     btnStats: $('#btnStats'),
     btnClearStats: $('#btnClearStats'),
@@ -1317,6 +1319,8 @@
       if (e.target === m) closeModal(m);
     });
   });
+
+  el.btnHelp.addEventListener('click', () => openModal(el.helpModal));
 
   el.btnStats.addEventListener('click', () => {
     renderStats();

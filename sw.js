@@ -18,7 +18,7 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = '38e9adcc';
+const VERSION = 'c76a2492';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
@@ -66,6 +66,7 @@ const PRECACHE = [
   'js/core.js',
   'js/game.js',
   'js/haptics.js',
+  'js/howto.js',
   'js/mahjong/engine.js',
   'js/mahjong/faces.js',
   'js/mahjong/ui.js',

@@ -91,6 +91,8 @@
     confetti: $('#confetti'),
     btnWinNew: $('#btnWinNew'),
     statsModal: $('#statsModal'),
+    helpModal: $('#helpModal'),
+    btnHelp: $('#btnHelp'),
     statsTable: $('#statsTable'),
     btnClearStats: $('#btnClearStats'),
     confirmModal: $('#confirmModal'),
@@ -1223,6 +1225,8 @@
     renderStats();
     openModal(el.statsModal);
   });
+
+  el.btnHelp.addEventListener('click', () => openModal(el.helpModal));
 
   /* ------------------------------ הגדרות ------------------------------ */
 

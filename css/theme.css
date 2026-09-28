@@ -724,3 +724,20 @@ a.logo:active .logo-back { transform: translateX(3px); color: var(--accent); }
 
 /* יעד הדילוג אינו אמור לצייר טבעת פוקוס — הוא רק נקודת נחיתה */
 [id="main"]:focus, .sol-board:focus { outline: none; }
+
+/* ------------------------------ איך משחקים ------------------------------ */
+/* חלון ההסבר זהה בכל המשחקים, ולכן הסגנון שלו יושב בבסיס */
+
+.modal-wide { max-width: 440px; }
+.help-body {
+  max-height: min(62vh, 560px);
+  overflow-y: auto;
+  text-align: start;
+  font-size: .84rem;
+  line-height: 1.65;
+  color: var(--text-2);
+}
+.help-body p { margin: 0 0 9px; }
+.help-body ul { margin: 0 0 9px; padding-inline-start: 18px; }
+.help-body li { margin-bottom: 3px; }
+.help-body b { color: var(--text); }
