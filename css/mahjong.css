@@ -1,0 +1,164 @@
+/* =============================================================================
+ * mahjong.css — מהג'ונג סוליטר
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css.
+ *
+ * מידות האבן מגיעות מה-JS כמשתנים (--tw, --th) לפי רוחב המסך. עובי
+ * האבן — הצד שנראה מימין-למטה — מצויר בצללים ביחידות em, וה-font-size של
+ * הלוח הוא העובי בפיקסלים. כך כל האבנים משנות עובי יחד עם הגודל, בלי
+ * לחשב צללים ב-JS.
+ * =========================================================================== */
+
+:root {
+  --mj-felt-1: #237a55;
+  --mj-felt-2: #13513a;
+  --mj-face-1: #fffdf6;
+  --mj-face-2: #f1e8cf;
+  --mj-side-1: #e2d4aa;
+  --mj-side-2: #cdb886;
+  --mj-side-3: #b39a60;
+}
+
+:root[data-theme="dark"] {
+  --mj-felt-1: #1a5c41;
+  --mj-felt-2: #0d3526;
+  /* האבנים נשארות שנהב — רק מעט עמומות, כדי שלא יסנוורו על רקע כהה */
+  --mj-face-1: #f4efe2;
+  --mj-face-2: #e2d8bc;
+}
+
+/* -------------------------------- פריסה --------------------------------- */
+
+.mj-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mj-felt {
+  position: relative;
+  padding: 12px 8px 14px;
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 50% 35%, var(--mj-felt-1), var(--mj-felt-2));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), 0 8px 22px rgba(0, 0, 0, .2);
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mj-board {
+  position: relative;
+  margin: 0 auto;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* -------------------------------- אבן ----------------------------------- */
+
+.mj-tile {
+  position: absolute;
+  width: var(--tw);
+  height: var(--th);
+  padding: 0;
+  border: 0;
+  border-radius: calc(var(--tw) * .13);
+  background: linear-gradient(145deg, var(--mj-face-1), var(--mj-face-2));
+  /* הצד של האבן: שלוש שכבות צבע ואחריהן צל רך על הלבד */
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .7),
+    .35em .35em 0 var(--mj-side-1),
+    .7em .7em 0 var(--mj-side-2),
+    1em 1em 0 var(--mj-side-3),
+    1.1em 1.4em .9em rgba(0, 0, 0, .38);
+  cursor: pointer;
+  transition: transform .14s var(--ease), filter .16s, opacity .16s;
+}
+
+.mj-face {
+  position: absolute;
+  inset: 6% 7%;
+  width: 86%;
+  height: 88%;
+  pointer-events: none;
+}
+
+.mj-tile:focus-visible { outline: 3px solid var(--accent); outline-offset: 1px; }
+
+/* אבן חסומה — כשהאפשרות מופעלת בהגדרות */
+.mj-board.dim-blocked .mj-tile.is-blocked { filter: brightness(.8) saturate(.85); }
+
+/* נבחרה */
+.mj-tile.is-selected {
+  background: linear-gradient(145deg, #fff6c4, #f6dd77);
+  transform: translateY(-2px);
+}
+.mj-tile.is-selected::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2.5px #f5b800, 0 0 12px 2px rgba(245, 184, 0, .6);
+  pointer-events: none;
+}
+
+/* רמז — פעימה ירוקה */
+.mj-tile.is-hint::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2.5px var(--success), 0 0 14px 3px rgba(35, 153, 107, .7);
+  animation: mjHint .9s var(--ease) infinite;
+  pointer-events: none;
+}
+@keyframes mjHint { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+
+/* נגיעה באבן חסומה — רעד קצר */
+.mj-tile.is-shake { animation: mjShake .3s var(--ease); }
+@keyframes mjShake {
+  0%, 100% { translate: 0 0; }
+  25% { translate: -3px 0; }
+  75% { translate: 3px 0; }
+}
+
+/* זוג שיוצא */
+.mj-tile.is-leaving {
+  pointer-events: none;
+  animation: mjLeave .26s var(--ease) forwards;
+}
+@keyframes mjLeave {
+  0% { opacity: 1; transform: translateY(-2px) scale(1); }
+  100% { opacity: 0; transform: translateY(-10px) scale(.86); }
+}
+
+/* אבן שחזרה בביטול */
+.mj-tile.is-back { animation: mjBack .22s var(--ease); }
+@keyframes mjBack {
+  0% { opacity: 0; transform: translateY(-10px) scale(.9); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* ------------------------------ כלים ------------------------------------ */
+
+.mj-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.stat-value.is-low { color: var(--error); }
+
+/* ------------------------------ עזרה ------------------------------------ */
+
+.modal-wide { max-width: 440px; }
+.help-body { text-align: start; font-size: .82rem; line-height: 1.6; color: var(--text-2); }
+.help-body p { margin: 0 0 9px; }
+.help-body ul { margin: 0 0 9px; padding-inline-start: 18px; }
+.help-body li { margin-bottom: 3px; }
+.help-body b { color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mj-tile { transition: none; }
+  .mj-tile.is-hint::after { animation: none; opacity: 1; }
+  .mj-tile.is-leaving { animation-duration: .01s; }
+}

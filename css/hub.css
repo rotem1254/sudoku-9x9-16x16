@@ -254,3 +254,26 @@
 .mbb-3 { top: 2px;  left: 36px; background: #00d4dc; }
 .mbb-4 { top: 17px; left: 9px;  background: #f0dc00; }
 .mbb-5 { top: 17px; left: 27px; background: #e01010; }
+
+/* --- מהג'ונג: שלוש אבני שנהב על לבד ירוק --- */
+.game-art-mahjong { background: #1c6b4a; }
+
+.mini-mahjong { position: relative; width: 54px; height: 44px; }
+.mm {
+  position: absolute;
+  top: 6px;
+  width: 20px;
+  height: 27px;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(145deg, #fffdf6, #efe4c6);
+  box-shadow: 2px 2px 0 #cdb886, 3px 4px 4px rgba(0, 0, 0, .35);
+  font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', 'Microsoft YaHei', serif;
+  font-size: .9rem;
+  font-style: normal;
+  font-weight: 700;
+}
+.mm-1 { inset-inline-start: 0;  top: 10px; color: #c62828; transform: rotate(-7deg); }
+.mm-2 { inset-inline-start: 17px; color: #1c8a3c; z-index: 2; }
+.mm-3 { inset-inline-start: 34px; top: 10px; color: #1a2a6c; transform: rotate(7deg); }

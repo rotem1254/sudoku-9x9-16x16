@@ -13,6 +13,7 @@
 | בלוק בלאסט | `blockblast.html` |
 | 2048 | `2048.html` |
 | באבלס | `bubbles.html` |
+| מהג'ונג | `mahjong.html` |
 
 ## הפעלה
 
@@ -50,6 +51,9 @@ js/blockblast/game.js   מצב משחק, קומבו, שמירה
 js/blockblast/ui.js     גרירה, ציור, שמירה
 js/bubbles/engine.js    רשת משושים, מסלול עם קפיצות, פיצוץ ונפילה
 js/bubbles/ui.js        ציור על canvas, כיוון, הנפשות, שמירה
+js/mahjong/engine.js    פריסת הצב, חוק האבן החופשית, חלוקה פתירה, ערבוב
+js/mahjong/faces.js     ציורי האבנים ב-SVG
+js/mahjong/ui.js        לוח, בחירה, רמז, ביטול, שעון, שמירה
 
 tools/make-icons.js   מייצר את האייקונים (PNG + SVG)
 tools/bump-version.js גרסאות נכסים לפי hash של התוכן

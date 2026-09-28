@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048 ובאבלס. הכול בדפדפן, בלי התקנה ובלי חשבון.">
+  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס ומהג'ונג. הכול בדפדפן, בלי התקנה ובלי חשבון.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=e8da7068">
-  <link rel="stylesheet" href="css/hub.css?v=581a6cb9">
+  <link rel="stylesheet" href="css/hub.css?v=34909f82">
 </head>
 <body>
 
@@ -159,6 +159,26 @@
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
     </a>
 
+    <!-- ==================== מהג'ונג ==================== -->
+    <a class="game-card" href="mahjong.html">
+      <div class="game-art game-art-mahjong" aria-hidden="true">
+        <span class="mini-mahjong">
+          <i class="mm mm-1">中</i>
+          <i class="mm mm-2">發</i>
+          <i class="mm mm-3">東</i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">מהג'ונג</h2>
+        <p class="game-desc">מוציאים זוגות אבנים חופשיות מפריסת הצב הקלאסית. כל חלוקה פתירה.</p>
+        <div class="game-tags">
+          <span class="tag">144 אבנים</span>
+          <span class="tag" id="tagMahjong">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
   </nav>
 
   <footer class="footer hub-footer">
@@ -291,6 +311,21 @@
       tagBu.textContent = 'שיא · ' + buStats.best;
     } else {
       tagBu.textContent = 'חדש';
+    }
+  }
+
+  var mj = read('mahjong.v1.save', null);
+  var mjStats = read('mahjong.v1.stats', null);
+  var tagMj = document.getElementById('tagMahjong');
+  if (tagMj) {
+    var mjLeft = mj && Array.isArray(mj.tiles) ? mj.tiles.filter(function (t) { return t.alive; }).length : 0;
+    if (mj && !mj.finished && mjLeft > 0 && mjLeft < 144) {
+      tagMj.textContent = 'ממשיכים · ' + mjLeft + ' אבנים';
+      tagMj.classList.add('is-live');
+    } else if (mjStats && mjStats.bestTime) {
+      tagMj.textContent = 'שיא · ' + fmt(mjStats.bestTime);
+    } else {
+      tagMj.textContent = 'פריסת הצב';
     }
   }
 
