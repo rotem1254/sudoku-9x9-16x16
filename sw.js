@@ -18,7 +18,7 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = 'cb5e7882';
+const VERSION = 'b188b6c8';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
@@ -27,6 +27,7 @@ const PRECACHE = [
   '2048.html',
   'blockblast.html',
   'bubbles.html',
+  'chess.html',
   'index.html',
   'mahjong.html',
   'rummikub.html',
@@ -37,6 +38,7 @@ const PRECACHE = [
   'css/2048.css',
   'css/blockblast.css',
   'css/bubbles.css',
+  'css/chess.css',
   'css/hub.css',
   'css/mahjong.css',
   'css/rummikub.css',
@@ -58,6 +60,9 @@ const PRECACHE = [
   'js/blockblast/ui.js',
   'js/bubbles/engine.js',
   'js/bubbles/ui.js',
+  'js/chess/ai.js',
+  'js/chess/engine.js',
+  'js/chess/ui.js',
   'js/core.js',
   'js/game.js',
   'js/haptics.js',

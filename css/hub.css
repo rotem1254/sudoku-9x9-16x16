@@ -342,3 +342,21 @@
   background: #e7471d;
   box-shadow: inset -2px -2px 0 rgba(0, 0, 0, .15);
 }
+
+/* --- שחמט: מלך ופרש על משבצות עץ --- */
+.game-art-chess {
+  background:
+    repeating-conic-gradient(#b58863 0 25%, #f0d9b5 0 50%) 0 0 / 23px 23px;
+}
+
+.mini-chess { position: relative; width: 56px; height: 46px; }
+.mc4 {
+  position: absolute;
+  top: 2px;
+  font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Noto Sans Symbols2', 'DejaVu Sans', 'Apple Symbols', sans-serif;
+  font-size: 2.3rem;
+  font-style: normal;
+  line-height: 1;
+}
+.mc4-k { left: 0; color: #fff; -webkit-text-stroke: 1.3px #1b1b1b; paint-order: stroke fill; }
+.mc4-n { right: 0; top: 6px; color: #1f1f1f; text-shadow: 0 0 2px rgba(255, 255, 255, .5); }

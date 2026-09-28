@@ -16,6 +16,7 @@
 | מהג'ונג | `mahjong.html` |
 | טטריס | `tetris.html` |
 | סנייק | `snake.html` |
+| שחמט | `chess.html` |
 
 ## הפעלה
 
@@ -60,6 +61,9 @@ js/tetris/engine.js     SRS, שקית של 7, שמירה, השהיית נעיל�
 js/tetris/ui.js         לולאה, ציור, DAS/ARR, מחוות וכפתורים, שמירה
 js/snake/engine.js      צעדים, תור פניות, התנגשות, תפוחים, מעבר דרך קירות
 js/snake/ui.js          תנועה חלקה, החלקה במגע, מהירויות, שמירה
+js/chess/engine.js      חוקי שחמט מלאים (0x88), SAN, מצבי סיום, perft
+js/chess/ai.js          אלפא-בטא עם העמקה הדרגתית וחיפוש שקט, 4 רמות
+js/chess/ui.js          לוח, נגיעה וגרירה, הכתרה, ביטול, רמז, שמירה
 
 tools/make-icons.js   מייצר את האייקונים (PNG + SVG)
 tools/bump-version.js גרסאות נכסים לפי hash של התוכן

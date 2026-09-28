@@ -1,0 +1,310 @@
+/* =============================================================================
+ * chess.css — שחמט
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css.
+ *
+ * צבעי הלוח הם העץ הקלאסי, זהים באור ובחושך. גודל משבצת (--sq) מגיע
+ * מה-JS לפי המקום הפנוי, והכלים נגזרים ממנו.
+ *
+ * הכלים הם תווי יוניקוד של שחמט — תמיד בגרסה המלאה (♚♛♜♝♞♟), צבועים
+ * בלבן או בשחור עם קו מתאר. אחרי כל תו בא U+FE0E, שמבקש מהמערכת גרסה
+ * טקסטואלית ולא אמוג'י: בלעדיו ♟ מופיע באנדרואיד ובאייפון כאמוג'י צבעוני.
+ * =========================================================================== */
+
+:root {
+  --ch-light: #f0d9b5;
+  --ch-dark: #b58863;
+  --ch-last: rgba(205, 210, 106, .75);
+  --ch-select: rgba(20, 85, 30, .5);
+  --ch-dot: rgba(20, 85, 30, .45);
+  --ch-hint: #2f6bff;
+  --sq: 44px;
+}
+
+/* -------------------------------- פריסה --------------------------------- */
+
+.ch-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.ch-player {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(var(--sq) * 8);
+  max-width: 100%;
+  min-height: 26px;
+  font-size: .86rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.ch-player.is-turn .ch-name { color: var(--accent); }
+
+.ch-dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-2);
+}
+.ch-dot.is-w { background: #fff; }
+.ch-dot.is-b { background: #222; border-color: #888; }
+
+.ch-captured {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  font-size: calc(var(--sq) * .42);
+  line-height: 1;
+  color: var(--text-2);
+  font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Noto Sans Symbols2', 'DejaVu Sans', 'Apple Symbols', sans-serif;
+}
+.ch-captured .adv {
+  margin-inline-start: 6px;
+  font-family: inherit;
+  font-size: .78rem;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.ch-board-wrap {
+  border-radius: 6px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .28);
+  overflow: hidden;
+}
+
+.ch-board {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(8, var(--sq));
+  grid-template-rows: repeat(8, var(--sq));
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ------------------------------- משבצת ---------------------------------- */
+
+.ch-sq {
+  position: relative;
+  padding: 0;
+  border: 0;
+  background: var(--ch-light);
+  cursor: pointer;
+}
+.ch-sq.is-dark { background: var(--ch-dark); }
+.ch-sq:focus-visible { outline: 3px solid var(--accent); outline-offset: -3px; z-index: 3; }
+
+/* שכבות סימון מעל הצבע ומתחת לכלי */
+.ch-sq.is-last::before,
+.ch-sq.is-sel::before,
+.ch-sq.is-check::before,
+.ch-sq.is-hint::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.ch-sq.is-last::before { background: var(--ch-last); opacity: .55; }
+.ch-sq.is-sel::before { background: var(--ch-select); opacity: .6; }
+.ch-sq.is-check::before {
+  background: radial-gradient(circle, rgba(255, 0, 0, .9) 0%, rgba(231, 0, 0, .55) 35%, rgba(169, 0, 0, 0) 72%);
+}
+.ch-sq.is-hint::before {
+  box-shadow: inset 0 0 0 calc(var(--sq) * .07) var(--ch-hint);
+  animation: chHint 1s var(--ease) infinite;
+}
+@keyframes chHint { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+
+/* לאן אפשר לזוז: נקודה, ובהכאה — טבעת */
+.ch-sq.is-target::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30%;
+  height: 30%;
+  border-radius: 50%;
+  background: var(--ch-dot);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+.ch-sq.is-target.is-capture::after {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(transparent 0 58%, var(--ch-dot) 60%);
+}
+.ch-sq.is-over { box-shadow: inset 0 0 0 calc(var(--sq) * .06) rgba(255, 255, 255, .7); }
+
+/* קואורדינטות בפינות — כמו בלוחות אמיתיים */
+.ch-coord {
+  position: absolute;
+  font-size: calc(var(--sq) * .2);
+  font-weight: 800;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+}
+.ch-coord.file { right: 3px; bottom: 2px; }
+.ch-coord.rank { left: 3px; top: 3px; }
+.ch-sq .ch-coord { color: var(--ch-dark); }
+.ch-sq.is-dark .ch-coord { color: var(--ch-light); }
+.ch-board.no-coords .ch-coord { display: none; }
+
+/* -------------------------------- כלי ----------------------------------- */
+
+.ch-pc {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--sq) * .82);
+  line-height: 1;
+  font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', 'Noto Sans Symbols2', 'DejaVu Sans', 'Apple Symbols', sans-serif;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity .12s;
+}
+/* לבן: מילוי לבן וקו מתאר כהה. שחור: מילוי כהה והילה בהירה דקה */
+.ch-pc.w {
+  color: #fff;
+  -webkit-text-stroke: calc(var(--sq) * .028) #1b1b1b;
+  paint-order: stroke fill;
+  text-shadow: 0 calc(var(--sq) * .03) calc(var(--sq) * .04) rgba(0, 0, 0, .35);
+}
+.ch-pc.b {
+  color: #1f1f1f;
+  -webkit-text-stroke: calc(var(--sq) * .012) #000;
+  text-shadow: 0 0 calc(var(--sq) * .02) rgba(255, 255, 255, .35), 0 calc(var(--sq) * .03) calc(var(--sq) * .04) rgba(0, 0, 0, .3);
+}
+.ch-pc.is-lifted { opacity: .3; }
+.ch-pc.is-moving { transition: transform .18s var(--ease); z-index: 4; }
+
+/* הכלי הנגרר — צף מעל הכול, עוקב אחרי האצבע */
+.ch-drag {
+  position: fixed;
+  z-index: 60;
+  width: var(--sq);
+  height: var(--sq);
+  pointer-events: none;
+  transform: translate(-50%, -60%) scale(1.15);
+}
+.ch-drag .ch-pc { position: absolute; }
+
+/* ------------------------------- מצב ------------------------------------ */
+
+.ch-status {
+  margin: 2px 0 0;
+  min-height: 1.3em;
+  font-size: .9rem;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.ch-status.is-check { color: var(--error); }
+.ch-status.is-thinking::after {
+  content: "";
+  display: inline-block;
+  width: 1.2em;
+  text-align: start;
+  animation: chDots 1.2s steps(4) infinite;
+}
+@keyframes chDots {
+  0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; }
+}
+
+.ch-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: calc(var(--sq) * 8);
+  max-width: 100%;
+}
+
+/* רשימת המהלכים — שורה אחת נגללת, המהלך האחרון תמיד בתצוגה */
+.ch-moves {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  width: calc(var(--sq) * 8);
+  max-width: 100%;
+  min-height: 30px;
+  margin: 0;
+  padding: 4px 2px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  font-size: .8rem;
+}
+.ch-moves:empty::before { content: "—"; color: var(--muted); padding: 2px 6px; }
+.ch-moves li { flex: 0 0 auto; display: flex; gap: 3px; align-items: baseline; }
+.ch-moves .n { color: var(--muted); font-weight: 600; }
+.ch-moves .m { padding: 1px 5px; border-radius: 6px; font-weight: 700; color: var(--text-2); }
+.ch-moves .m.is-last { background: var(--accent-soft); color: var(--accent); }
+
+/* --------------------------- משחק חדש / הכתרה --------------------------- */
+
+.ch-options { text-align: start; }
+.ch-opt-label { margin: 12px 0 6px; font-size: .78rem; font-weight: 700; color: var(--muted); }
+.ch-ai-only[hidden] { display: none; }
+
+.ch-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.ch-seg button {
+  flex: 1 1 0;
+  min-height: 38px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ch-seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.ch-promo {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+.ch-promo button {
+  position: relative;
+  aspect-ratio: 1;
+  --sq: 64px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--ch-light);
+  cursor: pointer;
+}
+.ch-promo button:nth-child(even) { background: var(--ch-dark); }
+
+/* ------------------------------ עזרה ------------------------------------ */
+
+.modal-wide { max-width: 440px; }
+.help-body { text-align: start; font-size: .82rem; line-height: 1.6; color: var(--text-2); }
+.help-body p { margin: 0 0 9px; }
+.help-body b { color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ch-pc.is-moving { transition: none; }
+  .ch-sq.is-hint::before { animation: none; }
+}
