@@ -1,0 +1,178 @@
+/* =============================================================================
+ * tetris.css — טטריס
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css.
+ *
+ * הלוח עצמו מצויר על canvas (ראו tetris/ui.js); כאן רק המסגרת: הבאר
+ * והעמודות שלצידה, שכבת ההשהיה וכפתורי השליטה. הבאר כהה בשתי ערכות
+ * הנושא — צבעי החלקים בולטים רק על רקע כהה, כמו בכל טטריס.
+ * =========================================================================== */
+
+:root {
+  --tt-well: #0d1017;
+  --tt-well-edge: #2a3142;
+}
+
+:root[data-theme="dark"] {
+  --tt-well: #07090e;
+  --tt-well-edge: #232a39;
+}
+
+/* -------------------------------- פריסה --------------------------------- */
+
+.tt-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.tt-play {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.tt-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.tt-label {
+  font-size: .66rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: .02em;
+}
+
+.tt-mini {
+  display: block;
+  border-radius: 10px;
+  background: var(--tt-well);
+  box-shadow: inset 0 0 0 1px var(--tt-well-edge);
+}
+
+.tt-well {
+  position: relative;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  background: var(--tt-well);
+  box-shadow: 0 0 0 2px var(--tt-well-edge), 0 10px 26px rgba(0, 0, 0, .3);
+  overflow: hidden;
+  /* המחוות מטופלות בקוד — בלי זה גרירה גוללת את הדף */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tt-well canvas { display: block; }
+
+/* ------------------------------ השהיה ---------------------------------- */
+
+.tt-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(7, 9, 14, .78);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.tt-overlay[hidden] { display: none; }
+.tt-overlay-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+/* ------------------------- כפתורי שליטה -------------------------------- */
+
+.tt-controls {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+}
+.tt-controls[hidden] { display: none; }
+
+.tt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 52px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: .78rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .08s var(--ease), background .12s;
+}
+.tt-btn svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tt-btn.is-down { transform: scale(.94); background: var(--accent-soft); }
+.tt-btn-wide { grid-column: span 2; }
+
+@media (max-height: 720px) {
+  .tt-btn { min-height: 44px; }
+}
+
+/* התוספת לניקוד עפה מעל הלוח */
+.gain {
+  position: fixed;
+  z-index: 55;
+  pointer-events: none;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .8);
+  white-space: nowrap;
+  animation: ttGain 1s var(--ease) forwards;
+}
+.gain.is-big { font-size: 1.4rem; color: #facc15; }
+@keyframes ttGain {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(.8); }
+  20%  { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -48px) scale(1); }
+}
+
+/* ------------------------------ עזרה ------------------------------------ */
+
+.modal-wide { max-width: 440px; }
+.help-body { text-align: start; font-size: .82rem; line-height: 1.6; color: var(--text-2); }
+.help-body p { margin: 0 0 9px; }
+.help-body ul { margin: 0 0 9px; padding-inline-start: 18px; }
+.help-body li { margin-bottom: 3px; }
+.help-body b { color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .gain { animation-duration: .4s; }
+}

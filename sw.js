@@ -18,7 +18,7 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = '8d6db2a3';
+const VERSION = '9aa13031';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
@@ -32,6 +32,7 @@ const PRECACHE = [
   'rummikub.html',
   'solitaire.html',
   'sudoku.html',
+  'tetris.html',
   'css/2048.css',
   'css/blockblast.css',
   'css/bubbles.css',
@@ -40,6 +41,7 @@ const PRECACHE = [
   'css/rummikub.css',
   'css/solitaire.css',
   'css/sudoku.css',
+  'css/tetris.css',
   'css/theme.css',
   'icon.svg',
   'icons/apple-touch-icon.png',
@@ -68,6 +70,8 @@ const PRECACHE = [
   'js/solitaire/ui.js',
   'js/storage.js',
   'js/sw-register.js',
+  'js/tetris/engine.js',
+  'js/tetris/ui.js',
   'js/ui-math.js',
   'js/ui.js',
   'manifest.webmanifest',

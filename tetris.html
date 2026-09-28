@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="טטריס בדפדפן — סיבוב SRS, שמירה, חלק רפאים ותור של הבאים. מקלדת, מחוות מגע וכפתורים, מותאם לטלפון.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="טטריס">
+  <title>טטריס · מרכז המשחקים</title>
+  <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
+  <link rel="manifest" href="manifest.webmanifest?v=8c006993">
+  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
+  <link rel="stylesheet" href="css/tetris.css?v=b8a97993">
+</head>
+<body>
+
+<a class="skip-link" href="#main">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
+
+<div class="app">
+
+  <header class="topbar">
+    <a class="logo" href="index.html" title="חזרה למרכז המשחקים">
+      <svg class="logo-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-text">טטריס</span>
+    </a>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="btnPause" aria-label="השהיה" title="השהיה (P)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnHelp" aria-label="איך משחקים" title="איך משחקים">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="statusbar">
+    <div class="stat">
+      <span class="stat-label">ניקוד</span>
+      <span class="stat-value" id="statScore">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">שיא</span>
+      <span class="stat-value" id="statBest">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">שורות</span>
+      <span class="stat-value" id="statLines">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">שלב</span>
+      <span class="stat-value" id="statLevel">1</span>
+    </div>
+  </div>
+
+  <main class="tt-stage" id="main" tabindex="-1">
+    <!--
+      אזור המשחק LTR בכוונה: שמאל וימין על הלוח הם כיווני התזוזה של החלק,
+      ובדף RTL הם היו מתהפכים. השמירה משמאל והבאים מימין — כמו בכל טטריס.
+    -->
+    <div class="tt-play" id="play" dir="ltr">
+      <div class="tt-side">
+        <span class="tt-label">שמירה</span>
+        <canvas id="holdCanvas" class="tt-mini" aria-label="החלק השמור" role="img"></canvas>
+      </div>
+      <div class="tt-well" id="well">
+        <canvas id="boardCanvas" aria-label="לוח הטטריס" role="img"></canvas>
+        <div class="tt-overlay" id="overlay" dir="rtl" hidden>
+          <p class="tt-overlay-title" id="overlayTitle">מושהה</p>
+          <button type="button" class="btn btn-primary" id="btnResume">ממשיכים</button>
+        </div>
+      </div>
+      <div class="tt-side">
+        <span class="tt-label">הבאים</span>
+        <canvas id="nextCanvas" class="tt-mini" aria-label="החלקים הבאים" role="img"></canvas>
+      </div>
+    </div>
+
+    <div class="tt-controls" id="controls" dir="ltr" hidden>
+      <button type="button" class="tt-btn" data-act="hold" aria-label="שמירה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2"/><path d="M9 12h6"/></svg>
+        <span>שמור</span>
+      </button>
+      <button type="button" class="tt-btn" data-act="ccw" aria-label="סיבוב נגד כיוון השעון">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v4h4"/></svg>
+      </button>
+      <button type="button" class="tt-btn" data-act="cw" aria-label="סיבוב עם כיוון השעון">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v4h-4"/></svg>
+      </button>
+      <button type="button" class="tt-btn" data-act="hard" aria-label="הפלה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></svg>
+        <span>הפל</span>
+      </button>
+      <button type="button" class="tt-btn" data-act="left" aria-label="שמאלה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <button type="button" class="tt-btn tt-btn-wide" data-act="soft" aria-label="ירידה רכה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button type="button" class="tt-btn" data-act="right" aria-label="ימינה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <button type="button" class="link-btn" id="btnNew">משחק חדש</button>
+    <span class="footer-sep">·</span>
+    <span id="footerInfo">—</span>
+  </footer>
+</div>
+
+<!-- ==================== סוף משחק ==================== -->
+<div class="modal" id="overModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <h2 class="modal-title" id="overTitle">המשחק נגמר</h2>
+    <p class="modal-sub" id="overSub"></p>
+    <div class="win-stats" id="overStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>סגור</button>
+      <button type="button" class="btn btn-primary" id="btnOverNew">משחק חדש</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== הגדרות ==================== -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
+    <div class="settings-list">
+      <p class="settings-head">תצוגה ומשוב</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">רטט</span>
+          <span class="setting-desc" id="hapticsNote">משוב מישושי על נעילה, שורות וסיום</span>
+        </span>
+        <input type="checkbox" class="switch" id="optHaptics" data-pref="haptics">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">חלק רפאים</span>
+          <span class="setting-desc">מראה איפה החלק ינחת</span>
+        </span>
+        <input type="checkbox" class="switch" id="optGhost" data-pref="ghost">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">כפתורי שליטה</span>
+          <span class="setting-desc">כפתורים מתחת ללוח. המחוות על הלוח עובדות תמיד</span>
+        </span>
+        <input type="checkbox" class="switch" id="optControls" data-pref="controls">
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== סטטיסטיקות ==================== -->
+<div class="modal" id="statsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <h2 class="modal-title" id="statsTitle">סטטיסטיקות</h2>
+    <div class="stats-table" id="statsTable"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="btnClearStats">איפוס נתונים</button>
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== איך משחקים ==================== -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
+    <div class="help-body">
+      <p><b>המטרה</b> — לסדר את החלקים הנופלים כך שייווצרו שורות מלאות. שורה
+        מלאה נעלמת. המשחק נגמר כשאין מקום לחלק חדש.</p>
+      <p><b>ניקוד</b> — שורה 100, שתיים 300, שלוש 500, ו<b>טטריס</b> (ארבע בבת אחת)
+        800, כפול השלב. טטריס רצוף שווה פי 1.5, ושורות ברצף מוסיפות קומבו.</p>
+      <p><b>שלב</b> — כל 10 שורות עולים שלב, והחלקים נופלים מהר יותר.</p>
+      <p><b>שמירה</b> — אפשר לשמור חלק בצד ולהחליף אותו מאוחר יותר, פעם אחת לכל חלק.</p>
+      <p><b>טלפון — מחוות על הלוח:</b></p>
+      <ul>
+        <li><b>נגיעה</b> — סיבוב (צד ימין עם השעון, צד שמאל נגדו)</li>
+        <li><b>גרירה</b> ימינה/שמאלה — תזוזה, ולמטה — ירידה רכה</li>
+        <li><b>הצלפה</b> מהירה למטה — הפלה, ולמעלה — שמירה</li>
+      </ul>
+      <p><b>מקלדת:</b></p>
+      <ul>
+        <li><b>← →</b> תזוזה · <b>↓</b> ירידה רכה · <b>רווח</b> הפלה</li>
+        <li><b>↑</b> או <b>X</b> סיבוב · <b>Z</b> סיבוב נגדי · <b>C</b> או <b>Shift</b> שמירה</li>
+        <li><b>P</b> או <b>Esc</b> השהיה</li>
+      </ul>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== אישור ==================== -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+    <h2 class="modal-title" id="confirmTitle">רגע</h2>
+    <p class="modal-sub" id="confirmText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmOk">אישור</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="js/announce.js?v=b637ed5a"></script>
+<script src="js/sw-register.js?v=89122463"></script>
+<script src="js/modal.js?v=66375e94"></script>
+<script src="js/haptics.js?v=88d431f4"></script>
+<script src="js/tetris/engine.js?v=799424ac"></script>
+<script src="js/tetris/ui.js?v=a7542b4e"></script>
+</body>
+</html>

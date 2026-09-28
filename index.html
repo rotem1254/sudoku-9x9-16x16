@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס ומהג'ונג. הכול בדפדפן, בלי התקנה ובלי חשבון.">
+  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס, מהג'ונג וטטריס. הכול בדפדפן, בלי התקנה ובלי חשבון.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=e8da7068">
-  <link rel="stylesheet" href="css/hub.css?v=34909f82">
+  <link rel="stylesheet" href="css/hub.css?v=49905cfa">
 </head>
 <body>
 
@@ -179,6 +179,26 @@
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
     </a>
 
+    <!-- ==================== טטריס ==================== -->
+    <a class="game-card" href="tetris.html">
+      <div class="game-art game-art-tetris" aria-hidden="true">
+        <span class="mini-tetris">
+          <i class="mt4 mt4-t1"></i><i class="mt4 mt4-t2"></i><i class="mt4 mt4-t3"></i><i class="mt4 mt4-t4"></i>
+          <i class="mt4 mt4-l1"></i><i class="mt4 mt4-l2"></i><i class="mt4 mt4-l3"></i><i class="mt4 mt4-l4"></i>
+          <i class="mt4 mt4-i1"></i><i class="mt4 mt4-i2"></i><i class="mt4 mt4-i3"></i><i class="mt4 mt4-i4"></i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">טטריס</h2>
+        <p class="game-desc">החלקים נופלים, ממלאים שורות ומנקים. שמירה, חלק רפאים, ומהירות שעולה כל 10 שורות.</p>
+        <div class="game-tags">
+          <span class="tag">10×20</span>
+          <span class="tag" id="tagTetris">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
   </nav>
 
   <footer class="footer hub-footer">
@@ -326,6 +346,20 @@
       tagMj.textContent = 'שיא · ' + fmt(mjStats.bestTime);
     } else {
       tagMj.textContent = 'פריסת הצב';
+    }
+  }
+
+  var tt = read('tetris.v1.save', null);
+  var ttStats = read('tetris.v1.stats', null);
+  var tagT = document.getElementById('tagTetris');
+  if (tagT) {
+    if (tt && !tt.over && tt.score > 0) {
+      tagT.textContent = 'ממשיכים · ' + tt.score + ' נק׳';
+      tagT.classList.add('is-live');
+    } else if (ttStats && ttStats.best) {
+      tagT.textContent = 'שיא · ' + ttStats.best;
+    } else {
+      tagT.textContent = 'חדש';
     }
   }
 
