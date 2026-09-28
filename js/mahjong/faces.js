@@ -130,13 +130,15 @@
       ' font-weight="800" dominant-baseline="central">' + label + '</text>';
   }
 
-  function flowerMark(x, y, color) {
+  function flowerMark(x, y, color, k) {
+    k = k || 1;
     let s = '';
-    for (let k = 0; k < 5; k++) {
-      const a = (k * 2 * Math.PI) / 5 - Math.PI / 2;
-      s += '<circle cx="' + (x + Math.cos(a) * 5).toFixed(2) + '" cy="' + (y + Math.sin(a) * 5).toFixed(2) + '" r="3.6" fill="' + color + '"/>';
+    for (let i = 0; i < 5; i++) {
+      const a = (i * 2 * Math.PI) / 5 - Math.PI / 2;
+      s += '<circle cx="' + (x + Math.cos(a) * 5 * k).toFixed(2) + '" cy="' + (y + Math.sin(a) * 5 * k).toFixed(2) +
+        '" r="' + (3.6 * k).toFixed(2) + '" fill="' + color + '"/>';
     }
-    return s + '<circle cx="' + x + '" cy="' + y + '" r="2.6" fill="#f0c000"/>';
+    return s + '<circle cx="' + x + '" cy="' + y + '" r="' + (2.6 * k).toFixed(2) + '" fill="#f0c000"/>';
   }
 
   const WINDS = { E: '東', S: '南', W: '西', N: '北' };
@@ -174,14 +176,84 @@
     return '';
   }
 
+  /* ------------------------- סגנון "ברור" ---------------------------- */
+
+  /*
+   * בטלפון אבן היא בערך 21×28 פיקסלים. בגודל הזה הפרטים הקלאסיים — טבעות
+   * בתוך העיגולים, תשעה מקלות, ספרות סיניות — מתמזגים לכתם. הסגנון הברור
+   * מחליף אותם במה שהעין קולטת גם בקטן: ספרה גדולה בצבע הסדרה, וסמל
+   * סדרה אחד גדול מתחתיה. אבני הכבוד מקבלות תו אחד, גדול ועבה.
+   */
+
+  /** ספרה ערבית עבה — גופן מערכת, לא סיני */
+  function digit(n, color) {
+    return '<text x="30" y="27" font-size="44" fill="' + color + '" stroke="' + color + '" stroke-width="2.2"' +
+      ' stroke-linejoin="round" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif"' +
+      ' font-weight="900" text-anchor="middle" dominant-baseline="central">' + n + '</text>';
+  }
+
+  function bigDot(x, y, r, color) {
+    return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + color + '"/>' +
+      '<circle cx="' + x + '" cy="' + y + '" r="' + (r * 0.42).toFixed(2) + '" fill="#fff"/>';
+  }
+
+  function bigStick(x, y, color) {
+    const w = 12, h = 26, top = y - h / 2;
+    return '<rect x="' + (x - w / 2) + '" y="' + top + '" width="' + w + '" height="' + h + '" rx="4" fill="' + color + '"/>' +
+      '<rect x="' + (x - w / 2 - 2) + '" y="' + (y - 2) + '" width="' + (w + 4) + '" height="4" rx="2" fill="' + color + '"/>' +
+      '<rect x="' + (x - w / 2 - 2) + '" y="' + (top - 1) + '" width="' + (w + 4) + '" height="4" rx="2" fill="' + color + '"/>' +
+      '<rect x="' + (x - w / 2 - 2) + '" y="' + (top + h - 3) + '" width="' + (w + 4) + '" height="4" rx="2" fill="' + color + '"/>';
+  }
+
+  /** אות לטינית קטנה בתחתית — לרוחות */
+  function label(ch, color) {
+    return '<text x="30" y="68" font-size="20" fill="' + color + '" font-family="system-ui,sans-serif"' +
+      ' font-weight="900" text-anchor="middle" dominant-baseline="central">' + ch + '</text>';
+  }
+
+  function clearBody(face) {
+    const kind = face[0];
+    const v = face.slice(1);
+    const n = parseInt(v, 10);
+    switch (kind) {
+      case 'd': return digit(n, BLUE) + bigDot(30, 62, 12, BLUE);
+      case 'b': return digit(n, GREEN) + bigStick(30, 62, GREEN);
+      case 'c': return digit(n, '#111') + text('萬', 30, 62, 28, RED, 900);
+      case 'w': return text(WINDS[v], 30, 32, 42, NAVY, 900) + label(v, NAVY);
+      case 'r':
+        if (v === 'R') return text('中', 30, 40, 54, RED, 900);
+        if (v === 'G') return text('發', 30, 40, 50, GREEN, 900);
+        return '<rect x="9" y="11" width="42" height="58" rx="4" fill="none" stroke="' + BLUE + '" stroke-width="6"/>' +
+          '<rect x="19" y="21" width="22" height="38" rx="2" fill="none" stroke="' + BLUE + '" stroke-width="3.5"/>';
+      case 'f': {
+        const [ch, col] = FLOWERS[n - 1];
+        return text(ch, 30, 30, 38, col, 900) + flowerMark(30, 64, col, 1.6);
+      }
+      case 's': {
+        const [ch, col] = SEASONS[n - 1];
+        return text(ch, 30, 30, 38, col, 900) +
+          '<circle cx="30" cy="64" r="10" fill="none" stroke="' + col + '" stroke-width="4"/>' +
+          '<circle cx="30" cy="64" r="4" fill="' + col + '"/>';
+      }
+    }
+    return '';
+  }
+
   const cache = new Map();
 
-  function svg(face) {
-    if (!cache.has(face)) {
-      cache.set(face,
-        '<svg class="mj-face" viewBox="0 0 60 80" aria-hidden="true" focusable="false">' + body(face) + '</svg>');
+  /**
+   * @param {string} face
+   * @param {boolean} [clear=true] הסגנון הברור (ברירת המחדל) או הקלאסי
+   */
+  function svg(face, clear) {
+    clear = clear !== false;
+    const key = (clear ? 'c:' : 'k:') + face;
+    if (!cache.has(key)) {
+      cache.set(key,
+        '<svg class="mj-face" viewBox="0 0 60 80" aria-hidden="true" focusable="false">' +
+        (clear ? clearBody(face) : body(face)) + '</svg>');
     }
-    return cache.get(face);
+    return cache.get(key);
   }
 
   /** שם בעברית — לקורא מסך ולהודעות */

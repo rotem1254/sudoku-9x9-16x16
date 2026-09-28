@@ -24,9 +24,10 @@
   const SAVE_KEY = 'mahjong.v1.save';
   const STATS_KEY = 'mahjong.v1.stats';
 
-  /* יחס גובה/רוחב של אבן, ועובי הצד כחלק מהרוחב */
+  /* יחס גובה/רוחב של אבן, ועובי הצד כחלק מהרוחב. בטלפון הצד דק יותר —
+     כל פיקסל שהולך לתלת-ממד נלקח מהפנים של האבן */
   const RATIO = 1.32;
-  const DEPTH = 0.12;
+  const depthRatio = () => (window.innerWidth < 520 ? 0.08 : 0.12);
   const MAX_TW = 58;
 
   /* --------------------------------------------------------------------- */
@@ -55,6 +56,8 @@
     haptics: true,
     dimBlocked: false,
     timer: true,
+    /** אבנים ברורות: ספרה גדולה וסמל סדרה במקום הציור הקלאסי */
+    clearFaces: true,
   };
 
   const state = {
@@ -171,6 +174,7 @@
     const avail = el.felt.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
     const cols = b.w / 2;
     // רוחב כולל = עמודות × רוחב אבן + הזזת השכבות + עובי הצד
+    const DEPTH = depthRatio();
     let tw = avail / (cols + DEPTH * (b.layers + 1));
     tw = Math.max(16, Math.min(MAX_TW, Math.floor(tw)));
     dims.tw = tw;
@@ -209,7 +213,7 @@
       b.type = 'button';
       b.className = 'mj-tile';
       b.dataset.id = String(t.id);
-      b.innerHTML = Faces.svg(t.face);
+      b.innerHTML = Faces.svg(t.face, state.prefs.clearFaces);
       place(t, b);
       state.els.set(t.id, b);
       frag.appendChild(b);
@@ -545,7 +549,8 @@
     state.prefs[input.dataset.pref] = input.checked;
     savePrefs();
     if (input.dataset.pref === 'haptics' && H) H.setEnabled(input.checked);
-    refresh();
+    if (input.dataset.pref === 'clearFaces') render();
+    else refresh();
   });
 
   el.btnNew.addEventListener('click', () => {

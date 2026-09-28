@@ -45,6 +45,15 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* בטלפון הלבד נמתח מקצה לקצה — כל פיקסל רוחב הופך לאבן גדולה יותר */
+@media (max-width: 520px) {
+  .mj-felt {
+    margin-inline: calc(var(--app-pad, 12px) * -1);
+    padding: 10px 3px 12px;
+    border-radius: 0;
+  }
+}
+
 .mj-board {
   position: relative;
   margin: 0 auto;
@@ -76,9 +85,9 @@
 
 .mj-face {
   position: absolute;
-  inset: 6% 7%;
-  width: 86%;
-  height: 88%;
+  inset: 4% 5%;
+  width: 90%;
+  height: 92%;
   pointer-events: none;
 }
 
