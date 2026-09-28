@@ -110,6 +110,8 @@
     freshTiles: [],
     /** { from:'rack'|'table', setIndex, tileIndex, tile } */
     selection: null,
+    /** אינדקס צירוף שהרגע הפך חוקי, להבהוב ירוק חד־פעמי; 1- = אין */
+    flashSet: -1,
     aiRunning: false,
     confirmAction: null,
   };
@@ -647,6 +649,7 @@
       const box = document.createElement('div');
       box.className = 'set';
       if (mark && !T.isValidSet(set)) box.classList.add('is-invalid');
+      if (si === state.flashSet) box.classList.add('is-locked');
       box.dataset.set = String(si);
 
       set.forEach((tile, ti) => {
@@ -862,10 +865,24 @@
      * שסגרה צירוף חוקי מקבלת פעימה כפולה. היד יודעת שהצירוף נסגר עוד
      * לפני שהעין הספיקה לבדוק
      */
-    const dstSet = state.workTable[dst.setIndex];
-    feel(dstSet && T.isValidSet(dstSet) ? 'lock' : 'move');
+    /*
+     * מאתרים את הצירוף שקיבל את האבן לפי האבן עצמה ולא לפי dst.setIndex —
+     * הסידור וההסרה מהמקור עשויים להזיז אינדקסים, אבל האבן היא היא.
+     * אם הצירוף הפך חוקי, מסמנים אותו להבהוב ירוק קצר: משוב חד־משמעי
+     * ש"נסגר", חוץ מהפעימה המישושית
+     */
+    let flashIdx = -1;
+    for (let i = 0; i < state.workTable.length; i++) {
+      if (state.workTable[i].includes(src.tile)) {
+        if (T.isValidSet(state.workTable[i])) flashIdx = i;
+        break;
+      }
+    }
+    feel(flashIdx >= 0 ? 'lock' : 'move');
 
+    state.flashSet = flashIdx;
     render();
+    state.flashSet = -1;
     saveDraft();
     return true;
   }
@@ -1126,6 +1143,13 @@
   let dragStart = null;
   let dragPointerId = null;
   const DRAG_THRESHOLD = 6;
+  /*
+   * כמה פיקסלים האבן הנגררת "מרחפת" מעל האצבע. בלי זה האצבע מכסה בדיוק
+   * את האבן ואת קו ההכנסה, ושיבוץ מדויק הופך לניחוש. ההרמה חלה גם על
+   * נקודת הבדיקה של היעד, כך שהקו נבנה במקום שבו האבן *נראית*, לא מתחת
+   * לאצבע.
+   */
+  const DRAG_LIFT = 46;
 
   /*
    * הגרירה מתעדכנת פעם אחת לכל פריים (requestAnimationFrame) ולא בכל
@@ -1168,11 +1192,23 @@
   }
 
   /** מצייר את המצב האחרון פעם אחת בפריים. */
+  /*
+   * נקודת ההרמה חלה רק מעל השולחן. מעל המגש אין הרמה — אחרת סידור־מחדש
+   * בתוך המגש היה מכוון לנקודה שמעליו (על השולחן) והאבן לא הייתה חוזרת
+   * למגש. כך ההרמה עוזרת לשיבוץ מדויק בשולחן בלי לשבור את המגש.
+   */
+  function dragPoint(x, y) {
+    const under = document.elementFromPoint(x, y);
+    const overRack = under && under.closest('#rack');
+    return { x, y: overRack ? y : y - DRAG_LIFT };
+  }
+
   function flushDrag() {
     dragRaf = null;
     if (!dragGhost || !lastPointer) return;
-    moveGhost(lastPointer.x, lastPointer.y);
-    highlightDrop(lastPointer.x, lastPointer.y);
+    const p = dragPoint(lastPointer.x, lastPointer.y);
+    moveGhost(p.x, p.y);
+    highlightDrop(p.x, p.y);
   }
 
   function beginGhost(e) {
@@ -1190,7 +1226,8 @@
     clearSelection();
     lastDropKey = null;
     feel('pick');
-    moveGhost(e.clientX, e.clientY);
+    const p = dragPoint(e.clientX, e.clientY);
+    moveGhost(p.x, p.y);
   }
 
   function moveGhost(x, y) {
@@ -1198,7 +1235,7 @@
     /* transform בלבד — ללא left/top — כדי שלא יופעל layout בכל תזוזה.
      * הסקאלה והסיבוב עדינים כדי שהתחושה תהיה חלקה ולא "קופצת". */
     dragGhost.style.transform =
-      'translate3d(' + x + 'px,' + y + 'px,0) translate(-50%,-50%) scale(1.06) rotate(-2deg)';
+      'translate3d(' + x + 'px,' + y + 'px,0) translate(-50%,-50%) scale(1.12) rotate(-2deg)';
   }
 
   /** מסמן את היעד ומצייר קו הכנסה — רק כשהיעד השתנה מהפריים הקודם. */
@@ -1259,7 +1296,8 @@
 
     if (!wasDrag) return; // הקשה רגילה — ה-click יטפל
 
-    const dst = dropTargetAt(e.clientX, e.clientY);
+    const p = dragPoint(e.clientX, e.clientY);
+    const dst = dropTargetAt(p.x, p.y);
     if (dst) applyMove(src, dst);
     else render();
 

@@ -173,11 +173,12 @@
 /* קו ההכנסה — מראה בדיוק לאן האבן תיכנס */
 .drop-caret {
   flex: 0 0 auto;
-  width: 3px;
+  width: 5px;
   align-self: stretch;
-  border-radius: 2px;
+  margin: -2px 1px;
+  border-radius: 3px;
   background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
+  box-shadow: 0 0 6px 1px var(--accent), 0 0 0 1px rgba(255, 255, 255, .35);
   animation: caretPulse .8s var(--ease) infinite;
 }
 @keyframes caretPulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
@@ -302,15 +303,26 @@
 
 /* ------------------------------- השולחן --------------------------------- */
 
-.table-area { position: relative; }
+/*
+ * השולחן הוא משטח המשחק — הוא מקבל את כל הגובה הפנוי. בעבר הוא נחסם
+ * ל-42vh ומתחתיו נשאר חלל שחור גדול; עכשיו הוא גדל למלא את המרווח שבין
+ * שורת המצב למגש, כך שבאמצע משחק יש מקום אמיתי לסדר בו צירופים.
+ */
+.table-area {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
 
 .table-scroll {
+  flex: 1 1 auto;
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 8px;
   min-height: 116px;
-  max-height: 42vh;
+  max-height: none;
   overflow-y: auto;
   padding: 10px;
   border-radius: 14px;
@@ -336,6 +348,17 @@
 }
 .set.is-target { box-shadow: inset 0 0 0 2.5px var(--accent); background: rgba(79, 110, 247, .25); }
 .set.is-invalid { box-shadow: inset 0 0 0 2px var(--error); background: rgba(200, 30, 40, .22); }
+
+/* צירוף שהרגע הפך חוקי — הבהוב ירוק חד־פעמי שאומר "נסגר" */
+.set.is-locked { animation: setLocked 1s var(--ease); }
+@keyframes setLocked {
+  0% { box-shadow: inset 0 0 0 2.5px var(--success), 0 0 14px 2px var(--success-soft); }
+  70% { box-shadow: inset 0 0 0 2.5px var(--success), 0 0 10px 1px transparent; }
+  100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .set.is-locked { animation: none; }
+}
 
 /* מקום להנחת צירוף חדש */
 .set-new {
@@ -594,7 +617,6 @@
 @media (max-width: 430px) {
   .tile { --tile-w: 39px; }
   .rack { min-height: calc(39px * 1.42 + 12px); }
-  .table-scroll { max-height: 38vh; }
 }
 
 @media (max-width: 360px) {
@@ -603,7 +625,7 @@
 }
 
 @media (max-height: 720px) {
-  .table-scroll { min-height: 96px; max-height: 34vh; }
+  .table-scroll { min-height: 96px; }
   .rack-head { margin-bottom: 5px; }
 }
 
