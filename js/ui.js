@@ -24,10 +24,22 @@
   /* מצב הממשק                                                              */
   /* --------------------------------------------------------------------- */
 
+  /*
+   * סוג לוח ("mode"): '9' קלאסי, '16' מורחב, 'x9' — 9×9 אלכסון.
+   * הגודל והווריאנט נגזרים ממנו; כל טאב שומר משחק, קושי וסטטיסטיקה משלו.
+   */
+  const MODES = {
+    9: { size: 9, variant: 'classic', label: '9×9' },
+    16: { size: 16, variant: 'classic', label: '16×16' },
+    x9: { size: 9, variant: 'diagonal', label: 'אלכסון 9×9' },
+  };
+  const modeOf = (g) => (g.variant === 'diagonal' ? 'x' : '') + g.size;
+
   const state = {
     prefs: Storage.loadPrefs(),
     game: null,
     size: 9,
+    mode: '9',
     selected: -1, // אינדקס התא הנבחר
     notesMode: false,
     paused: false,
@@ -165,8 +177,7 @@
    * בונה מחדש את אלמנטי הלוח. נקרא רק כשמשתנה גודל הלוח או מתחיל משחק חדש —
    * לא בכל עדכון. כל שאר העדכונים נעשים על אלמנטים קיימים.
    */
-  function buildBoard(size) {
-    const spec = Core.specFor(size);
+  function buildBoard(spec) {
 
     // כל המידות נגזרות מהמפרט — אין כאן שום הנחה על 9x9
     el.board.style.setProperty('--n', String(spec.N));
@@ -177,6 +188,7 @@
     // מספר עמודות בתצוגת הפתקים: 3 ל-9x9, 4 ל-16x16
     el.board.style.setProperty('--note-cols', String(spec.boxW));
     el.board.dataset.size = String(spec.N);
+    el.board.classList.toggle('is-diagonal', spec.diagonal);
     el.board.setAttribute('aria-rowcount', spec.N);
     el.board.setAttribute('aria-colcount', spec.N);
 
@@ -197,7 +209,8 @@
         const i = unit[k];
 
         const cell = document.createElement('div');
-        cell.className = 'cell';
+        // תאי האלכסונים צבועים ברקע משלהם — כך רואים מיד איפה החוק חל
+        cell.className = 'cell' + (spec.onD1[i] || spec.onD2[i] ? ' is-diag' : '');
         cell.dataset.i = i;
         cell.setAttribute('role', 'gridcell');
 
@@ -287,6 +300,9 @@
     const selRow = sel >= 0 ? spec.rowOf[sel] : -1;
     const selCol = sel >= 0 ? spec.colOf[sel] : -1;
     const selBox = sel >= 0 ? spec.boxOf[sel] : -1;
+    // באלכסון — גם תאי האלכסון של התא הנבחר הם "שכנים"
+    const selD1 = sel >= 0 && spec.onD1[sel];
+    const selD2 = sel >= 0 && spec.onD2[sel];
     const selValue = sel >= 0 ? g.values[sel] : 0;
     const selBit = selValue ? 1 << (selValue - 1) : 0;
 
@@ -299,7 +315,9 @@
         sel >= 0 &&
         (spec.rowOf[i] === selRow ||
           spec.colOf[i] === selCol ||
-          spec.boxOf[i] === selBox);
+          spec.boxOf[i] === selBox ||
+          (selD1 && spec.onD1[i]) ||
+          (selD2 && spec.onD2[i]));
       const isSame =
         prefs.highlightSame &&
         !isSel &&
@@ -387,7 +405,7 @@
     redoBtn.disabled = !g.canRedo();
     hintBtn.disabled = g.hintsLeft === 0 || g.finished;
 
-    el.footerInfo.textContent = `${g.size}×${g.size} · ${
+    el.footerInfo.textContent = `${MODES[modeOf(g)].label} · ${
       DIFF_LABELS[g.difficulty] || g.difficulty
     }`;
   }
@@ -453,7 +471,7 @@
 
   function saveGame() {
     if (!state.game) return;
-    Storage.saveGame(state.game.size, state.game.serialize());
+    Storage.saveGame(modeOf(state.game), state.game.serialize());
   }
 
   /** שמירה מושהית — מונעת כתיבות מיותרות בזמן הקלדה מהירה. */
@@ -958,11 +976,11 @@
     saveGame();
 
     const seconds = g.currentSeconds();
-    const rec = Storage.recordWin(g.size, g.difficulty, seconds);
+    const rec = Storage.recordWin(modeOf(g), g.difficulty, seconds);
 
     playWinAnimation();
 
-    el.winSub.textContent = `${g.size}×${g.size} · ${DIFF_LABELS[g.difficulty]}`;
+    el.winSub.textContent = `${MODES[modeOf(g)].label} · ${DIFF_LABELS[g.difficulty]}`;
     el.winStats.innerHTML = [
       statCard('זמן', formatTime(seconds), rec.isNewBest),
       statCard('שיא אישי', rec.best != null ? formatTime(rec.best) : '—', false),
@@ -1013,8 +1031,9 @@
     if (show) el.loadingBar.style.width = '0%';
   }
 
-  async function newGame(size, difficulty) {
+  async function newGame(mode, difficulty) {
     if (state.generating) return;
+    const { size, variant, label } = MODES[mode];
     state.generating = true;
     showLoading(true);
     el.loadingTitle.textContent = 'יוצר פאזל…';
@@ -1028,15 +1047,16 @@
 
     try {
       const data = await Core.generatePuzzle(size, difficulty, {
-        onProgress: (p, label) => {
+        variant,
+        onProgress: (p, text) => {
           el.loadingBar.style.width = Math.round(p * 100) + '%';
-          if (label) el.loadingSub.textContent = label;
+          if (text) el.loadingSub.textContent = text;
         },
       });
 
-      Storage.recordStart(size, difficulty);
+      Storage.recordStart(mode, difficulty);
       loadGameObject(new Game(data));
-      toast(`לוח ${size}×${size} · ${DIFF_LABELS[difficulty]}`);
+      toast(`לוח ${label} · ${DIFF_LABELS[difficulty]}`);
     } catch (err) {
       console.error(err);
       toast('שגיאה ביצירת הפאזל, נסה שוב');
@@ -1050,12 +1070,13 @@
   function loadGameObject(game) {
     state.game = game;
     state.size = game.size;
+    state.mode = modeOf(game);
     state.selected = -1;
     state.notesMode = false;
     state.paused = false;
     state.autoCompleting = false;
 
-    buildBoard(game.size);
+    buildBoard(game.spec);
     buildNumpad(game.size);
     renderAllCells();
     updateHighlights();
@@ -1081,29 +1102,31 @@
   /* מעבר בין גדלים ורמות                                                   */
   /* --------------------------------------------------------------------- */
 
-  function setActiveSize(size, { load = true } = {}) {
-    state.size = size;
-    state.prefs.size = size;
+  function setActiveMode(mode, { load = true } = {}) {
+    state.mode = mode;
+    state.size = MODES[mode].size;
+    state.prefs.mode = mode;
+    state.prefs.size = state.size; // לתאימות לאחור
     Storage.savePrefs(state.prefs);
 
-    el.tabs.dataset.active = size;
+    el.tabs.dataset.active = mode;
     el.tabs.querySelectorAll('.tab').forEach((t) => {
-      const on = Number(t.dataset.size) === size;
+      const on = t.dataset.mode === mode;
       t.classList.toggle('is-active', on);
       t.setAttribute('aria-selected', String(on));
     });
 
-    setActiveDifficulty(state.prefs.difficulty[size] || 'easy', { persist: false });
+    setActiveDifficulty(state.prefs.difficulty[mode] || 'easy', { persist: false });
 
     if (!load) return;
 
-    // כל גודל לוח שומר משחק משלו — אז מעבר בין טאבים לא מאבד התקדמות
-    const saved = Storage.loadGame(size);
+    // כל סוג לוח שומר משחק משלו — אז מעבר בין טאבים לא מאבד התקדמות
+    const saved = Storage.loadGame(mode);
     const g = saved ? Game.deserialize(saved) : null;
     if (g) {
       loadGameObject(g);
     } else {
-      newGame(size, state.prefs.difficulty[size] || 'easy');
+      newGame(mode, state.prefs.difficulty[mode] || 'easy');
     }
   }
 
@@ -1112,7 +1135,7 @@
       p.classList.toggle('is-active', p.dataset.difficulty === difficulty);
     });
     if (persist) {
-      state.prefs.difficulty[state.size] = difficulty;
+      state.prefs.difficulty[state.mode] = difficulty;
       Storage.savePrefs(state.prefs);
     }
   }
@@ -1120,32 +1143,32 @@
   el.tabs.addEventListener('click', (e) => {
     const tab = e.target.closest('.tab');
     if (!tab || state.generating) return;
-    const size = Number(tab.dataset.size);
-    if (size === state.size) return;
+    const mode = tab.dataset.mode;
+    if (mode === state.mode) return;
     saveGame(); // שומרים את המשחק הנוכחי לפני המעבר
-    setActiveSize(size);
+    setActiveMode(mode);
   });
 
   el.pills.addEventListener('click', (e) => {
     const pill = e.target.closest('.pill');
     if (!pill || state.generating) return;
     const difficulty = pill.dataset.difficulty;
-    if (difficulty === state.prefs.difficulty[state.size]) return;
+    if (difficulty === state.prefs.difficulty[state.mode]) return;
     setActiveDifficulty(difficulty);
-    newGame(state.size, difficulty);
+    newGame(state.mode, difficulty);
   });
 
   el.btnNew.addEventListener('click', () => {
     if (state.generating) return;
-    const difficulty = state.prefs.difficulty[state.size] || 'easy';
+    const difficulty = state.prefs.difficulty[state.mode] || 'easy';
     const g = state.game;
     // מזהירים רק אם באמת יש התקדמות להפסיד
     if (g && !g.finished && g.undoStack.length > 3) {
       confirmAction('להתחיל לוח חדש? ההתקדמות הנוכחית תימחק.', () =>
-        newGame(state.size, difficulty)
+        newGame(state.mode, difficulty)
       );
     } else {
-      newGame(state.size, difficulty);
+      newGame(state.mode, difficulty);
     }
   });
 
@@ -1175,7 +1198,7 @@
   el.btnResume.addEventListener('click', () => setPaused(false));
   el.btnWinNew.addEventListener('click', () => {
     closeModal(el.winModal);
-    newGame(state.size, state.prefs.difficulty[state.size] || 'easy');
+    newGame(state.mode, state.prefs.difficulty[state.mode] || 'easy');
   });
 
   el.btnConfirmOk.addEventListener('click', () => {
@@ -1241,10 +1264,10 @@
 
   function renderStats() {
     let html = '';
-    [9, 16].forEach((size) => {
-      html += `<div class="stats-group-title">לוח ${size}×${size}</div>`;
+    ['9', '16', 'x9'].forEach((mode) => {
+      html += `<div class="stats-group-title">לוח ${MODES[mode].label}</div>`;
       Core.DIFFICULTY_ORDER.forEach((d) => {
-        const rec = Storage.getStat(size, d);
+        const rec = Storage.getStat(mode, d);
         html += `<div class="stats-row">
           <span class="name">${DIFF_LABELS[d]}</span>
           <span class="meta">${rec.won} ניצחונות / ${rec.played} משחקים</span>
@@ -1337,9 +1360,11 @@
     applyTheme();
     spawnConfetti();
 
-    const size = state.prefs.size === 16 ? 16 : 9;
-    // setActiveSize יטען משחק שמור אם קיים, אחרת ייצור חדש
-    setActiveSize(size);
+    // העדפה ישנה שמרה רק size — ממנה גוזרים את הטאב
+    const mode = MODES[state.prefs.mode] ? String(state.prefs.mode)
+      : state.prefs.size === 16 ? '16' : '9';
+    // setActiveMode יטען משחק שמור אם קיים, אחרת ייצור חדש
+    setActiveMode(mode);
 
     if (!Storage.isAvailable()) {
       setTimeout(() => toast('אחסון מקומי חסום — ההתקדמות לא תישמר'), 900);

@@ -16,7 +16,9 @@
      * @param {object} data תוצאת Core.generatePuzzle או מצב שמור
      */
     constructor(data) {
-      const spec = Core.specFor(data.size);
+      // 'classic' או 'diagonal' — משחקים שמורים מלפני הווריאנט הם קלאסיים
+      this.variant = data.variant === 'diagonal' ? 'diagonal' : 'classic';
+      const spec = Core.specFor(data.size, this.variant);
       this.spec = spec;
       this.size = data.size;
       this.difficulty = data.difficulty;
@@ -66,12 +68,12 @@
 
     /** מחזיר Uint8Array של התנגשויות נוכחיות. */
     conflicts() {
-      return Core.findConflicts(this.values, this.size);
+      return Core.findConflicts(this.values, this.size, this.variant);
     }
 
     /** האם הלוח מלא ותקין. */
     isComplete() {
-      return Core.isSolved(this.values, this.size);
+      return Core.isSolved(this.values, this.size, this.variant);
     }
 
     /** מספר התאים שנותרו ריקים. */
@@ -289,7 +291,7 @@
      */
     fillNotes() {
       if (this.finished) return 0;
-      const masks = Core.candidateMasks(this.values, this.size);
+      const masks = Core.candidateMasks(this.values, this.size, this.variant);
       let touched = 0;
 
       this._transaction((touch) => {
@@ -390,6 +392,7 @@
       return {
         v: 1,
         size: this.size,
+        variant: this.variant,
         difficulty: this.difficulty,
         seed: this.seed,
         puzzle: Array.from(this.puzzle),

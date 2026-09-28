@@ -235,6 +235,61 @@ section('יצירת פאזלים — כל הגדלים וכל הרמות');
 
   /* ------------------------------------------------------------------- */
 
+  section('סודוקו אלכסון');
+  {
+    const sd = Core.specFor(9, 'diagonal');
+    check('מפרט אלכסון: 29 יחידות (27 + שני אלכסונים)', sd.units.length === 29 && sd.diagonal);
+    check('המפרט הקלאסי לא השתנה', Core.specFor(9).units.length === 27 && !Core.specFor(9).diagonal);
+    check('התא המרכזי שייך לשני האלכסונים — 5 יחידות', sd.unitsOfCell[40].length === 5);
+    check('פינה שייכת לאלכסון אחד — 4 יחידות', sd.unitsOfCell[0].length === 4 && sd.unitsOfCell[8].length === 4);
+    check('תא שלא על אלכסון — 3 יחידות', sd.unitsOfCell[1].length === 3);
+
+    // שני 5 על האלכסון הראשי: התנגשות רק בווריאנט אלכסון
+    const v = new Array(81).fill(0);
+    v[0] = 5;   // (0,0)
+    v[40] = 5;  // (4,4)
+    const cDiag = Core.findConflicts(v, 9, 'diagonal');
+    const cClassic = Core.findConflicts(v, 9);
+    check('כפילות על אלכסון — התנגשות באלכסון', cDiag[0] === 1 && cDiag[40] === 1);
+    check('ואין התנגשות בקלאסי', cClassic[0] === 0 && cClassic[40] === 0);
+
+    // פתקים אוטומטיים: 5 על האלכסון מוציא את 5 מהמועמדים של תא אחר על האלכסון
+    const one = new Array(81).fill(0);
+    one[0] = 5;
+    const masks = Core.candidateMasks(one, 9, 'diagonal');
+    check('מועמדים — 5 אסור בתא (8,8) על אותו אלכסון', (masks[80] & (1 << 4)) === 0);
+    // (6,2) — על האלכסון השני, ולא חולק שורה/עמודה/תיבה עם (0,0)
+    check('אבל מותר בתא (6,2) על האלכסון השני', (masks[56] & (1 << 4)) !== 0);
+
+    let allOk = true;
+    let classicAmbiguous = 0;
+    for (const d of Core.DIFFICULTY_ORDER) {
+      const p = await Core.generatePuzzle(9, d, { variant: 'diagonal', seed: 777 + d.length });
+      const sol = p.solution;
+      const d1 = new Set(), d2 = new Set();
+      for (let k = 0; k < 9; k++) { d1.add(sol[k * 9 + k]); d2.add(sol[k * 9 + 8 - k]); }
+      if (p.variant !== 'diagonal' || d1.size !== 9 || d2.size !== 9) allOk = false;
+      if (!Core.isSolved(sol, 9, 'diagonal')) allOk = false;
+      if (!Core.hasUniqueSolution(p.puzzle, 9, undefined, 'diagonal')) allOk = false;
+      if (!Core.hasUniqueSolution(p.puzzle, 9)) classicAmbiguous++;
+    }
+    check('פאזלים בכל הרמות: שני האלכסונים מלאים 1–9 ופתרון יחיד', allOk);
+    check('החוק באמת נחוץ — לפחות חלק מהפאזלים לא יחידים בלעדיו', classicAmbiguous > 0);
+
+    const pd = await Core.generatePuzzle(9, 'easy', { variant: 'diagonal', seed: 99 });
+    check('רמה קלה באלכסון — פתירה בהיסק בלבד', Core.solvableByLogicOnly(pd.puzzle, 9, 'diagonal'));
+
+    const gd = new Game(pd);
+    check('משחק אלכסון נושא את הווריאנט', gd.variant === 'diagonal' && gd.spec.diagonal);
+    const back = Game.deserialize(JSON.parse(JSON.stringify(gd.serialize())));
+    check('ושומר אותו בשמירה ושחזור', back.variant === 'diagonal' && back.spec.units.length === 29);
+    const legacy = Object.assign({}, gd.serialize());
+    delete legacy.variant;
+    check('משחק שמור ישן בלי variant נטען כקלאסי', new Game(legacy).variant === 'classic');
+  }
+
+  /* ------------------------------------------------------------------- */
+
   console.log(`\n${passed} עברו, ${failed} נכשלו`);
   process.exit(failed ? 1 : 0);
 })();

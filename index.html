@@ -50,10 +50,11 @@
       </div>
       <div class="game-body">
         <h2 class="game-title">סודוקו</h2>
-        <p class="game-desc">לוח קלאסי 9×9 ולוח מורחב 16×16, ארבע רמות קושי, פתקים ורמזים.</p>
+        <p class="game-desc">לוח קלאסי 9×9, לוח מורחב 16×16 וסודוקו אלכסון. ארבע רמות קושי, פתקים ורמזים.</p>
         <div class="game-tags">
           <span class="tag">9×9</span>
           <span class="tag">16×16</span>
+          <span class="tag">אלכסון</span>
           <span class="tag" id="tagSudoku">—</span>
         </div>
       </div>
@@ -290,21 +291,22 @@
 
   var DIFF = { easy: 'קל', medium: 'בינוני', hard: 'קשה', expert: 'מומחה' };
 
-  // סודוקו שומר בנפרד לכל גודל לוח — מציגים את המתקדם מביניהם
+  // סודוקו שומר בנפרד לכל סוג לוח — מציגים את המתקדם מביניהם
+  var SUDOKU_MODES = { '9': '9×9', '16': '16×16', 'x9': 'אלכסון' };
   var best = null;
-  [9, 16].forEach(function (size) {
-    var s = read('sudoku.v1.save.' + size, null);
+  Object.keys(SUDOKU_MODES).forEach(function (mode) {
+    var s = read('sudoku.v1.save.' + mode, null);
     if (!s || s.finished) return;
     var filled = (s.values || []).filter(Boolean).length;
     var total = (s.values || []).length || 1;
     var ratio = filled / total;
     if (!best || ratio > best.ratio) {
-      best = { ratio: ratio, size: size, difficulty: s.difficulty };
+      best = { ratio: ratio, label: SUDOKU_MODES[mode], difficulty: s.difficulty };
     }
   });
   var tagS = document.getElementById('tagSudoku');
   if (best) {
-    tagS.textContent = 'ממשיכים ' + best.size + '×' + best.size + ' · ' + (DIFF[best.difficulty] || '');
+    tagS.textContent = 'ממשיכים ' + best.label + ' · ' + (DIFF[best.difficulty] || '');
     tagS.classList.add('is-live');
   } else {
     tagS.textContent = '4 רמות קושי';

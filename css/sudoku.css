@@ -5,12 +5,22 @@
  * גודל הלוח מוזרק כמשתנה --n (9 או 16) ולכן כל הגדלים מחושבים גנרית.
  * =========================================================================== */
 
+/* רקע תאי האלכסון בסודוקו אלכסון — ענבר עדין, שונה מצבע השכנים הכחלחל */
+:root {
+  --diag-bg: #fdf3dc;
+  --diag-given-bg: #f5e6c2;
+}
+:root[data-theme="dark"] {
+  --diag-bg: #2a2518;
+  --diag-given-bg: #342d1c;
+}
+
 /* -------------------------------- טאבים -------------------------------- */
 
 .tabs {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 4px;
   padding: 4px;
   background: var(--surface-2);
@@ -42,7 +52,7 @@
   position: absolute;
   top: 4px;
   bottom: 4px;
-  width: calc(50% - 6px);
+  width: calc((100% - 16px) / 3);
   border-radius: 12px;
   background: var(--accent);
   box-shadow: var(--shadow-sm);
@@ -52,6 +62,7 @@
   transform: translateX(0);
 }
 .tabs[data-active="16"] .tab-indicator { transform: translateX(calc(-100% - 4px)); }
+.tabs[data-active="x9"] .tab-indicator { transform: translateX(calc(-200% - 8px)); }
 
 /* ------------------------------ רמות קושי ------------------------------ */
 
@@ -197,6 +208,13 @@
 .cell.is-hint { color: var(--hint); background: var(--hint-soft); }
 
 /* הדגשות */
+/*
+ * סודוקו אלכסון: שני האלכסונים צבועים ברקע ענבר עדין, כדי שיהיה ברור איפה
+ * חל החוק הנוסף. הכללים באים לפני שכנים/נבחר/שגיאה — אלה גוברים עליהם.
+ */
+.cell.is-diag { background: var(--diag-bg); }
+.cell.is-diag.is-given { background: var(--diag-given-bg); }
+
 .cell.is-peer { background: var(--accent-soft-2); }
 .cell.is-given.is-peer { background: var(--surface-3); }
 /* כל התאים עם אותו ערך — מודגשים חזק כדי שסריקת הלוח בעין תהיה מיידית */

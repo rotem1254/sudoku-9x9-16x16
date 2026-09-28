@@ -12,6 +12,12 @@
  *
  * זה חיוני ל-16x16: לוח של 256 תאים לא ניתן לפתור בזמן סביר עם
  * backtracking נאיבי בלבד.
+ *
+ * וריאנט "אלכסון" (Sudoku X): שני האלכסונים הראשיים הם יחידות נוספות —
+ * גם בהם כל ספרה מופיעה פעם אחת. הם פשוט נכנסים לרשימת היחידות של המפרט,
+ * ולכן הפתרון, בדיקת היחידות, ההתנגשויות והפתקים האוטומטיים אוכפים אותם
+ * בלי שום קוד מיוחד. הפרמטר variant ('classic' | 'diagonal') עובר לצד
+ * size בכל הפונקציות הציבוריות, וברירת המחדל היא קלאסי.
  * =========================================================================== */
 (function (global) {
   'use strict';
@@ -83,10 +89,11 @@
    * בונה מפרט לוח גנרי.
    * @param {number} boxW רוחב תיבת משנה (מספר עמודות בתיבה)
    * @param {number} boxH גובה תיבת משנה (מספר שורות בתיבה)
+   * @param {boolean} [diagonal] האם שני האלכסונים הם יחידות נוספות
    */
-  function buildSpec(boxW, boxH) {
+  function buildSpec(boxW, boxH, diagonal) {
     const N = boxW * boxH;
-    const key = boxW + 'x' + boxH;
+    const key = boxW + 'x' + boxH + (diagonal ? '/d' : '');
     if (specCache.has(key)) return specCache.get(key);
 
     const cells = N * N;
@@ -125,10 +132,28 @@
       units.push(u);
     }
 
-    // עבור כל תא — שלוש היחידות שהוא שייך להן (לעדכון ממוקד)
+    // אלכסונים: יחידה 3N היא האלכסון הראשי (↘), 3N+1 האלכסון המשני (↙)
+    const onD1 = new Uint8Array(cells);
+    const onD2 = new Uint8Array(cells);
+    if (diagonal) {
+      const d1 = new Int32Array(N);
+      const d2 = new Int32Array(N);
+      for (let k = 0; k < N; k++) {
+        d1[k] = k * N + k;
+        d2[k] = k * N + (N - 1 - k);
+        onD1[d1[k]] = 1;
+        onD2[d2[k]] = 1;
+      }
+      units.push(d1, d2);
+    }
+
+    // עבור כל תא — היחידות שהוא שייך להן (שלוש, ועד שתיים נוספות באלכסון)
     const unitsOfCell = [];
     for (let i = 0; i < cells; i++) {
-      unitsOfCell.push([rowOf[i], N + colOf[i], 2 * N + boxOf[i]]);
+      const u = [rowOf[i], N + colOf[i], 2 * N + boxOf[i]];
+      if (onD1[i]) u.push(3 * N);
+      if (onD2[i]) u.push(3 * N + 1);
+      unitsOfCell.push(u);
     }
 
     const spec = {
@@ -143,6 +168,9 @@
       boxOf,
       units,
       unitsOfCell,
+      diagonal: !!diagonal,
+      onD1,
+      onD2,
     };
     specCache.set(key, spec);
     return spec;
@@ -153,9 +181,17 @@
     9: buildSpec(3, 3),
     16: buildSpec(4, 4),
   };
+  const DIAG_SPECS = {
+    9: buildSpec(3, 3, true),
+    16: buildSpec(4, 4, true),
+  };
 
-  function specFor(size) {
-    const s = SPECS[size];
+  /**
+   * @param {number} size
+   * @param {string} [variant] 'classic' (ברירת מחדל) או 'diagonal'
+   */
+  function specFor(size, variant) {
+    const s = (variant === 'diagonal' ? DIAG_SPECS : SPECS)[size];
     if (!s) throw new Error('Unsupported board size: ' + size);
     return s;
   }
@@ -170,6 +206,9 @@
       rowM: new Int32Array(spec.N),
       colM: new Int32Array(spec.N),
       boxM: new Int32Array(spec.N),
+      // מסכות האלכסונים (בשימוש רק בווריאנט אלכסון)
+      d1M: 0,
+      d2M: 0,
       empty: 0,
       nodes: 0,
       aborted: false,
@@ -182,6 +221,8 @@
         st.rowM[spec.rowOf[i]] |= bit;
         st.colM[spec.colOf[i]] |= bit;
         st.boxM[spec.boxOf[i]] |= bit;
+        if (spec.onD1[i]) st.d1M |= bit;
+        if (spec.onD2[i]) st.d2M |= bit;
       } else {
         st.empty++;
       }
@@ -191,10 +232,10 @@
 
   /** מסכת המועמדים החוקיים לתא ריק. */
   function candidates(st, spec, i) {
-    return (
-      spec.FULL &
-      ~(st.rowM[spec.rowOf[i]] | st.colM[spec.colOf[i]] | st.boxM[spec.boxOf[i]])
-    );
+    let used = st.rowM[spec.rowOf[i]] | st.colM[spec.colOf[i]] | st.boxM[spec.boxOf[i]];
+    if (spec.onD1[i]) used |= st.d1M;
+    if (spec.onD2[i]) used |= st.d2M;
+    return spec.FULL & ~used;
   }
 
   function place(st, spec, i, val) {
@@ -203,6 +244,8 @@
     st.rowM[spec.rowOf[i]] |= bit;
     st.colM[spec.colOf[i]] |= bit;
     st.boxM[spec.boxOf[i]] |= bit;
+    if (spec.onD1[i]) st.d1M |= bit;
+    if (spec.onD2[i]) st.d2M |= bit;
     st.empty--;
   }
 
@@ -214,6 +257,8 @@
     st.rowM[spec.rowOf[i]] &= bit;
     st.colM[spec.colOf[i]] &= bit;
     st.boxM[spec.boxOf[i]] &= bit;
+    if (spec.onD1[i]) st.d1M &= bit;
+    if (spec.onD2[i]) st.d2M &= bit;
     st.empty++;
   }
 
@@ -356,12 +401,12 @@
    * פותר / סופר פתרונות.
    * @param {ArrayLike<number>} grid לוח (0 = ריק)
    * @param {number} size גודל הלוח
-   * @param {object} [opts] { limit, rng, nodeBudget }
+   * @param {object} [opts] { limit, rng, nodeBudget, variant }
    * @returns {{count:number, solution:Int32Array|null, aborted:boolean, nodes:number}}
    */
   function solve(grid, size, opts) {
-    const spec = specFor(size);
     const o = opts || {};
+    const spec = specFor(size, o.variant);
     const st = createState(grid, spec);
     st.nodeBudget = o.nodeBudget || Infinity;
     const res = { count: 0, solution: null, trail: [] };
@@ -375,8 +420,8 @@
   }
 
   /** האם ללוח יש בדיוק פתרון אחד. */
-  function hasUniqueSolution(grid, size, nodeBudget) {
-    const r = solve(grid, size, { limit: 2, nodeBudget: nodeBudget });
+  function hasUniqueSolution(grid, size, nodeBudget, variant) {
+    const r = solve(grid, size, { limit: 2, nodeBudget: nodeBudget, variant: variant });
     if (r.aborted) return false; // לא הצלחנו להכריע — נחשיב כלא-יחיד (שמרני)
     return r.count === 1;
   }
@@ -385,8 +430,8 @@
    * האם הפאזל פתיר בהיסק לוגי בלבד (Naked/Hidden Singles), בלי ניחושים.
    * משמש לדירוג קושי: פאזל "קל" חייב להיות פתיר כך.
    */
-  function solvableByLogicOnly(grid, size) {
-    const spec = specFor(size);
+  function solvableByLogicOnly(grid, size, variant) {
+    const spec = specFor(size, variant);
     const st = createState(grid, spec);
     const trail = [];
     if (!propagate(st, spec, trail)) return false;
@@ -398,32 +443,27 @@
   /* --------------------------------------------------------------------- */
 
   /**
-   * מחזיר Uint8Array שבו 1 = התא מתנגש עם תא מלא אחר באותה שורה/עמודה/תיבה.
+   * מחזיר Uint8Array שבו 1 = התא מתנגש עם תא מלא אחר באותה יחידה
+   * (שורה/עמודה/תיבה, ובווריאנט אלכסון — גם אלכסון).
    * מיועד לסימון שגיאות בזמן אמת בממשק.
    */
-  function findConflicts(values, size) {
-    const spec = specFor(size);
+  function findConflicts(values, size, variant) {
+    const spec = specFor(size, variant);
     const bad = new Uint8Array(spec.cells);
-    const seenRow = [];
-    const seenCol = [];
-    const seenBox = [];
-    for (let k = 0; k < spec.N; k++) {
-      seenRow.push(new Int32Array(spec.N + 1).fill(-1));
-      seenCol.push(new Int32Array(spec.N + 1).fill(-1));
-      seenBox.push(new Int32Array(spec.N + 1).fill(-1));
-    }
-    for (let i = 0; i < spec.cells; i++) {
-      const v = values[i];
-      if (!v) continue;
-      const r = spec.rowOf[i], c = spec.colOf[i], b = spec.boxOf[i];
-      const groups = [seenRow[r], seenCol[c], seenBox[b]];
-      for (let g = 0; g < 3; g++) {
-        const prev = groups[g][v];
+    const seen = new Int32Array(spec.N + 1);
+    for (let u = 0; u < spec.units.length; u++) {
+      const unit = spec.units[u];
+      seen.fill(-1);
+      for (let k = 0; k < unit.length; k++) {
+        const i = unit[k];
+        const v = values[i];
+        if (!v) continue;
+        const prev = seen[v];
         if (prev >= 0) {
           bad[i] = 1;
           bad[prev] = 1;
         } else {
-          groups[g][v] = i;
+          seen[v] = i;
         }
       }
     }
@@ -435,8 +475,8 @@
    * תא מלא מקבל 0. משמש למילוי פתקים אוטומטי.
    * @returns {Int32Array}
    */
-  function candidateMasks(values, size) {
-    const spec = specFor(size);
+  function candidateMasks(values, size, variant) {
+    const spec = specFor(size, variant);
     const st = createState(values, spec);
     const out = new Int32Array(spec.cells);
     for (let i = 0; i < spec.cells; i++) {
@@ -446,10 +486,10 @@
   }
 
   /** האם הלוח מלא וחוקי לחלוטין. */
-  function isSolved(values, size) {
-    const spec = specFor(size);
+  function isSolved(values, size, variant) {
+    const spec = specFor(size, variant);
     for (let i = 0; i < spec.cells; i++) if (!values[i]) return false;
-    const bad = findConflicts(values, size);
+    const bad = findConflicts(values, size, variant);
     for (let i = 0; i < spec.cells; i++) if (bad[i]) return false;
     return true;
   }
@@ -463,11 +503,15 @@
    * טריק להאצה: ממלאים קודם את תיבות האלכסון (שאינן חולקות שורה/עמודה,
    * ולכן ניתן למלא אותן בפרמוטציה אקראית חופשית), ורק אז פותרים את השאר.
    * ב-16x16 זה מקצר משמעותית את זמן החיפוש.
+   *
+   * בווריאנט אלכסון הטריק לא תקף: האלכסון הראשי עובר בדיוק דרך תיבות
+   * האלכסון, ופרמוטציות אקראיות בהן כמעט תמיד ישכפלו ספרה על האלכסון.
+   * שם פותרים מלוח ריק עם rng — ב-9x9 זה מהיר ממילא.
    */
-  function generateSolved(size, rng) {
-    const spec = specFor(size);
+  function generateSolved(size, rng, variant) {
+    const spec = specFor(size, variant);
     const grid = new Int32Array(spec.cells);
-    const diagCount = Math.min(spec.boxesPerRow, spec.N / spec.boxH);
+    const diagCount = spec.diagonal ? 0 : Math.min(spec.boxesPerRow, spec.N / spec.boxH);
 
     for (let d = 0; d < diagCount; d++) {
       const b = d * spec.boxesPerRow + d; // תיבה על האלכסון
@@ -478,12 +522,13 @@
       for (let k = 0; k < spec.N; k++) grid[unit[k]] = vals[k];
     }
 
-    const res = solve(grid, size, { limit: 1, rng: rng, nodeBudget: 2000000 });
+    const res = solve(grid, size, { limit: 1, rng: rng, nodeBudget: 2000000, variant: variant });
     if (!res.solution) {
       // נדיר מאוד — ננסה שוב מאפס בלי זרעי אלכסון
       const res2 = solve(new Int32Array(spec.cells), size, {
         limit: 1,
         rng: rng,
+        variant: variant,
       });
       return res2.solution;
     }
@@ -534,11 +579,12 @@
    *
    * @param {number} size 9 או 16
    * @param {string} difficulty easy|medium|hard|expert
-   * @param {object} [opts] { seed, onProgress(0..1) }
+   * @param {object} [opts] { seed, onProgress(0..1), variant }
    */
   async function generatePuzzle(size, difficulty, opts) {
     const o = opts || {};
-    const spec = specFor(size);
+    const variant = o.variant === 'diagonal' ? 'diagonal' : 'classic';
+    const spec = specFor(size, variant);
     const conf = (DIFFICULTY[size] || DIFFICULTY[9])[difficulty] ||
       DIFFICULTY[size].medium;
     const seed = o.seed != null ? o.seed : (Math.random() * 4294967295) >>> 0;
@@ -548,7 +594,7 @@
     onProgress(0.02, 'בונה לוח פתור…');
     await sleep(0);
 
-    const solution = generateSolved(size, rng);
+    const solution = generateSolved(size, rng, variant);
     if (!solution) throw new Error('failed to build a solved board');
 
     onProgress(0.12, 'מסיר תאים…');
@@ -576,8 +622,8 @@
 
       puzzle[idx] = 0;
 
-      let ok = hasUniqueSolution(puzzle, size, nodeBudget);
-      if (ok && conf.logicOnly) ok = solvableByLogicOnly(puzzle, size);
+      let ok = hasUniqueSolution(puzzle, size, nodeBudget, variant);
+      if (ok && conf.logicOnly) ok = solvableByLogicOnly(puzzle, size, variant);
 
       if (ok) {
         clues--;
@@ -597,6 +643,7 @@
 
     return {
       size,
+      variant,
       difficulty,
       seed,
       puzzle: Array.from(puzzle),

@@ -1,7 +1,10 @@
 /* =============================================================================
  * storage.js — שכבת שמירה מקומית (localStorage)
  * -----------------------------------------------------------------------------
- * שמירה נפרדת לכל גודל לוח, כדי שמשחק 9x9 ומשחק 16x16 לא ידרסו זה את זה.
+ * שמירה נפרדת לכל סוג לוח ("mode"), כדי שמשחקים לא ידרסו זה את זה:
+ *   '9'  — 9×9 קלאסי     '16' — 16×16     'x9' — 9×9 אלכסון
+ * המפתחות של 9 ו-16 זהים לגרסאות הקודמות, כך שמשחקים וסטטיסטיקות קיימים
+ * ממשיכים לעבוד.
  * כל הגישות עטופות ב-try/catch: במצב פרטי / חסימת אחסון האתר ימשיך לעבוד,
  * פשוט בלי שמירה.
  * =========================================================================== */
@@ -9,7 +12,7 @@
   'use strict';
 
   const PREFIX = 'sudoku.v1.';
-  const KEY_SAVE = (size) => PREFIX + 'save.' + size; // מצב משחק פעיל
+  const KEY_SAVE = (mode) => PREFIX + 'save.' + mode; // מצב משחק פעיל
   const KEY_STATS = PREFIX + 'stats'; // סטטיסטיקות מצטברות
   const KEY_PREFS = PREFIX + 'prefs'; // העדפות (ערכת נושא, גודל אחרון, קושי)
 
@@ -61,26 +64,29 @@
 
   /* ------------------------------ משחק שמור ---------------------------- */
 
-  function loadGame(size) {
-    const data = read(KEY_SAVE(size), null);
-    if (!data || data.size !== size || !Array.isArray(data.puzzle)) return null;
+  /** סוג הלוח של משחק שמור — כדי לוודא שהוא שייך לטאב שביקש אותו */
+  const modeOf = (data) => (data.variant === 'diagonal' ? 'x' : '') + data.size;
+
+  function loadGame(mode) {
+    const data = read(KEY_SAVE(mode), null);
+    if (!data || modeOf(data) !== String(mode) || !Array.isArray(data.puzzle)) return null;
     return data;
   }
 
-  function saveGame(size, state) {
-    return write(KEY_SAVE(size), state);
+  function saveGame(mode, state) {
+    return write(KEY_SAVE(mode), state);
   }
 
-  function clearGame(size) {
-    remove(KEY_SAVE(size));
+  function clearGame(mode) {
+    remove(KEY_SAVE(mode));
   }
 
   /* ----------------------------- סטטיסטיקות ---------------------------- */
 
   const emptyStats = () => ({});
 
-  /** מפתח סטטיסטיקה לכל צירוף גודל+קושי, כדי שהנתונים לא יתערבבו. */
-  const statKey = (size, difficulty) => size + ':' + difficulty;
+  /** מפתח סטטיסטיקה לכל צירוף סוג לוח+קושי, כדי שהנתונים לא יתערבבו. */
+  const statKey = (mode, difficulty) => mode + ':' + difficulty;
 
   function loadStats() {
     return read(KEY_STATS, emptyStats());
@@ -127,7 +133,9 @@
   const DEFAULT_PREFS = {
     theme: 'auto', // auto | light | dark
     size: 9,
-    difficulty: { 9: 'easy', 16: 'easy' },
+    /** הטאב האחרון: '9' | '16' | 'x9' (size נשאר לתאימות לאחור) */
+    mode: null,
+    difficulty: { 9: 'easy', 16: 'easy', x9: 'easy' },
     highlightPeers: true,
     highlightSame: true,
     showErrors: true,
