@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס, מהג'ונג וטטריס. הכול בדפדפן, בלי התקנה ובלי חשבון.">
+  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס, מהג'ונג, טטריס וסנייק. הכול בדפדפן, בלי התקנה ובלי חשבון.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=e8da7068">
-  <link rel="stylesheet" href="css/hub.css?v=49905cfa">
+  <link rel="stylesheet" href="css/hub.css?v=1bfe877c">
 </head>
 <body>
 
@@ -199,6 +199,26 @@
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
     </a>
 
+    <!-- ==================== סנייק ==================== -->
+    <a class="game-card" href="snake.html">
+      <div class="game-art game-art-snake" aria-hidden="true">
+        <span class="mini-snake">
+          <i class="ms-body"></i>
+          <i class="ms-eye ms-eye-1"></i><i class="ms-eye ms-eye-2"></i>
+          <i class="ms-apple"></i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">סנייק</h2>
+        <p class="game-desc">אוכלים תפוחים, גדלים, ולא נתקעים בקיר או בעצמכם. שלוש מהירויות.</p>
+        <div class="game-tags">
+          <span class="tag">15×17</span>
+          <span class="tag" id="tagSnake">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
   </nav>
 
   <footer class="footer hub-footer">
@@ -360,6 +380,24 @@
       tagT.textContent = 'שיא · ' + ttStats.best;
     } else {
       tagT.textContent = 'חדש';
+    }
+  }
+
+  var sn = read('snake.v1.save', null);
+  var snStats = read('snake.v1.stats', null);
+  var tagSn = document.getElementById('tagSnake');
+  if (tagSn) {
+    var snBest = 0;
+    if (snStats && snStats.best) {
+      Object.keys(snStats.best).forEach(function (k) { snBest = Math.max(snBest, snStats.best[k] || 0); });
+    }
+    if (sn && !sn.over && sn.steps > 0) {
+      tagSn.textContent = 'ממשיכים · ' + sn.score + ' תפוחים';
+      tagSn.classList.add('is-live');
+    } else if (snBest) {
+      tagSn.textContent = 'שיא · ' + snBest;
+    } else {
+      tagSn.textContent = 'חדש';
     }
   }
 

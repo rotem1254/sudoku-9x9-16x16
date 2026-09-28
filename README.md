@@ -15,6 +15,7 @@
 | באבלס | `bubbles.html` |
 | מהג'ונג | `mahjong.html` |
 | טטריס | `tetris.html` |
+| סנייק | `snake.html` |
 
 ## הפעלה
 
@@ -57,6 +58,8 @@ js/mahjong/faces.js     ציורי האבנים ב-SVG
 js/mahjong/ui.js        לוח, בחירה, רמז, ביטול, שעון, שמירה
 js/tetris/engine.js     SRS, שקית של 7, שמירה, השהיית נעילה, ניקוד — זמן מוזרק
 js/tetris/ui.js         לולאה, ציור, DAS/ARR, מחוות וכפתורים, שמירה
+js/snake/engine.js      צעדים, תור פניות, התנגשות, תפוחים, מעבר דרך קירות
+js/snake/ui.js          תנועה חלקה, החלקה במגע, מהירויות, שמירה
 
 tools/make-icons.js   מייצר את האייקונים (PNG + SVG)
 tools/bump-version.js גרסאות נכסים לפי hash של התוכן

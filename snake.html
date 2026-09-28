@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="סנייק בדפדפן — אוכלים תפוחים, גדלים ולא נתקעים בעצמכם. שלוש מהירויות, החלקה במגע או חצים.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="סנייק">
+  <title>סנייק · מרכז המשחקים</title>
+  <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
+  <link rel="manifest" href="manifest.webmanifest?v=8c006993">
+  <link rel="stylesheet" href="css/theme.css?v=e8da7068">
+  <link rel="stylesheet" href="css/snake.css?v=c682f93c">
+</head>
+<body>
+
+<a class="skip-link" href="#main">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
+
+<div class="app">
+
+  <header class="topbar">
+    <a class="logo" href="index.html" title="חזרה למרכז המשחקים">
+      <svg class="logo-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-text">סנייק</span>
+    </a>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="btnPause" aria-label="השהיה" title="השהיה (P)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnHelp" aria-label="איך משחקים" title="איך משחקים">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="statusbar">
+    <div class="stat">
+      <span class="stat-label">תפוחים</span>
+      <span class="stat-value" id="statScore">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">שיא</span>
+      <span class="stat-value" id="statBest">0</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">אורך</span>
+      <span class="stat-value" id="statLen">4</span>
+    </div>
+  </div>
+
+  <main class="sn-stage" id="main" tabindex="-1">
+    <!-- LTR: שמאל וימין הם כיווני התנועה של הנחש, לא כיוון הקריאה -->
+    <div class="sn-field" id="field" dir="ltr">
+      <canvas id="boardCanvas" aria-label="לוח הסנייק" role="img"></canvas>
+      <div class="sn-overlay" id="overlay" dir="rtl" hidden>
+        <p class="sn-overlay-title" id="overlayTitle">סנייק</p>
+        <div class="sn-speeds" id="speeds" role="radiogroup" aria-label="מהירות">
+          <button type="button" class="sn-speed" data-speed="slow" role="radio">איטי</button>
+          <button type="button" class="sn-speed" data-speed="normal" role="radio">רגיל</button>
+          <button type="button" class="sn-speed" data-speed="fast" role="radio">מהיר</button>
+        </div>
+        <button type="button" class="btn btn-primary" id="btnResume">מתחילים</button>
+        <p class="sn-overlay-hint" id="overlayHint">החלקה או חצים כדי לפנות</p>
+      </div>
+    </div>
+
+    <div class="sn-pad" id="pad" dir="ltr" hidden>
+      <button type="button" class="sn-key sn-up" data-dir="up" aria-label="למעלה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+      </button>
+      <button type="button" class="sn-key sn-left" data-dir="left" aria-label="שמאלה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <button type="button" class="sn-key sn-down" data-dir="down" aria-label="למטה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <button type="button" class="sn-key sn-right" data-dir="right" aria-label="ימינה">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <button type="button" class="link-btn" id="btnNew">משחק חדש</button>
+    <span class="footer-sep">·</span>
+    <span id="footerInfo">—</span>
+  </footer>
+</div>
+
+<!-- ==================== סוף משחק ==================== -->
+<div class="modal" id="overModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <h2 class="modal-title" id="overTitle">אאוץ׳!</h2>
+    <p class="modal-sub" id="overSub"></p>
+    <div class="win-stats" id="overStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>סגור</button>
+      <button type="button" class="btn btn-primary" id="btnOverNew">משחק חדש</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== הגדרות ==================== -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
+    <div class="settings-list">
+      <p class="settings-head">תצוגה ומשוב</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">רטט</span>
+          <span class="setting-desc" id="hapticsNote">משוב מישושי על אכילה וסיום</span>
+        </span>
+        <input type="checkbox" class="switch" id="optHaptics" data-pref="haptics">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">מעבר דרך הקירות</span>
+          <span class="setting-desc">יוצאים מצד אחד ונכנסים מהצד השני. נכנס לתוקף במשחק הבא</span>
+        </span>
+        <input type="checkbox" class="switch" id="optWrap" data-pref="wrap">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">כפתורי חצים</span>
+          <span class="setting-desc">ארבעה חצים מתחת ללוח. החלקה על המסך עובדת תמיד</span>
+        </span>
+        <input type="checkbox" class="switch" id="optPad" data-pref="pad">
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== סטטיסטיקות ==================== -->
+<div class="modal" id="statsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <h2 class="modal-title" id="statsTitle">סטטיסטיקות</h2>
+    <div class="stats-table" id="statsTable"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="btnClearStats">איפוס נתונים</button>
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== איך משחקים ==================== -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
+    <div class="help-body">
+      <p><b>המטרה</b> — לאכול כמה שיותר תפוחים. כל תפוח מאריך את הנחש באחד.</p>
+      <p><b>נפסלים</b> כשהראש נתקע בקיר או בגוף של הנחש עצמו.</p>
+      <p><b>מהירות</b> — בוחרים לפני כל משחק: איטי, רגיל או מהיר. לכל מהירות שיא משלה.</p>
+      <p><b>מעבר דרך הקירות</b> — אפשרות בהגדרות: הקירות לא הורגים, ורק הגוף מסוכן.</p>
+      <p><b>שליטה:</b></p>
+      <ul>
+        <li>טלפון — <b>החלקה</b> לכל כיוון, בכל מקום על הלוח</li>
+        <li>מקלדת — <b>חצים</b> או <b>W A S D</b></li>
+        <li><b>רווח</b>, <b>P</b> או <b>Esc</b> — השהיה</li>
+      </ul>
+      <p>אפשר ללחוץ שתי פניות מהר ברצף (למשל למעלה ואז שמאלה) — הנחש יבצע את
+        שתיהן, אחת אחרי השנייה.</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== אישור ==================== -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+    <h2 class="modal-title" id="confirmTitle">רגע</h2>
+    <p class="modal-sub" id="confirmText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmOk">אישור</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="js/announce.js?v=b637ed5a"></script>
+<script src="js/sw-register.js?v=89122463"></script>
+<script src="js/modal.js?v=66375e94"></script>
+<script src="js/haptics.js?v=88d431f4"></script>
+<script src="js/snake/engine.js?v=466a4e16"></script>
+<script src="js/snake/ui.js?v=9af1006a"></script>
+</body>
+</html>

@@ -303,3 +303,42 @@
 .mt4-i2 { grid-area: 4 / 2; background: #22d3ee; }
 .mt4-i3 { grid-area: 4 / 3; background: #22d3ee; }
 .mt4-i4 { grid-area: 4 / 4; background: #22d3ee; }
+
+/* --- סנייק: נחש כחול מתפתל על דשא משובץ, ותפוח --- */
+.game-art-snake {
+  background:
+    repeating-conic-gradient(#aad751 0 25%, #a2d149 0 50%) 0 0 / 16px 16px;
+}
+
+.mini-snake { position: relative; width: 56px; height: 44px; }
+.ms-body {
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  width: 34px;
+  height: 26px;
+  border: 8px solid #4a75f0;
+  border-left-color: transparent;
+  border-radius: 14px;
+  box-sizing: border-box;
+}
+.ms-eye {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: inset 1px 0 0 1px #1b1f2a;
+}
+.ms-eye-1 { left: 8px; top: 9px; }
+.ms-eye-2 { left: 8px; top: 29px; }
+.ms-apple {
+  position: absolute;
+  right: 2px;
+  top: 15px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #e7471d;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, .15);
+}
