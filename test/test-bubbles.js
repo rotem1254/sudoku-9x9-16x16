@@ -42,7 +42,7 @@ function blank(rowsSpec, opts) {
     if (rowsSpec[r]) rowsSpec[r].forEach((v, c) => { row[c] = v; });
     grid.push(row);
   }
-  // refillRows: 1 — לוחות הבדיקה רדודים בכוונה; מתמלאים מחדש רק כשהם ריקים
+  // refillRows: 1 — כשלוח בדיקה מתרוקן יורדת שורה אחת בלבד
   return new Bubbles(Object.assign({ cols, rows, grid, current: 0, next: 0, rng: seeded(1), refillRows: 1 }, opts));
 }
 
@@ -190,13 +190,45 @@ section('נפילה');
 section('התחדשות');
 
 {
-  // לוח רדוד משורה אחת, עם refillRows ברירת מחדל (5)
+  // לוח רדוד משורה אחת — החטאה לא ממלאת אותו, רק סופרת
   const g = blank([[0, 0, 1, 1, 2, 2, 3, 3, 4, 4]], { refillRows: 5 });
   g.current = 5;
   const res = g.shoot(UP);
-  check('לוח רדוד מתמלא עד 5 שורות', res.refilled >= 3 && g.depth() >= 5);
-  check('השורות החדשות מלאות', g.grid[0].slice(0, g.rowLen(0)).every((v) => v !== E));
-  check('אין בועות צפות אחרי מילוי', g.floating().length === 0);
+  check('לוח רדוד לא מתמלא מעצמו', res.refilled === 0 && !res.pushed && g.depth() === 2);
+  check('ההחטאה נספרת', g.misses === 1);
+}
+
+{
+  // פיצוץ שמשאיר לוח רדוד — עדיין בלי שורות חדשות
+  const g = blank([[0, 0, 1, 1, 2, 2, 3, 3, 4, 4]], { refillRows: 5 });
+  g.misses = 3;
+  let found = null;
+  for (let a = 0.3; a < Math.PI - 0.3; a += 0.001) {
+    const t = g.trace(a);
+    if (t.cell && t.cell.r === 1 && t.cell.c === 0) { found = a; break; }
+  }
+  if (found != null) {
+    g.current = 0;
+    const res = g.shoot(found);
+    check('פיצוץ על לוח רדוד לא מוריד שורות', res.popped.length === 3 && res.refilled === 0 && !res.pushed);
+    check('ומאפס את מונה ההחטאות', g.misses === 0);
+  } else check('יש זווית שפוגעת בתא המבוקש', false);
+}
+
+{
+  // לוח שמתרוקן לגמרי מתמלא ל-refillRows שורות
+  const g = blank([[0, 0]], { refillRows: 5 });
+  let found = null;
+  for (let a = 0.3; a < Math.PI - 0.3; a += 0.001) {
+    const t = g.trace(a);
+    if (t.cell && t.cell.r === 0 && t.cell.c === 2) { found = a; break; }
+  }
+  if (found != null) {
+    g.current = 0;
+    const res = g.shoot(found);
+    check('לוח ריק מתמלא ל-5 שורות', res.cleared && res.refilled === 5 && g.depth() === 5);
+    check('השורות החדשות מלאות', g.grid[0].slice(0, g.rowLen(0)).every((v) => v !== E));
+  } else check('יש זווית שפוגעת בתא המבוקש', false);
 }
 
 {
@@ -322,8 +354,8 @@ section('שלמות לאורך משחקים אקראיים');
       }
       if (!ok) break;
     }
-    // הלוח לא מתרוקן — אחרי כל ירייה יש לפחות refillRows שורות
-    if (!g.over && g.depth() < g.refillRows) ok = false;
+    // הלוח אף פעם לא נשאר ריק
+    if (!g.over && g.isEmpty()) ok = false;
     games++;
   }
   check('40 משחקים אקראיים בלי שבירת אינווריאנטים (' + totalShots + ' יריות)', ok && games === 40);

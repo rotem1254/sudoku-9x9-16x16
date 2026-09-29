@@ -11,9 +11,10 @@
  * "איזו שורה מוסטת" נקבע ע"י shift. כשנדחפת שורה חדשה מלמעלה כל השורות
  * יורדות אחת, ו-shift מתהפך — כך כל בועה שומרת על מיקומה הפיזי.
  *
- * אין שלבים: הלוח מתחדש כל הזמן. כשהבועות מתדלדלות ונשארות פחות מ-
- * refillRows שורות, שורות חדשות נדחפות מלמעלה עד שחוזרים לעומק הזה — כך
- * תמיד יש במה לירות, והמשחק נמשך עד שהבועות מגיעות לקו.
+ * אין שלבים: הלוח מתחדש רק לפי ההחטאות — כל missLimit יריות בלי פיצוץ
+ * נדחפת שורה חדשה מלמעלה. מי שמפוצץ ברצף לא מקבל שורות חדשות. רק לוח
+ * שהתרוקן לגמרי מתמלא מיד מחדש ל-refillRows שורות, כדי שיהיה במה לירות.
+ * המשחק נמשך עד שהבועות מגיעות לקו.
  *
  * trace(angle) מחשב את מסלול הירייה (כולל קפיצות מהקירות) ואת התא שבו
  * הבועה תיעצר. אותה פונקציה משמשת גם לקו הכיוון וגם לירייה עצמה, ולכן מה
@@ -31,7 +32,7 @@
   const STEP = 0.08;
 
   /* מידות המשחק הקלאסי: 17 בועות לרוחב, 9 שורות בפתיחה.
-     refillRows — העומק המינימלי; מתחתיו הלוח מתמלא מחדש מלמעלה */
+     refillRows — כמה שורות יורדות כשהלוח מתרוקן לגמרי */
   const DEFAULTS = { cols: 17, rows: 17, startRows: 9, refillRows: 5 };
 
   /* בונוס על ניקוי הלוח כולו */
@@ -334,7 +335,7 @@
     this.grid.unshift(row);
   };
 
-  /** ממלא מחדש מלמעלה עד לעומק refillRows. מחזיר כמה שורות נדחפו. */
+  /** לוח ריק מתמלא מלמעלה ל-refillRows שורות. מחזיר כמה שורות נדחפו. */
   P.refill = function () {
     let n = 0;
     while (this.depth() < this.refillRows) { this.pushRow(); n++; }
@@ -347,7 +348,7 @@
    *   path, cell, color,
    *   popped: {r,c,color}[], dropped: {r,c,color}[],
    *   gained: number, pushed: boolean, cleared: boolean,
-   *   refilled: number,  // שורות שנדחפו כי הלוח התדלדל
+   *   refilled: number,  // שורות שנדחפו כי הלוח התרוקן
    *   over: boolean,
    *   shift: number  // ה-shift שבו נמדדו popped/dropped
    * }}
@@ -397,8 +398,8 @@
     if (this.isEmpty()) {
       res.cleared = true;
       res.gained += CLEAR_BONUS;
+      res.refilled = this.refill();
     }
-    res.refilled = this.refill();
 
     this.score += res.gained;
 
