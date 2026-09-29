@@ -11,6 +11,10 @@
  * "איזו שורה מוסטת" נקבע ע"י shift. כשנדחפת שורה חדשה מלמעלה כל השורות
  * יורדות אחת, ו-shift מתהפך — כך כל בועה שומרת על מיקומה הפיזי.
  *
+ * אין שלבים: הלוח מתחדש כל הזמן. כשהבועות מתדלדלות ונשארות פחות מ-
+ * refillRows שורות, שורות חדשות נדחפות מלמעלה עד שחוזרים לעומק הזה — כך
+ * תמיד יש במה לירות, והמשחק נמשך עד שהבועות מגיעות לקו.
+ *
  * trace(angle) מחשב את מסלול הירייה (כולל קפיצות מהקירות) ואת התא שבו
  * הבועה תיעצר. אותה פונקציה משמשת גם לקו הכיוון וגם לירייה עצמה, ולכן מה
  * שרואים בכוונת הוא בדיוק מה שקורה.
@@ -26,8 +30,12 @@
   const HIT_DIST = 0.82;
   const STEP = 0.08;
 
-  /* מידות המשחק הקלאסי: 17 בועות לרוחב, 9 שורות בפתיחה */
-  const DEFAULTS = { cols: 17, rows: 17, startRows: 9 };
+  /* מידות המשחק הקלאסי: 17 בועות לרוחב, 9 שורות בפתיחה.
+     refillRows — העומק המינימלי; מתחתיו הלוח מתמלא מחדש מלמעלה */
+  const DEFAULTS = { cols: 17, rows: 17, startRows: 9, refillRows: 5 };
+
+  /* בונוס על ניקוי הלוח כולו */
+  const CLEAR_BONUS = 500;
 
   const MIN_ANGLE = (8 * Math.PI) / 180;
   const MAX_ANGLE = Math.PI - MIN_ANGLE;
@@ -37,6 +45,7 @@
    * @param {number} [opts.cols=17]
    * @param {number} [opts.rows=17] השורה האחרונה כבר מחוץ ללוח — בועה שם מסיימת
    * @param {number} [opts.startRows=9]
+   * @param {number} [opts.refillRows=5]
    * @param {function} [opts.rng=Math.random]
    * @param {number[][]} [opts.grid] לוח נתון (בדיקות ושחזור)
    */
@@ -45,12 +54,12 @@
     this.cols = opts.cols || DEFAULTS.cols;
     this.rows = opts.rows || DEFAULTS.rows;
     this.startRows = opts.startRows || DEFAULTS.startRows;
+    this.refillRows = opts.refillRows || DEFAULTS.refillRows;
     this.rng = opts.rng || Math.random;
     this.shift = opts.shift || 0;
     this.score = opts.score || 0;
     this.shots = opts.shots || 0;
     this.misses = opts.misses || 0;
-    this.level = opts.level || 1;
     this.popped = opts.popped || 0;
     this.over = !!opts.over;
 
@@ -120,11 +129,16 @@
   /* צבעים                                                                  */
   /* --------------------------------------------------------------------- */
 
-  /** שישה צבעים, כמו במשחק המקורי. הקושי עולה דרך סבלנות קצרה יותר. */
+  /** שישה צבעים, כמו במשחק המקורי. */
   P.colorCount = function () { return 6; };
 
-  /** כמה החטאות (ירייה בלי פיצוץ) עד שנדחפת שורה חדשה. */
-  P.missLimit = function () { return Math.max(3, 6 - this.level); };
+  /**
+   * כמה החטאות (ירייה בלי פיצוץ) עד שנדחפת שורה חדשה. בלי שלבים הקושי
+   * עולה בהדרגה לפי כמות הבועות שפוצצו: 5, אחרי 300 — 4, אחרי 700 — 3.
+   */
+  P.missLimit = function () {
+    return this.popped < 300 ? 5 : this.popped < 700 ? 4 : 3;
+  };
   P.shotsLeft = function () { return this.missLimit() - this.misses; };
 
   P.colorsOnBoard = function () {
@@ -299,6 +313,14 @@
     return this.grid.every((row) => row.every((v) => v === EMPTY));
   };
 
+  /** מספר השורות מהתקרה ועד הבועה הנמוכה ביותר (0 ללוח ריק). */
+  P.depth = function () {
+    for (let r = this.rows - 1; r >= 0; r--) {
+      if (this.grid[r].some((v) => v !== EMPTY)) return r + 1;
+    }
+    return 0;
+  };
+
   /** האם יש בועה בשורה האחרונה — קו הסיום. */
   P._crossed = function () {
     return this.grid[this.rows - 1].some((v) => v !== EMPTY);
@@ -312,12 +334,21 @@
     this.grid.unshift(row);
   };
 
+  /** ממלא מחדש מלמעלה עד לעומק refillRows. מחזיר כמה שורות נדחפו. */
+  P.refill = function () {
+    let n = 0;
+    while (this.depth() < this.refillRows) { this.pushRow(); n++; }
+    return n;
+  };
+
   /**
    * יורה את הבועה הנוכחית.
    * @returns {null|{
    *   path, cell, color,
    *   popped: {r,c,color}[], dropped: {r,c,color}[],
-   *   gained: number, pushed: boolean, cleared: boolean, over: boolean,
+   *   gained: number, pushed: boolean, cleared: boolean,
+   *   refilled: number,  // שורות שנדחפו כי הלוח התדלדל
+   *   over: boolean,
    *   shift: number  // ה-shift שבו נמדדו popped/dropped
    * }}
    */
@@ -334,7 +365,7 @@
     const res = {
       path: t.path, cell: t.cell, color,
       popped: [], dropped: [], gained: 0,
-      pushed: false, cleared: false, over: false,
+      pushed: false, cleared: false, refilled: 0, over: false,
       shift: this.shift,
     };
 
@@ -365,11 +396,9 @@
 
     if (this.isEmpty()) {
       res.cleared = true;
-      res.gained += 500 * this.level;
-      this.level++;
-      this.misses = 0;
-      for (let rr = 0; rr < this.startRows; rr++) this.grid[rr] = this._randomRow(rr, this.grid[rr - 1]);
+      res.gained += CLEAR_BONUS;
     }
+    res.refilled = this.refill();
 
     this.score += res.gained;
 
@@ -395,7 +424,8 @@
       cols: this.cols, rows: this.rows, startRows: this.startRows,
       grid: this.grid.map((row) => row.slice()),
       shift: this.shift, score: this.score, shots: this.shots,
-      misses: this.misses, level: this.level, popped: this.popped,
+      refillRows: this.refillRows,
+      misses: this.misses, popped: this.popped,
       over: this.over, current: this.current, next: this.next,
     };
   };
@@ -408,6 +438,7 @@
 
   Bubbles.DEFAULTS = DEFAULTS;
   Bubbles.EMPTY = EMPTY;
+  Bubbles.CLEAR_BONUS = CLEAR_BONUS;
   Bubbles.ROW_H = ROW_H;
   Bubbles.MIN_ANGLE = MIN_ANGLE;
   Bubbles.MAX_ANGLE = MAX_ANGLE;

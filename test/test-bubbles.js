@@ -42,7 +42,8 @@ function blank(rowsSpec, opts) {
     if (rowsSpec[r]) rowsSpec[r].forEach((v, c) => { row[c] = v; });
     grid.push(row);
   }
-  return new Bubbles(Object.assign({ cols, rows, grid, current: 0, next: 0, rng: seeded(1) }, opts));
+  // refillRows: 1 — לוחות הבדיקה רדודים בכוונה; מתמלאים מחדש רק כשהם ריקים
+  return new Bubbles(Object.assign({ cols, rows, grid, current: 0, next: 0, rng: seeded(1), refillRows: 1 }, opts));
 }
 
 const UP = Math.PI / 2;
@@ -180,9 +181,33 @@ section('נפילה');
     const res = g.shoot(found);
     check('שלוש אדומות מתפוצצות', res.popped.length === 3);
     check('שלוש הירוקות שנשארו תלויות נופלות', res.dropped.length === 3);
-    check('נפילה שווה 20 לבועה', res.gained === 30 + 60 + 500);
-    check('לוח ריק — שלב עולה', res.cleared && g.level === 2);
+    check('נפילה שווה 20 לבועה, ועוד בונוס ניקוי', res.gained === 30 + 60 + Bubbles.CLEAR_BONUS);
+    check('לוח ריק — מתמלא מחדש מלמעלה', res.cleared && res.refilled === 1 && g.depth() === 1);
+    check('אין יותר שלבים', g.level === undefined);
   }
+}
+
+section('התחדשות');
+
+{
+  // לוח רדוד משורה אחת, עם refillRows ברירת מחדל (5)
+  const g = blank([[0, 0, 1, 1, 2, 2, 3, 3, 4, 4]], { refillRows: 5 });
+  g.current = 5;
+  const res = g.shoot(UP);
+  check('לוח רדוד מתמלא עד 5 שורות', res.refilled >= 3 && g.depth() >= 5);
+  check('השורות החדשות מלאות', g.grid[0].slice(0, g.rowLen(0)).every((v) => v !== E));
+  check('אין בועות צפות אחרי מילוי', g.floating().length === 0);
+}
+
+{
+  const g = blank([], { refillRows: 5 });
+  g.popped = 0;
+  const a = g.missLimit();
+  g.popped = 400;
+  const b = g.missLimit();
+  g.popped = 5000;
+  const c = g.missLimit();
+  check('הסבלנות מתקצרת בהדרגה: ' + a + ' → ' + b + ' → ' + c, a === 5 && b === 4 && c === 3);
 }
 
 section('שורה חדשה');
@@ -278,7 +303,7 @@ section('שמירה');
 section('שלמות לאורך משחקים אקראיים');
 
 {
-  let ok = true, games = 0, maxLevel = 1, totalShots = 0;
+  let ok = true, games = 0, totalShots = 0;
   for (let seed = 1; seed <= 40; seed++) {
     const rng = seeded(seed);
     const g = new Bubbles({ rng });
@@ -297,8 +322,9 @@ section('שלמות לאורך משחקים אקראיים');
       }
       if (!ok) break;
     }
+    // הלוח לא מתרוקן — אחרי כל ירייה יש לפחות refillRows שורות
+    if (!g.over && g.depth() < g.refillRows) ok = false;
     games++;
-    maxLevel = Math.max(maxLevel, g.level);
   }
   check('40 משחקים אקראיים בלי שבירת אינווריאנטים (' + totalShots + ' יריות)', ok && games === 40);
 }

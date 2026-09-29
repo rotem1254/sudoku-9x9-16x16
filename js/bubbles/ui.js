@@ -90,7 +90,7 @@
     canvas: $('#canvas'),
     statScore: $('#statScore'),
     statBest: $('#statBest'),
-    statLevel: $('#statLevel'),
+    statPopped: $('#statPopped'),
     footerInfo: $('#footerInfo'),
     toast: $('#toast'),
     overModal: $('#overModal'),
@@ -570,8 +570,8 @@
 
     state.view = snapshot();
 
-    if (res.pushed && !reducedMotion) state.slide = { t0: now, dur: 260, rows: 1 };
-    if (res.cleared && !reducedMotion) state.slide = { t0: now, dur: 600, rows: state.game.startRows };
+    const slid = (res.pushed ? 1 : 0) + res.refilled;
+    if (slid && !reducedMotion) state.slide = { t0: now, dur: 260 + 90 * (slid - 1), rows: slid };
 
     if (res.popped.length) {
       feel('lock');
@@ -584,7 +584,7 @@
     if (res.pushed) { feel('reject'); say('שורה חדשה ירדה'); }
     if (res.cleared) {
       feel('win');
-      toast('הלוח נוקה! שלב ' + state.game.level);
+      toast('הלוח נוקה! +' + Bubbles.CLEAR_BONUS);
     }
 
     state.busy = false;
@@ -629,7 +629,7 @@
     const s = stats();
     el.statScore.textContent = String(g.score);
     el.statBest.textContent = String(Math.max(g.score, s.best || 0));
-    el.statLevel.textContent = String(g.level);
+    el.statPopped.textContent = String(g.popped);
     const left = g.shotsLeft();
     el.footerInfo.textContent = g.over ? g.shots + ' יריות'
       : (left === 1 ? 'שורה חדשה בירייה הבאה' : 'שורה חדשה בעוד ' + left + ' יריות');
@@ -645,7 +645,7 @@
     const s = stats();
     s.played = (s.played || 0) + 1;
     if (g.score > (s.best || 0)) s.best = g.score;
-    if (g.level > (s.bestLevel || 0)) s.bestLevel = g.level;
+    if (g.popped > (s.bestPopped || 0)) s.bestPopped = g.popped;
     s.totalScore = (s.totalScore || 0) + g.score;
     s.totalPopped = (s.totalPopped || 0) + g.popped;
     store.write(STATS_KEY, s);
@@ -666,8 +666,8 @@
     el.overStats.innerHTML =
       '<div class="win-stat' + (isBest ? ' is-best' : '') + '"><span class="k">ניקוד</span><span class="v">' + g.score + '</span></div>' +
       '<div class="win-stat"><span class="k">שיא</span><span class="v">' + (s.best || g.score) + '</span></div>' +
-      '<div class="win-stat"><span class="k">שלב</span><span class="v">' + g.level + '</span></div>' +
-      '<div class="win-stat"><span class="k">בועות</span><span class="v">' + g.popped + '</span></div>';
+      '<div class="win-stat"><span class="k">בועות</span><span class="v">' + g.popped + '</span></div>' +
+      '<div class="win-stat"><span class="k">יריות</span><span class="v">' + g.shots + '</span></div>';
 
     renderStatus();
     openModal(el.overModal);
@@ -795,7 +795,7 @@
       ['משחקים', String(s.played || 0)],
       ['הניקוד הגבוה ביותר', String(s.best || 0)],
       ['ניקוד ממוצע', s.played ? String(avg) : '—'],
-      ['השלב הגבוה ביותר', String(s.bestLevel || 0)],
+      ['הכי הרבה בועות במשחק', String(s.bestPopped || 0)],
       ['בועות שפוצצו', String(s.totalPopped || 0)],
     ];
     el.statsTable.innerHTML = rows
