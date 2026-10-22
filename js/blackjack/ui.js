@@ -2,21 +2,27 @@
  * blackjack/ui.js — ממשק הבלאקג'ק
  * -----------------------------------------------------------------------------
  * המנוע (engine.js) מחזיק את כל המצב ומחשב הכול מיד: deal() כבר יודע מה
- * הדילר יקבל, ו-act('stand') כבר שילם. הממשק הוא זה שמותח את זה בזמן —
- * קלף אחרי קלף, היפוך הקלף הסגור, ורק בסוף הסכומים והתוצאה.
+ * הדילר יקבל, ו-act('stand') כבר שילם. הממשק הוא זה שמותח את זה בזמן,
+ * כמו דילר אמיתי:
  *
- * כדי לדעת מה "חדש" בכל ציור, לכל קלף יש id לפי סדר השליפה מהחפיסה.
- * קלף שה-id שלו עוד לא נראה מקבל הנפשת חלוקה, ממוינים לפי ה-id — וכך
- * סדר ההופעה על המסך הוא בדיוק סדר החלוקה האמיתי.
+ *   1. כל קלף חדש עף מהחפיסה (shoe) למקומו, בסדר השליפה האמיתי — לכל
+ *      קלף יש id לפי סדר השליפה, וקלף שעוד לא נראה מקבל את המעוף
+ *   2. הקלף הסגור של הדילר נחלק הפוך, ובתורו מתהפך (הרמה, סיבוב, נחיתה)
+ *      לפני שהדילר מושך — הרגע שהמתח נבנה אליו
+ *   3. רק כשהכול נחת: סכומים, תוצאה לכל יד, וז'יטונים שזזים — רווח עף
+ *      ממגש הבית אל היד ומשם לקופה, והפסד נאסף למגש
  *
  * בזמן ההנפשה (busy) הכפתורים נעולים, כדי שלחיצה מהירה לא תפעל על מצב
- * שהשחקן עוד לא ראה.
+ * שהשחקן עוד לא ראה. ב"פחות תנועה" הכול מיידי, ושום מידע לא עובר רק דרך
+ * הנפשה — הסכומים, התוצאות וההודעה תמיד נכתבים.
  * =========================================================================== */
 (function () {
   'use strict';
 
   const BJ = window.Blackjack;
   const PC = window.PlayingCards;
+  const FX = window.TableFX;
+  const SND = window.Sound;
   const H = window.Haptics;
 
   const $ = (s) => document.querySelector(s);
@@ -57,7 +63,7 @@
     remove(k) { if (this.ok) { try { localStorage.removeItem(k); } catch (e) {} } },
   };
 
-  const DEFAULT_PREFS = { theme: 'auto', haptics: true, fast: false, level: 1 };
+  const DEFAULT_PREFS = { theme: 'auto', haptics: true, sound: true, fast: false, level: 1 };
 
   const state = {
     prefs: Object.assign({}, DEFAULT_PREFS, store.read(PREFS_KEY, {})),
@@ -72,8 +78,10 @@
     holeOpen: false,
     busy: false,
     timers: [],
-    /** הקופה שמוצגת — מתעדכנת רק כשהתוצאה נחשפת */
+    /** הקופה שמוצגת — מתעדכנת רק כשהז'יטונים מגיעים אליה */
     shownBank: 0,
+    /** מה שכתוב כרגע בקופה, כדי שהמונה יטפס ממנו */
+    paintedBank: null,
     /** הפעולה שהרמז סימן, עד המהלך הבא */
     hinted: null,
     /** האם הסיבוב האחרון כבר נספר בסטטיסטיקה */
@@ -82,18 +90,23 @@
 
   const el = {
     table: $('#table'),
+    shoe: $('#shoe'),
+    tray: $('#tray'),
+    discard: $('#discard'),
     dealerCards: $('#dealerCards'),
     dealerTotal: $('#dealerTotal'),
     hands: $('#hands'),
     banner: $('#banner'),
-    rules: $('#rules'),
+    confetti: $('#confetti'),
     rulesMain: $('#rulesMain'),
     rulesSub: $('#rulesSub'),
     betSpot: $('#betSpot'),
     betStack: $('#betStack'),
     betAmount: $('#betAmount'),
     advice: $('#advice'),
+    waitLine: $('#waitLine'),
     statBank: $('#statBank'),
+    bankItem: $('.bj-hud-bank'),
     statBet: $('#statBet'),
     statLevel: $('#statLevel'),
     btnLevel: $('#btnLevel'),
@@ -106,7 +119,8 @@
     btnInsYes: $('#btnInsYes'),
     btnInsNo: $('#btnInsNo'),
     playControls: $('#playControls'),
-    actButtons: Array.from(document.querySelectorAll('.bj-act')),
+    actSub: $('.bj-actions-sub'),
+    actButtons: Array.from(document.querySelectorAll('.bj-act[data-act]')),
     btnHint: $('#btnHint'),
     doneControls: $('#doneControls'),
     btnChangeBet: $('#btnChangeBet'),
@@ -125,6 +139,7 @@
     settingsModal: $('#settingsModal'),
     btnSettings: $('#btnSettings'),
     hapticsNote: $('#hapticsNote'),
+    soundNote: $('#soundNote'),
     helpModal: $('#helpModal'),
     btnHelp: $('#btnHelp'),
     statsModal: $('#statsModal'),
@@ -165,6 +180,7 @@
   }
 
   function feel(name) { if (state.prefs.haptics && H) H.fire(name); }
+  function sound(name) { if (SND) SND.play(name); }
 
   const savePrefs = () => store.write(PREFS_KEY, state.prefs);
   const stats = () => store.read(STATS_KEY, {});
@@ -174,17 +190,17 @@
    * LTR (U+2066…U+2069): בתוך משפט עברי ה-+ וה-− הם תווים ניטרליים,
    * ובלי הבידוד "+160" מוצג כ-"160+"
    */
-  const fmt = (n) => (n < 0 ? '\u2066−' + Math.abs(n).toLocaleString('en-US') + '\u2069'
+  const fmt = (n) => (n < 0 ? '⁦−' + Math.abs(n).toLocaleString('en-US') + '⁩'
     : n.toLocaleString('en-US'));
-  const signed = (n) => (n > 0 ? '\u2066+' + fmt(n) + '\u2069' : fmt(n));
+  const signed = (n) => (n > 0 ? '⁦+' + fmt(n) + '⁩' : fmt(n));
   const sum = (arr) => arr.reduce((a, b) => a + b, 0);
 
   /** קצב ההנפשות: רגיל, מהיר, או כמעט מיידי כשמבקשים פחות תנועה */
   function pace() {
-    if (reducedMotion) return { card: 40, dealer: 60, settle: 60 };
+    if (reducedMotion) return { card: 30, fly: 0, flip: 40, dealer: 60, settle: 60, pay: 0 };
     return state.prefs.fast
-      ? { card: 140, dealer: 260, settle: 160 }
-      : { card: 260, dealer: 520, settle: 320 };
+      ? { card: 150, fly: 300, flip: 380, dealer: 330, settle: 200, pay: 380 }
+      : { card: 260, fly: 430, flip: 560, dealer: 560, settle: 320, pay: 520 };
   }
 
   function later(fn, ms) {
@@ -216,22 +232,9 @@
     if (state.prefs.theme === 'auto') applyTheme();
   });
 
-  /** פירוק סכום לז'יטונים, מהגדול לקטן — לערימה בעיגול ההימור */
+  /** פירוק סכום לז'יטונים של המשחק, מהקטן לגדול — לערימה בעיגול ההימור */
   function toChips(amount) {
-    const out = [];
-    for (let i = CHIPS.length - 1; i >= 0; i--) {
-      while (amount >= CHIPS[i]) { out.push(CHIPS[i]); amount -= CHIPS[i]; }
-    }
-    return out.reverse();
-  }
-
-  function chipEl(value, tag) {
-    const c = document.createElement(tag || 'span');
-    c.className = 'chip chip-' + value;
-    const s = document.createElement('span');
-    s.textContent = value >= 1000 ? (value / 1000) + 'K' : String(value);
-    c.appendChild(s);
-    return c;
+    return FX.breakdown(amount, CHIPS.slice().reverse()).reverse();
   }
 
   /** סכום היד לתצוגה: "7/17" ליד רכה שעוד משחקים בה */
@@ -249,19 +252,34 @@
     return 'bj-total';
   }
 
+  /** הקופה בראש המסך — מטפסת לערך החדש במקום לקפוץ אליו */
+  function paintBank(value, animate) {
+    const from = state.paintedBank == null ? value : state.paintedBank;
+    state.paintedBank = value;
+    if (animate && from !== value) {
+      FX.countUp(el.statBank, from, value, 650, fmt);
+      FX.bump(el.bankItem);
+    } else {
+      FX.countUp(el.statBank, value, value, 0, fmt);
+    }
+  }
+
   /* --------------------------------------------------------------------- */
   /* מידות                                                                  */
   /* --------------------------------------------------------------------- */
 
   /*
-   * רוחב הקלף נגזר מרוחב השולחן: חמישה קלפים בערך ברוחב אחד. בכמה ידיים
-   * כל יד מקבלת חלק מהרוחב, והקלפים בה חופפים יותר. אם גם אז לא נכנס,
-   * הקלף עצמו קטן — עד שכל קלף עדיין מציג את הפינה שלו
+   * רוחב הקלף נגזר מרוחב השולחן — חמישה קלפים בערך ברוחב אחד — ומוגבל
+   * גם לפי הגובה, כדי שבטלפון נמוך כל היד תיכנס בלי לגלול. בכמה ידיים כל
+   * יד מקבלת חלק מהרוחב והקלפים בה חופפים יותר; אם גם אז לא נכנס, הקלף
+   * עצמו קטן — עד שכל קלף עדיין מציג את הפינה שלו
    */
   function layout() {
     const t = state.table;
-    const W = Math.max(240, el.table.clientWidth - 20);
-    const base = Math.round(Math.min(88, Math.max(50, W / 5.1)));
+    const W = Math.max(240, el.table.clientWidth - 28);
+    // כל מה שאינו קלפים תופס בערך 540px; שתי שורות קלפים חולקות את השאר
+    const byHeight = (window.innerHeight - 540) / 2.8;
+    const base = Math.round(Math.max(52, Math.min(94, W / 4.7, byHeight)));
     el.table.style.setProperty('--card-w', base + 'px');
 
     const fit = (container, count, avail, cw, maxStep) => {
@@ -276,18 +294,20 @@
       container.style.setProperty('--step', Math.floor(step) + 'px');
     };
 
-    fit(el.dealerCards, t.dealer.length, W, base, 0.68);
+    fit(el.dealerCards, t.dealer.length, W * 0.8, base, 0.62);
 
     const handEls = el.hands.querySelectorAll('.bj-hand');
     const n = handEls.length;
     if (!n) return;
-    const avail = (W - (n - 1) * 10) / n - 8;
+    // הקשת בתחתית מצמצמת את הרוחב השימושי — לידיים הקיצוניות יש פחות מקום
+    const usable = n > 2 ? W * 0.9 : W * 0.84;
+    const avail = (usable - (n - 1) * 10) / n - 10;
     const cw = n === 1 ? base : Math.min(base * 0.86, avail * 0.78);
     handEls.forEach((h, i) => {
       const hand = t.hands[i];
       if (!hand) return;
-      h.style.maxWidth = n > 1 ? Math.floor(avail + 8) + 'px' : '';
-      fit(h.querySelector('.bj-cards'), hand.cards.length, avail, cw, n === 1 ? 0.62 : 0.34);
+      h.style.maxWidth = n > 1 ? Math.floor(avail + 10) + 'px' : '';
+      fit(h.querySelector('.bj-cards'), hand.cards.length, avail, cw, n === 1 ? 0.6 : 0.34);
     });
   }
 
@@ -295,21 +315,31 @@
   /* ציור                                                                   */
   /* --------------------------------------------------------------------- */
 
+  /** ז'יטוני הבית במגש מול הדילר — קישוט קבוע, וגם היעד והמקור של הז'יטונים */
+  function buildTray() {
+    el.tray.innerHTML = '';
+    [10, 50, 100, 500, 1000].forEach((v, i) => {
+      el.tray.appendChild(FX.stack(v * (3 + (i % 2)), { denoms: [v], max: 4, size: 17 }));
+    });
+  }
+
   function renderStatus() {
     const t = state.table;
     const pendingSum = sum(state.pending);
     const onTable = t.phase === 'bet' ? pendingSum : sum(t.hands.map((h) => h.bet)) + t.insurance;
-    el.statBank.textContent = fmt(t.phase === 'bet' ? t.bankroll - pendingSum : state.shownBank);
+    if (t.phase === 'bet') paintBank(t.bankroll - pendingSum, false);
+    else paintBank(state.shownBank, false);
     el.statBet.textContent = fmt(onTable);
     el.statLevel.textContent = t.rules.name;
 
     const r = t.rules;
     el.rulesMain.textContent = "בלאקג'ק משלם " + (r.bjPays === 1.5 ? '3:2' : '6:5');
-    el.rulesSub.textContent = (r.h17 ? 'הדילר מושך על 17 רך' : 'הדילר עומד על 17 רך') + ' · ביטוח משלם 2:1';
+    el.rulesSub.textContent = r.h17 ? 'הדילר מושך על 17 רך' : 'הדילר חייב לעמוד על 17 רך';
 
     const decks = r.decks === 1 ? 'חפיסה אחת' : r.decks + ' חפיסות';
     el.footerInfo.textContent = decks + ' · נשארו ' + t.shoe.length + ' קלפים · הימור ' +
       fmt(r.minBet) + '–' + fmt(r.maxBet);
+    el.discard.style.setProperty('--used', Math.max(0, Math.min(1, 1 - t.shoe.length / t.shoeSize)).toFixed(3));
   }
 
   function renderControls() {
@@ -332,17 +362,7 @@
       el.btnClear.disabled = !pendingSum;
       el.btnRebet.disabled = !state.lastBet || state.lastBet === pendingSum || !t.canBet(state.lastBet);
       el.btnDeal.disabled = !t.canBet(pendingSum);
-
-      el.betStack.innerHTML = '';
-      state.pending.slice(-8).forEach((v, i) => {
-        const c = chipEl(v);
-        c.style.setProperty('--i', i);
-        el.betStack.appendChild(c);
-      });
-      el.betSpot.classList.toggle('has-bet', pendingSum > 0);
-      el.betAmount.textContent = pendingSum
-        ? fmt(pendingSum) + (pendingSum < t.rules.minBet ? ' · מינימום ' + fmt(t.rules.minBet) : '')
-        : 'הניחו הימור · מינימום ' + fmt(t.rules.minBet);
+      renderSpot();
     }
 
     if (t.phase === 'insurance') {
@@ -358,9 +378,16 @@
         b.disabled = busy || !allowed[a];
         b.classList.toggle('is-advised', a === advised);
       });
-      el.btnHint.hidden = t.rules.advice !== 'hint';
+      const hasHint = t.rules.advice === 'hint';
+      el.btnHint.hidden = !hasHint;
       el.btnHint.disabled = busy;
+      el.actSub.classList.toggle('no-hint', !hasHint);
     }
+
+    // בזמן שהקלפים עפים או שהדילר משחק — שורה שמסבירה למה אין כפתורים
+    const waiting = busy && (t.phase === 'done' || t.phase === 'insurance');
+    el.waitLine.hidden = !waiting;
+    if (waiting) el.waitLine.textContent = state.holeOpen || t.dealer.length > 2 ? 'הדילר משחק…' : 'מחלק…';
 
     if (t.phase === 'done') {
       el.againAmount.textContent = fmt(state.lastBet);
@@ -368,6 +395,18 @@
     }
 
     renderAdvice();
+  }
+
+  /** עיגול ההימור: ערימה אמיתית של הז'יטונים שהונחו, והסכום מתחת */
+  function renderSpot() {
+    const t = state.table;
+    const pendingSum = sum(state.pending);
+    el.betStack.innerHTML = '';
+    if (pendingSum) el.betStack.appendChild(FX.stack(pendingSum, { denoms: CHIPS.slice().reverse(), max: 9 }));
+    el.betSpot.classList.toggle('has-bet', pendingSum > 0);
+    el.betAmount.textContent = pendingSum
+      ? fmt(pendingSum) + (pendingSum < t.rules.minBet ? ' · מינימום ' + fmt(t.rules.minBet) : '')
+      : 'מינימום ' + fmt(t.rules.minBet);
   }
 
   function renderAdvice() {
@@ -388,9 +427,9 @@
   }
 
   /**
-   * מצייר את השולחן. קלפים חדשים מקבלים הנפשת חלוקה בסדר שבו נשלפו,
-   * ואז — אם הגיע הזמן — הקלף הסגור מתהפך והדילר מושך, ורק בסוף נחשפים
-   * הסכומים, התוצאות והקופה.
+   * מצייר את השולחן. קלפים חדשים עפים מהחפיסה בסדר שבו נשלפו; אם הגיע
+   * הזמן — הקלף הסגור מתהפך והדילר מושך; ורק בסוף נחשפים הסכומים,
+   * התוצאות והתשלום.
    */
   function render() {
     clearTimers();
@@ -407,13 +446,14 @@
     t.dealer.slice(0, 2).forEach((c) => { if (fresh(c)) early.push(c); });
     early.sort((a, b) => a.id - b.id);
     early.forEach((c) => { delays.set(c.id, clock); clock += p.card; });
+    if (early.length) clock += p.fly - p.card;
 
     // היפוך הקלף הסגור, ואחריו הקלפים שהדילר מושך
     let flipAt = -1;
     const hole = t.dealer[1];
     if (hole && !holeHidden && !state.holeOpen) {
       flipAt = clock + (clock ? p.card : 0);
-      clock = flipAt + p.dealer;
+      clock = flipAt + p.flip;
     }
     t.dealer.slice(2).forEach((c) => {
       if (fresh(c)) { delays.set(c.id, clock); clock += p.dealer; }
@@ -422,20 +462,15 @@
 
     /* ---- הדילר ---- */
     el.dealerCards.innerHTML = '';
+    const flying = [];
+    let holeNode = null;
     t.dealer.forEach((c, i) => {
       const isHole = i === 1;
-      const faceDown = isHole && (holeHidden || !state.holeOpen);
-      const d = delays.has(c.id);
-      const node = PC.el(faceDown ? null : c, { deal: d, delay: delays.get(c.id) });
+      const down = isHole && (holeHidden || !state.holeOpen);
+      const node = PC.el(c, { down });
       el.dealerCards.appendChild(node);
-      if (isHole && flipAt >= 0) {
-        later(() => {
-          const face = PC.el(c);
-          face.classList.add('is-flip');
-          node.replaceWith(face);
-          feel('draw');
-        }, flipAt);
-      }
+      if (delays.has(c.id)) flying.push([node, delays.get(c.id)]);
+      if (isHole && flipAt >= 0) holeNode = node;
     });
 
     /* ---- ידי השחקן ---- */
@@ -444,6 +479,8 @@
     const handNodes = t.hands.map((h, i) => {
       const box = document.createElement('div');
       box.className = 'bj-hand';
+      box.setAttribute('role', 'group');
+      box.setAttribute('aria-label', t.hands.length > 1 ? 'יד ' + (i + 1) : 'היד שלך');
       if (t.phase === 'player') {
         if (i === t.active) box.classList.add('is-active');
         else box.classList.add('is-waiting');
@@ -452,7 +489,9 @@
       row.className = 'bj-cards';
       row.dir = 'ltr';
       h.cards.forEach((c) => {
-        row.appendChild(PC.el(c, { deal: delays.has(c.id), delay: delays.get(c.id) }));
+        const node = PC.el(c);
+        row.appendChild(node);
+        if (delays.has(c.id)) flying.push([node, delays.get(c.id)]);
       });
       box.appendChild(row);
 
@@ -461,7 +500,7 @@
       foot.dir = 'rtl';
       box.appendChild(foot);
       el.hands.appendChild(box);
-      return { box, foot };
+      return { box, foot, row };
     });
 
     [...early, ...t.dealer].forEach((c) => state.seen.add(c.id));
@@ -469,25 +508,49 @@
 
     layout();
 
+    // המעוף מהחפיסה — אחרי ה-layout, כדי שהיעד כבר במקומו הסופי
+    flying.forEach(([node, delay]) => {
+      FX.flyIn(node, el.shoe, { delay, duration: p.fly, rotate: -16, scale: 0.7, fade: true });
+      later(() => sound('deal'), delay);
+    });
+    if (holeNode) {
+      later(() => {
+        PC.reveal(holeNode, null, { instant: reducedMotion });
+        sound('flip');
+        feel('draw');
+      }, flipAt);
+    }
+
     // ציור הסכומים מתעכב עד שהקלפים נחתו
     state.busy = revealAt > 0;
     renderStatus();
     renderControls();
     el.banner.hidden = true;
-    el.rules.classList.remove('has-banner');
+    el.table.classList.remove('has-banner');
     el.dealerTotal.hidden = true;
     handNodes.forEach(({ foot }) => { foot.innerHTML = ''; });
+    if (!t.rules.totals || t.phase !== 'done') el.dealerTotal.hidden = true;
+    // לפני שהסכומים נחשפים — ההימור כבר על היד
+    handNodes.forEach(({ foot }, i) => foot.appendChild(betEl(t.hands[i].bet)));
 
     const reveal = () => {
       state.busy = false;
       paintTotals(handNodes);
-      if (t.phase === 'done') roundOver();
+      if (t.phase === 'done') roundOver(handNodes);
       renderStatus();
       renderControls();
       focusControls();
     };
     if (revealAt > 0) later(reveal, revealAt);
     else reveal();
+  }
+
+  function betEl(amount) {
+    const bet = document.createElement('span');
+    bet.className = 'bj-bet';
+    bet.appendChild(FX.stack(amount, { denoms: CHIPS.slice().reverse(), max: 6, size: 22 }));
+    bet.appendChild(document.createTextNode(fmt(amount)));
+    return bet;
   }
 
   function paintTotals(handNodes) {
@@ -500,6 +563,7 @@
       const cards = t.phase === 'insurance' || t.phase === 'player' ? [t.dealer[0]] : t.dealer;
       el.dealerTotal.textContent = totalText(cards, !done);
       el.dealerTotal.className = done ? totalClass(cards, BJ.isNatural(t.dealer)) : 'bj-total';
+      el.dealerTotal.setAttribute('aria-label', 'סכום הדילר ' + BJ.handValue(cards).total);
       el.dealerTotal.hidden = false;
     }
 
@@ -515,11 +579,7 @@
         tot.textContent = natural ? '21' : totalText(h.cards, !h.done);
         meta.appendChild(tot);
       }
-      const bet = document.createElement('span');
-      bet.className = 'bj-bet';
-      bet.appendChild(chipEl(toChips(h.bet).pop() || 10));
-      bet.appendChild(document.createTextNode(fmt(h.bet)));
-      meta.appendChild(bet);
+      meta.appendChild(betEl(h.bet));
       foot.appendChild(meta);
 
       if (done && h.result) {
@@ -532,20 +592,81 @@
     });
   }
 
-  /**
-   * אחרי שהתוצאה נחשפה: הודעה, קופה, סטטיסטיקה, ובדיקת "נגמר הכסף".
-   * סיבוב משוחזר מהשמירה רק מוצג — הוא כבר נספר כשהסתיים
-   */
-  function roundOver() {
-    const t = state.table;
-    state.shownBank = t.bankroll;
+  /* --------------------------------------------------------------------- */
+  /* סוף סיבוב                                                              */
+  /* --------------------------------------------------------------------- */
 
+  /** ז'יטון "רוח" לערימה מעופפת */
+  function ghostStack(amount, size) {
+    return FX.stack(amount, { denoms: CHIPS.slice().reverse(), max: 5, size: size || 26 });
+  }
+
+  /*
+   * הז'יטונים זזים כמו על שולחן אמיתי: רווח מגיע ממגש הבית אל היד, ואז
+   * כל מה שעל היד עובר לקופה; הפסד נאסף למגש. מחזיר מתי הכול נחת
+   */
+  function animatePayouts(handNodes) {
+    const t = state.table;
+    const p = pace();
+    if (!p.pay) return 0;
+    let end = 0;
+    handNodes.forEach(({ foot }, i) => {
+      const h = t.hands[i];
+      const stackEl = foot.querySelector('.bj-bet .chip-stack') || foot;
+      const start = i * 140;
+      if (h.result === 'win' || h.result === 'blackjack') {
+        FX.toss(ghostStack(h.payout), el.tray, stackEl, { delay: start, duration: p.pay });
+        later(() => sound('chips'), start + p.pay * 0.7);
+        FX.toss(ghostStack(h.bet + h.payout), stackEl, el.bankItem, { delay: start + p.pay + 120, duration: p.pay, scaleTo: 0.6 });
+        end = Math.max(end, start + p.pay * 2 + 120);
+      } else if (h.result === 'push' || h.result === 'surrender') {
+        const back = h.bet + h.payout;
+        FX.toss(ghostStack(back), stackEl, el.bankItem, { delay: start + 200, duration: p.pay, scaleTo: 0.6 });
+        end = Math.max(end, start + 200 + p.pay);
+      } else {
+        FX.toss(ghostStack(h.bet), stackEl, el.tray, { delay: start + 200, duration: p.pay, scaleTo: 0.7 });
+        later(() => sound('chip'), start + 200 + p.pay * 0.8);
+        end = Math.max(end, start + 200 + p.pay);
+      }
+      // הערימה על היד נעלמת כשהיא יוצאת לדרך
+      const leaveAt = (h.result === 'win' || h.result === 'blackjack') ? start + p.pay + 120 : start + 200;
+      later(() => { const b = foot.querySelector('.bj-bet'); if (b) b.style.visibility = 'hidden'; }, leaveAt);
+    });
+    if (t.insurance && t.insuranceResult > 0) {
+      FX.toss(ghostStack(t.insurance * 3), el.tray, el.bankItem, { delay: 300, duration: p.pay, scaleTo: 0.6 });
+    }
+    return end;
+  }
+
+  function confetti() {
+    if (reducedMotion) return;
+    el.confetti.innerHTML = '';
+    const colors = ['#f2c55c', '#f7d77e', '#ffffff', '#d6a52a', '#7fe0a8'];
+    for (let i = 0; i < 28; i++) {
+      const c = document.createElement('i');
+      c.style.left = (5 + Math.random() * 90) + '%';
+      c.style.background = colors[i % colors.length];
+      c.style.setProperty('--d', Math.round(Math.random() * 350) + 'ms');
+      c.style.setProperty('--dx', Math.round((Math.random() - 0.5) * 120) + 'px');
+      c.style.setProperty('--r', Math.round(240 + Math.random() * 600) + 'deg');
+      el.confetti.appendChild(c);
+    }
+    later(() => { el.confetti.innerHTML = ''; }, 2400);
+  }
+
+  /**
+   * אחרי שהתוצאה נחשפה: הודעה, תשלום, קופה, סטטיסטיקה, ובדיקת "נגמר
+   * הכסף". סיבוב משוחזר מהשמירה רק מוצג — הוא כבר נספר כשהסתיים
+   */
+  function roundOver(handNodes) {
+    const t = state.table;
     const net = t.lastNet;
     const single = t.hands.length === 1 ? t.hands[0].result : null;
     const dealerBust = BJ.handValue(t.dealer).total > 21;
+    const natural = single === 'blackjack';
     let text;
     let cls = net > 0 ? 'is-win' : net < 0 ? 'is-lose' : '';
-    if (single === 'blackjack') { text = "בלאקג'ק! " + signed(net); cls = 'is-bj'; }
+    if (natural) { text = "בלאקג'ק! " + signed(net); cls = 'is-bj'; }
     else if (single === 'bust') text = 'נשרפת ' + signed(net);
     else if (single === 'surrender') text = 'נכנעת ' + signed(net);
     else if (net > 0 && dealerBust) text = 'הדילר נשרף! ' + signed(net);
@@ -557,16 +678,46 @@
     el.banner.textContent = text;
     el.banner.className = 'bj-banner ' + cls;
     el.banner.hidden = false;
-    el.rules.classList.add('has-banner');
-    if (state.recorded) return;
+    el.table.classList.add('has-banner');
+
+    // הקלפים המנצחים מקבלים הילה; בלאקג'ק — הילה פועמת
+    handNodes.forEach(({ row }, i) => {
+      const r = t.hands[i].result;
+      if (r === 'win' || r === 'blackjack') {
+        row.querySelectorAll('.pc').forEach((c) => {
+          c.classList.add('is-glow');
+          if (r === 'blackjack') c.classList.add('is-pulse');
+        });
+      } else if (r === 'lose' || r === 'bust') {
+        row.querySelectorAll('.pc').forEach((c) => c.classList.add('is-dim'));
+      }
+    });
+
+    if (state.recorded) {
+      state.shownBank = t.bankroll;
+      paintBank(t.bankroll, false);
+      return;
+    }
 
     state.recorded = true;
     say(text, true);
     feel(net > 0 ? 'win' : net < 0 ? 'reject' : 'move');
+    const big = natural || net >= 2 * state.lastBet;
+    sound(net > 0 ? (big ? 'bigwin' : 'win') : net < 0 ? 'lose' : 'push');
+    if (big && net > 0) confetti();
     if (t.insurance && t.insuranceResult > 0) setTimeout(() => toast('הביטוח שילם ' + fmt(t.insuranceResult)), 600);
-    record(net, single === 'blackjack');
+
+    // הקופה מתעדכנת כשהז'יטונים מגיעים אליה
+    const landAt = animatePayouts(handNodes);
+    const settle = () => {
+      state.shownBank = t.bankroll;
+      paintBank(t.bankroll, true);
+    };
+    if (landAt) later(settle, Math.max(0, landAt - 200)); else settle();
+
+    record(net, natural);
     saveGame();
-    if (t.bankroll < t.rules.minBet) setTimeout(openBroke, 900);
+    if (t.bankroll < t.rules.minBet) setTimeout(openBroke, 900 + landAt);
   }
 
   function record(net, natural) {
@@ -592,7 +743,8 @@
     if (a && a !== document.body && !a.closest('[hidden]') && !a.disabled) return;
     const t = state.table;
     const target =
-      t.phase === 'player' ? el.actButtons.find((b) => !b.disabled)
+      t.phase === 'player' ? (el.actButtons.find((b) => b.classList.contains('is-advised') && !b.disabled) ||
+        el.actButtons.find((b) => !b.disabled))
       : t.phase === 'insurance' ? el.btnInsNo
       : t.phase === 'done' ? el.btnAgain
       : null;
@@ -603,22 +755,41 @@
   /* פעולות                                                                 */
   /* --------------------------------------------------------------------- */
 
-  function addChip(v) {
+  function addChip(v, from) {
     const t = state.table;
     if (t.phase !== 'bet' || state.busy) return;
     const room = Math.min(t.bankroll, t.rules.maxBet) - sum(state.pending);
     if (v > room) return;
     state.pending.push(v);
     feel('pick');
-    renderStatus();
-    renderControls();
+    sound('chip');
+    // הז'יטון עף מהמתלה לעיגול, והערימה גדלה כשהוא נוחת
+    if (from && !reducedMotion) {
+      const target = el.betStack.querySelector('.chip-stack') || el.betStack;
+      FX.toss(FX.chip(v, { size: 48 }), from, target, { duration: 340, arc: 40, fadeOut: false })
+        .then(() => { if (state.table.phase === 'bet') renderSpot(); });
+      renderStatus();
+      renderControls();
+      // עד הנחיתה מוצגת הערימה הקודמת
+      const prevSum = sum(state.pending) - v;
+      el.betStack.innerHTML = '';
+      if (prevSum) el.betStack.appendChild(FX.stack(prevSum, { denoms: CHIPS.slice().reverse(), max: 9 }));
+    } else {
+      renderStatus();
+      renderControls();
+    }
     saveGame();
   }
 
   function removeChip() {
     if (state.table.phase !== 'bet' || !state.pending.length) return;
-    state.pending.pop();
+    const v = state.pending.pop();
     feel('pick');
+    sound('chip');
+    if (!reducedMotion) {
+      const chipBtn = el.chipRack.querySelector('.chip-' + v);
+      FX.toss(FX.chip(v, { size: 48 }), el.betStack, chipBtn || el.chipRack, { duration: 320, arc: 30 });
+    }
     renderStatus();
     renderControls();
     saveGame();
@@ -640,19 +811,25 @@
     state.rounds++;
     state.shownBank = t.bankroll - amount;
     t.deal(amount);
-    if (t.shuffled) toast('החפיסה עורבבה');
+    if (t.shuffled) {
+      toast('החפיסה עורבבה');
+      sound('shuffle');
+    }
     feel('draw');
     saveGame();
+    paintBank(state.shownBank, false);
     render();
   }
 
   function act(action) {
     const t = state.table;
     if (state.busy || t.phase !== 'player' || !t.allowed()[action]) return;
+    const before = t.bankroll;
     t.act(action);
     state.hinted = null;
     // את הקופה אחרי תשלום חושפים רק בסוף ההנפשה
     state.shownBank = t.phase === 'done' ? bankBeforeSettle(t) : t.bankroll;
+    if (t.bankroll < before) sound('chips');
     feel(action === 'stand' ? 'move' : 'draw');
     say(ACT_NAMES[action]);
     saveGame();
@@ -671,6 +848,7 @@
     if (state.busy || t.phase !== 'insurance') return;
     t.resolveInsurance(take);
     state.shownBank = t.phase === 'done' ? bankBeforeSettle(t) : t.bankroll;
+    if (take) sound('chips');
     feel('move');
     saveGame();
     render();
@@ -705,6 +883,8 @@
     if (t.phase !== 'player' || state.busy) return;
     state.hinted = t.advice();
     renderControls();
+    const b = el.actButtons.find((x) => x.dataset.act === state.hinted);
+    if (b) FX.bump(b);
     say('המלצה: ' + ACT_NAMES[state.hinted]);
   }
 
@@ -767,16 +947,19 @@
   /* --------------------------------------------------------------------- */
 
   CHIPS.forEach((v) => {
-    const c = chipEl(v, 'button');
+    const c = FX.chip(v, { tag: 'button' });
     c.type = 'button';
     c.dataset.val = v;
     c.setAttribute('aria-label', "ז'יטון " + v);
-    c.addEventListener('click', () => addChip(v));
+    c.addEventListener('click', () => addChip(v, c));
     el.chipRack.appendChild(c);
   });
 
   el.betSpot.addEventListener('click', removeChip);
   el.btnClear.addEventListener('click', () => {
+    if (!state.pending.length) return;
+    if (!reducedMotion) FX.toss(FX.stack(sum(state.pending), { denoms: CHIPS.slice().reverse(), max: 6, size: 44 }), el.betStack, el.chipRack, { duration: 340, arc: 30 });
+    sound('chips');
     state.pending = [];
     renderStatus();
     renderControls();
@@ -785,8 +968,11 @@
   el.btnRebet.addEventListener('click', () => {
     if (!state.table.canBet(state.lastBet)) return;
     state.pending = toChips(state.lastBet);
+    sound('chips');
     renderStatus();
     renderControls();
+    FX.bump(el.betStack);
+    saveGame();
   });
   el.btnDeal.addEventListener('click', () => deal(sum(state.pending)));
 
@@ -819,6 +1005,7 @@
     s.rebuys = (s.rebuys || 0) + 1;
     store.write(STATS_KEY, s);
     toBetting();
+    sound('chips');
     toast('קופה חדשה · ' + fmt(BJ.START_BANKROLL));
   });
   el.btnBrokeLevel.addEventListener('click', () => {
@@ -905,6 +1092,11 @@
         : 'הדפדפן הזה אינו מאפשר רטט לדף. המשוב החזותי פועל כרגיל';
     const sw = document.getElementById('optHaptics');
     if (sw) sw.disabled = mode === 'none';
+    const snd = document.getElementById('optSound');
+    if (snd && !(SND && SND.supported())) {
+      snd.disabled = true;
+      el.soundNote.textContent = 'הדפדפן הזה אינו תומך בצלילים';
+    }
     openModal(el.settingsModal);
   });
 
@@ -915,6 +1107,10 @@
     state.prefs[key] = input.checked;
     savePrefs();
     if (key === 'haptics' && H) H.setEnabled(input.checked);
+    if (key === 'sound' && SND) {
+      SND.setEnabled(input.checked);
+      if (input.checked) sound('chip');
+    }
   });
 
   el.btnConfirmOk.addEventListener('click', () => {
@@ -946,6 +1142,8 @@
   function init() {
     applyTheme();
     if (H) H.setEnabled(!!state.prefs.haptics);
+    if (SND) SND.setEnabled(state.prefs.sound !== false);
+    buildTray();
 
     const saved = store.read(SAVE_KEY, null);
     let t = null;
@@ -960,7 +1158,7 @@
         state.pending = saved.pending.filter((v) => CHIPS.includes(v));
         while (sum(state.pending) > room) state.pending.pop();
       }
-      // סיבוב שהסתיים נשאר להצגה; המשך מסודר: לא מנפישים שוב את מה שכבר נראה
+      // סיבוב משוחזר: לא מנפישים שוב את מה שכבר נראה
       t.hands.forEach((h) => h.cards.forEach((c) => state.seen.add(c.id)));
       t.dealer.forEach((c) => state.seen.add(c.id));
       state.holeOpen = t.phase === 'done';

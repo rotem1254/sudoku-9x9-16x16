@@ -15,8 +15,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=35714093">
-  <link rel="stylesheet" href="css/cards.css?v=98df4f2b">
-  <link rel="stylesheet" href="css/poker.css?v=c354a59f">
+  <link rel="stylesheet" href="css/cards.css?v=b851b26c">
+  <link rel="stylesheet" href="css/poker.css?v=bcffdc4a">
 </head>
 <body>
 
@@ -50,50 +50,92 @@
 
   <main class="pk-stage" id="main" tabindex="-1">
     <div class="pk-info" id="info">
-      <span id="infoHand">יד 1</span>
-      <span id="infoBlinds">בליינדים 10/20</span>
-      <span id="infoLevel">מתחיל</span>
+      <span class="pk-info-item" id="infoHand">יד 1</span>
+      <span class="pk-info-item" id="infoBlinds">בליינדים 10/20</span>
+      <span class="pk-info-level" id="infoLevel">מתחיל</span>
     </div>
 
-    <!-- השולחן: יריבים מסביב למעלה, קלפי השולחן במרכז -->
-    <div class="felt pk-table" id="table" data-n="3">
-      <div id="seats"></div>
-      <div class="pk-center">
-        <div class="pk-pot" id="pot" aria-live="off"><span class="felt-label">קופה</span> <b id="potAmount">0</b></div>
-        <div class="pk-board" id="board" aria-label="קלפי השולחן"></div>
-        <p class="pk-msg" id="tableMsg"></p>
+    <!-- השולחן: לבד אובלי עם רייל. יריבים מסביב, קופה וקלפי שולחן במרכז,
+         ומול כל מושב מקום להימור שלו. הכל ממוקם באחוזים מתוך השולחן -->
+    <div class="felt pk-table pc-backs-red" id="table" data-n="3" data-shape="tall">
+      <div class="pk-print" aria-hidden="true">
+        <span class="felt-print">טקסס הולדם</span>
       </div>
-      <div class="pk-mybet" id="myBet"></div>
+      <div class="pk-deck" id="deck" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="pk-seats" id="seats"></div>
+      <div class="pk-center">
+        <div class="pk-pot is-empty" id="pot">
+          <span class="pk-pot-stack" id="potStack" aria-hidden="true"></span>
+          <span class="pk-pot-text"><span class="pk-pot-label">קופה</span> <b id="potAmount">0</b></span>
+        </div>
+        <div class="pk-board" id="board" role="group" aria-label="קלפי השולחן"></div>
+        <p class="pk-msg" id="tableMsg" aria-hidden="true"></p>
+      </div>
+      <div class="pk-bet-spot pk-mybet" id="myBet" data-seat="0"></div>
+      <span class="pk-puck" id="puck" aria-hidden="true">D</span>
     </div>
 
-    <!-- היד שלך -->
+    <!-- היד שלך: הקלפים יושבים על שפת השולחן, ולידם הערימה וחוזק היד -->
     <section class="pk-me" id="me" aria-label="היד שלך">
       <div class="pk-hole" id="myCards"></div>
-      <div class="pk-plate pk-myplate" id="myPlate">
-        <span class="pk-name">את/ה <span class="pk-dealer" id="myDealer" hidden>D</span></span>
-        <span class="pk-stack" id="myStack">1000</span>
-        <span class="pk-hand" id="myHand"></span>
+      <div class="pk-myplate" id="myPlate">
+        <span class="pk-avatar pk-av-me" id="myAvatar" aria-hidden="true"><span>את</span></span>
+        <span class="pk-mytext">
+          <span class="pk-name">את/ה</span>
+          <span class="pk-stack" id="myStack">1,000</span>
+        </span>
+        <span class="pk-strength" id="strength">
+          <span class="pk-hand" id="myHand"></span>
+          <span class="pk-meter" id="meter" aria-hidden="true"><i id="meterBar"></i></span>
+        </span>
       </div>
     </section>
 
-    <!-- פעולות -->
+    <!-- פעולות — באזור האגודל. העלאה בשני שלבים: הכפתור פותח גיליון סכום,
+         והאישור בגיליון מבצע. כך נגיעה לא מכוונת לא מהמרת -->
     <section class="pk-actions" id="actions" aria-label="פעולות">
-      <div class="pk-raise" id="raiseRow">
+      <p class="pk-status" id="status" aria-hidden="true"></p>
+
+      <div class="pk-sheet" id="raiseSheet" role="group" aria-label="סכום ההעלאה" hidden>
         <div class="pk-presets" id="presets">
-          <button type="button" class="pk-pre" data-pre="min">מינימום</button>
+          <button type="button" class="pk-pre" data-pre="min">מינ׳</button>
           <button type="button" class="pk-pre" data-pre="half">½ קופה</button>
+          <button type="button" class="pk-pre" data-pre="threeq">¾ קופה</button>
           <button type="button" class="pk-pre" data-pre="pot">קופה</button>
           <button type="button" class="pk-pre" data-pre="all">הכל</button>
+        </div>
+        <div class="pk-amount-row">
+          <button type="button" class="pk-step" id="btnLess" aria-label="פחות">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
+          </button>
+          <output class="pk-amount" id="raiseAmount" aria-live="polite">0</output>
+          <button type="button" class="pk-step" id="btnMore" aria-label="יותר">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>
+          </button>
         </div>
         <label class="pk-slider">
           <span class="sr-only">סכום ההעלאה</span>
           <input type="range" id="raiseRange" min="0" max="100" step="5" value="0">
         </label>
+        <div class="pk-sheet-actions">
+          <button type="button" class="btn btn-ghost" id="btnRaiseCancel">ביטול</button>
+          <button type="button" class="btn btn-primary pk-confirm" id="btnRaiseGo">העלאה</button>
+        </div>
       </div>
+
       <div class="pk-buttons" id="buttons">
-        <button type="button" class="btn pk-fold" id="btnFold" title="פולד (F)">פולד</button>
-        <button type="button" class="btn btn-ghost pk-call" id="btnCall" title="צ'ק / קול (C)">צ'ק</button>
-        <button type="button" class="btn btn-primary pk-bet" id="btnRaise" title="העלאה (R)">העלאה</button>
+        <button type="button" class="pk-btn pk-fold" id="btnFold" title="פולד (F)" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          <span class="pk-btn-text" id="foldText">פולד</span>
+        </button>
+        <button type="button" class="pk-btn pk-call" id="btnCall" title="צ'ק / קול (C)" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+          <span class="pk-btn-text" id="callText">צ'ק</span>
+        </button>
+        <button type="button" class="pk-btn pk-raise" id="btnRaise" title="העלאה (R)" aria-haspopup="true" aria-expanded="false" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+          <span class="pk-btn-text" id="raiseText">העלאה</span>
+        </button>
       </div>
       <div class="pk-next" id="nextRow" hidden>
         <button type="button" class="btn btn-primary" id="btnNext">יד הבאה</button>
@@ -176,6 +218,13 @@
       <p class="settings-head">משוב</p>
       <label class="setting">
         <span class="setting-text">
+          <span class="setting-name">צלילים</span>
+          <span class="setting-desc">ערבוב, חלוקה, ז'יטונים וזכייה — בעוצמה נמוכה</span>
+        </span>
+        <input type="checkbox" class="switch" id="optSound" data-pref="sound">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
           <span class="setting-name">רטט</span>
           <span class="setting-desc" id="hapticsNote">משוב מישושי על פעולה, חלוקה וזכייה</span>
         </span>
@@ -215,8 +264,8 @@
         <li><b>צ'ק</b> — להמשיך בלי להמר, אם אף אחד לא המר.</li>
         <li><b>קול</b> — להשוות להימור הגבוה.</li>
         <li><b>העלאה</b> — להמר יותר. ההעלאה המינימלית היא לפחות כמו ההעלאה
-          הקודמת. בכפתורים: מינימום, חצי קופה, קופה, או הכל (הכל-אין). אפשר גם
-          לכוון את הסכום בסרגל.</li>
+          הקודמת. הכפתור פותח גיליון סכום: מינימום, חצי קופה, שלושה רבעים, קופה
+          או הכל (הכל-אין), ואפשר לכוון בסרגל או ב-+/−. ההימור יוצא רק באישור.</li>
         <li><b>פולד</b> — לוותר על היד ועל מה שכבר הימרת.</li>
       </ul>
       <p><b>בליינדים</b> — שני השחקנים משמאל לכפתור (D) שמים הימור חובה, קטן
@@ -243,7 +292,8 @@
         ומבלף מעט. בינוני מחשב סיכויים מול יחס הקופה ומבלף לפעמים. קשה מחשב
         יותר, משנה גודל הימורים, מבצע צ'ק-רייז ולומד את הסגנון שלך.</p>
       <p><b>מקלדת</b> — <kbd>F</kbd> פולד, <kbd>C</kbd> צ'ק או קול, <kbd>R</kbd>
-        העלאה, חיצים לשינוי הסכום, <kbd>Enter</kbd> ליד הבאה.</p>
+        העלאה (פותח את גיליון הסכום, ולחיצה נוספת מאשרת), חיצים לשינוי הסכום,
+        <kbd>Esc</kbd> סוגר את הגיליון, <kbd>Enter</kbd> ליד הבאה.</p>
     </div>
     <div class="modal-actions">
       <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
@@ -270,9 +320,11 @@
 <script src="js/modal.js?v=66375e94"></script>
 <script src="js/howto.js?v=1ebd845d"></script>
 <script src="js/haptics.js?v=88d431f4"></script>
-<script src="js/playing-cards.js?v=9b55a862"></script>
+<script src="js/playing-cards.js?v=4161f8e5"></script>
+<script src="js/table-fx.js?v=b7942b8f"></script>
+<script src="js/sound.js?v=f8a0b8ee"></script>
 <script src="js/poker/engine.js?v=7f031ddc"></script>
 <script src="js/poker/ai.js?v=806a8418"></script>
-<script src="js/poker/ui.js?v=aab8a897"></script>
+<script src="js/poker/ui.js?v=659e2e62"></script>
 </body>
 </html>

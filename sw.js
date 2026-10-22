@@ -18,7 +18,7 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = '8c3ca419';
+const VERSION = '17f2f422';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
@@ -89,8 +89,10 @@ const PRECACHE = [
   'js/snake/ui.js',
   'js/solitaire/engine.js',
   'js/solitaire/ui.js',
+  'js/sound.js',
   'js/storage.js',
   'js/sw-register.js',
+  'js/table-fx.js',
   'js/tetris/engine.js',
   'js/tetris/ui.js',
   'js/ui-math.js',

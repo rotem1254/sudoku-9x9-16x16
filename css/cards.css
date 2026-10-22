@@ -1,82 +1,100 @@
 /* =============================================================================
- * cards.css — קלפים, שולחן לבד וז'יטונים, משותף לבלאקג'ק ולפוקר
+ * cards.css — קלפים, שולחן וז'יטונים, משותף לבלאקג'ק ולפוקר
  * -----------------------------------------------------------------------------
  * נטען אחרי theme.css ולפני הגיליון של המשחק.
  *
- * גודל הקלף נקבע במשתנה אחד, --card-w (רוחב), וכל השאר נגזר ממנו: הגובה
- * ביחס 1.4 של קלף אמיתי, והגופנים כחלק מהרוחב. כל משחק קובע --card-w על
- * המיכל (או על הקלף עצמו) לפי המקום הפנוי, והקלף נשאר פרופורציוני.
+ * מה למדנו ממשחקי קלפים טובים, ומה זה אומר כאן:
  *
- * בתוך הקלף הערך מועתק ל---cw המקומי. אילו הקלף היה מצהיר על --cw ישירות
- * עם ברירת מחדל, ההצהרה הייתה דורסת את מה שהמיכל ירש לו.
+ *   קלף שנראה כמו קלף   — קלפי מספר עם סידור הצורות האמיתי (2 עד 10, החצי
+ *                          התחתון הפוך), קלפי תמונה עם לוח מעוטר וכתר, ואינדקס
+ *                          בפינות. הצורות עצמן ב-SVG (js/playing-cards.js),
+ *                          ולא תווי יוניקוד שנראים אחרת בכל מערכת.
+ *   היפוך אמיתי         — לקלף שני צדדים, והחשיפה היא סיבוב תלת-ממדי עם
+ *                          הרמה קלה לפני (anticipation), ולא החלפת אלמנט.
+ *   שולחן עם נקודות ציון — לבד מודפס, רייל מרופד עם פס זהב דק, ומקומות
+ *                          קבועים לחפיסה ולז'יטונים.
+ *   ז'יטון עם עובי       — שוליים עם שיבוצים, טבעת פנימית ודופן, כך שערימה
+ *                          נראית כמו גליל ולא כמו עיגולים שטוחים.
  *
- * "נוח לעין": הלבד ירוק-טורקיז מעומעם ולא ירוק רווי, הקלפים בגוון שמנת
- * ולא לבן בוהק, והאדום והשחור בניגודיות גבוהה מספיק לקריאה מהירה גם
- * בקלף קטן. במצב כהה הכול מעומעם עוד, בלי לאבד ניגודיות על הקלף עצמו.
+ * גודל הקלף: --card-w על המיכל או על הקלף, וכל השאר נגזר ממנו (גובה 1.4,
+ * גופנים, צורות). בתוך הקלף הערך מועתק ל---cw המקומי.
  * =========================================================================== */
 
 :root {
-  --pc-face: #fffdf7;
-  --pc-edge: rgba(20, 28, 40, .16);
+  --pc-face: #fffdf8;
+  --pc-face-2: #f5efe2;
+  --pc-edge: rgba(30, 24, 16, .2);
   --pc-red: #c8253a;
-  --pc-black: #1a2030;
-  --pc-back-1: #24407a;
-  --pc-back-2: #3a5fae;
+  --pc-black: #161b28;
+  --pc-gold: #c99a3b;
+  --pc-back-1: #1f3d78;
+  --pc-back-2: #12284f;
+  --pc-back-ink: rgba(255, 255, 255, .5);
 
-  --felt-hi: #2b8268;
-  --felt: #1e6a54;
-  --felt-lo: #12453a;
-  --rail: #0d3329;
-  --felt-text: rgba(255, 255, 255, .92);
-  --felt-muted: rgba(255, 255, 255, .62);
+  --felt-hi: #2c8a6d;
+  --felt: #1f6e57;
+  --felt-lo: #11463a;
+  --felt-text: rgba(255, 255, 255, .93);
+  --felt-muted: rgba(255, 255, 255, .64);
   --felt-line: rgba(255, 255, 255, .22);
+  --felt-print: rgba(255, 238, 196, .5);
+  --rail-1: #5a3a28;
+  --rail-2: #2e1c13;
+  --trim: rgba(226, 186, 104, .75);
   --gold: #f2c55c;
   --win: #7fe0a8;
   --lose: #ff9a9a;
 }
 
 :root[data-theme="dark"] {
-  --pc-face: #f1eee6;
-  --pc-edge: rgba(0, 0, 0, .4);
-  --pc-red: #c0233a;
-  --pc-black: #161b28;
-  --pc-back-1: #1c3264;
-  --pc-back-2: #2d4a8c;
+  --pc-face: #f3efe6;
+  --pc-face-2: #e6dfd0;
+  --pc-edge: rgba(0, 0, 0, .45);
+  --pc-red: #bf2338;
+  --pc-black: #141926;
 
-  --felt-hi: #1f604f;
-  --felt: #164d40;
-  --felt-lo: #0b2e26;
-  --rail: #061a15;
+  --felt-hi: #1f6250;
+  --felt: #164e41;
+  --felt-lo: #0a2c25;
   --felt-text: rgba(255, 255, 255, .9);
-  --felt-muted: rgba(255, 255, 255, .56);
-  --felt-line: rgba(255, 255, 255, .18);
+  --felt-muted: rgba(255, 255, 255, .58);
+  --felt-line: rgba(255, 255, 255, .17);
+  --felt-print: rgba(255, 232, 180, .38);
+  --rail-1: #3d271b;
+  --rail-2: #1b100b;
+  --trim: rgba(214, 172, 92, .55);
   --gold: #e9bb4f;
 }
 
 /* --------------------------------- שולחן -------------------------------- */
 
 /*
- * אותו מבנה שכבות כמו בסוליטר: אריג דקיק, הילת מנורה מלמעלה, ומרכז מואר
- * עם שוליים כהים. המסגרת היא box-shadow כדי לצייר גם רייל וגם עומק
+ * שכבות הרקע, מלמעלה למטה: אריג דקיק, הילת מנורה, מרכז מואר עם שוליים
+ * כהים — כל אלה נצבעים בתוך ה-padding בלבד. השכבה האחרונה נצבעת גם מתחת
+ * לגבול השקוף, והיא הרייל: עור כהה עם ברק עליון. הצל הפנימי הראשון הוא
+ * פס הזהב שבין הרייל ללבד
  */
 .felt {
+  --rail-w: 9px;
   position: relative;
-  border-radius: 22px;
+  border: var(--rail-w) solid transparent;
+  border-radius: 26px;
   color: var(--felt-text);
-  background-color: var(--felt);
-  background-image:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, .022) 0 2px, transparent 2px 4px),
-    repeating-linear-gradient(-45deg, rgba(0, 0, 0, .035) 0 2px, transparent 2px 4px),
-    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, .13), transparent 60%),
-    radial-gradient(120% 120% at 50% 45%, var(--felt-hi), var(--felt) 55%, var(--felt-lo));
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .02) 0 2px, transparent 2px 4px) padding-box,
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, .035) 0 2px, transparent 2px 4px) padding-box,
+    radial-gradient(110% 65% at 50% -8%, rgba(255, 255, 255, .15), transparent 62%) padding-box,
+    radial-gradient(125% 120% at 50% 42%, var(--felt-hi), var(--felt) 52%, var(--felt-lo)) padding-box,
+    linear-gradient(180deg, rgba(255, 255, 255, .16), transparent 30%, rgba(0, 0, 0, .25)) border-box,
+    linear-gradient(var(--rail-1), var(--rail-2)) border-box;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .14),
-    inset 0 0 40px rgba(0, 0, 0, .32),
-    0 0 0 5px var(--rail),
-    0 10px 28px rgba(0, 0, 0, .32);
+    inset 0 0 0 1.5px var(--trim),
+    inset 0 2px 0 1.5px rgba(0, 0, 0, .25),
+    inset 0 0 46px rgba(0, 0, 0, .34),
+    0 1px 0 rgba(255, 255, 255, .06),
+    0 12px 30px rgba(0, 0, 0, .34);
 }
 
-/* כיתוב על הלבד — לבן שקוף, נקרא על ירוק בהיר וכהה */
 .felt-label {
   font-size: .72rem;
   font-weight: 700;
@@ -84,85 +102,197 @@
   color: var(--felt-muted);
 }
 
+/* כיתוב "מודפס על הלבד" — זהב דהוי, אותיות מרווחות */
+.felt-print {
+  color: var(--felt-print);
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
 /* ---------------------------------- קלף --------------------------------- */
 
+/*
+ * מבנה: .pc (מיקום, חלוקה, פרספקטיבה) > .pc-card (מסתובב) > שני צדדים.
+ * החלוקה מזיזה את .pc, וההיפוך מסובב את .pc-card — שתי הנפשות שלא
+ * דורסות זו את זו
+ */
 .pc {
   --cw: var(--card-w, 64px);
   position: relative;
   flex: 0 0 auto;
   width: var(--cw);
   height: calc(var(--cw) * 1.4);
-  border-radius: calc(var(--cw) * .1);
-  background: var(--pc-face);
-  border: 1px solid var(--pc-edge);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .25), 0 4px 10px rgba(0, 0, 0, .2);
-  overflow: hidden;
+  perspective: calc(var(--cw) * 9);
   user-select: none;
   -webkit-user-select: none;
   font-family: "Segoe UI", "Rubik", system-ui, -apple-system, Arial, sans-serif;
 }
-.pc.is-red { color: var(--pc-red); }
-.pc.is-black { color: var(--pc-black); }
 
-/* פינה: ערך מעל צורה. השנייה הפוכה בפינה הנגדית, כמו בקלף אמיתי */
+.pc-card {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform .45s cubic-bezier(.3, .7, .25, 1);
+}
+.pc.is-down .pc-card { transform: rotateY(180deg); }
+
+.pc-face {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--cw) * .09);
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .22), 0 3px 9px rgba(0, 0, 0, .2);
+}
+
+/* ---- הפנים ---- */
+.pc-front {
+  container-type: size;
+  background:
+    radial-gradient(130% 90% at 30% 10%, #fff 0, transparent 55%),
+    linear-gradient(170deg, var(--pc-face), var(--pc-face-2));
+  border: 1px solid var(--pc-edge);
+}
+.pc.is-red .pc-front { color: var(--pc-red); }
+.pc.is-black .pc-front { color: var(--pc-black); }
+
+/* theme.css מגדיר svg כאייקון קווי; כאן הצורות מלאות, והגודל לפי המקום */
+.pc svg {
+  display: block;
+  fill: currentColor;
+  stroke: none;
+}
+.pc-court svg { width: 100%; height: 100%; }
+
+/* אינדקס הפינה: ערך מעל צורה. השני הפוך בפינה הנגדית */
 .pc-corner {
   position: absolute;
-  top: calc(var(--cw) * .05);
-  left: calc(var(--cw) * .07);
+  top: 3.5%;
+  left: 4%;
+  width: 18%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: .92;
   font-weight: 800;
+  line-height: .9;
 }
-.pc-corner.is-end {
-  top: auto;
-  left: auto;
-  bottom: calc(var(--cw) * .05);
-  right: calc(var(--cw) * .07);
-  transform: rotate(180deg);
+.pc-corner.is-end { top: auto; left: auto; bottom: 3.5%; right: 4%; transform: rotate(180deg); }
+.pc-rank {
+  font-size: calc(var(--cw) * .24);
+  letter-spacing: -.06em;
+  font-variant-numeric: lining-nums;
 }
-.pc-rank { font-size: calc(var(--cw) * .3); letter-spacing: -.05em; }
-.pc-suit { font-size: calc(var(--cw) * .22); }
+/* 10 צר יותר, כמו בקלפים מודפסים — אחרת הוא נוגע בצורות */
+.pc-rank.is-ten { display: inline-block; transform: scaleX(.78); letter-spacing: -.1em; }
+.pc-corner .pc-suit { width: calc(var(--cw) * .14); height: calc(var(--cw) * .14); margin-top: 3%; }
 
-/* צורה גדולה במרכז — זיהוי מהיר בלי לקרוא */
-.pc-center {
+/* צורות קלפי המספר — מיקום לפי --x/--y באחוזים מתוך שטח הציור */
+.pc-pips {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: calc(var(--cw) * .52);
-  line-height: 1;
-  pointer-events: none;
+  inset: 15% 31%;
 }
-/* בקלפי תמונה: מסגרת עדינה סביב האות, שלא ייראו כמו קלפי מספר */
-.pc.is-face .pc-center span {
-  display: grid;
-  place-items: center;
-  width: 52%;
-  height: 50%;
-  border: 1.5px solid currentColor;
-  border-radius: calc(var(--cw) * .06);
-  font-size: calc(var(--cw) * .36);
-  font-weight: 800;
-  opacity: .9;
-  background: color-mix(in srgb, currentColor 7%, transparent);
+.pc-pip {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: calc(var(--cw) * .21);
+  height: calc(var(--cw) * .21);
+  transform: translate(-50%, -50%);
+}
+.pc-pips.is-dense .pc-pip { width: calc(var(--cw) * .18); height: calc(var(--cw) * .18); }
+.pc-pip.is-flip { transform: translate(-50%, -50%) rotate(180deg); }
+
+/* אס: צורה אחת גדולה; באס עלה גם טבעת עיטור */
+.pc-ace {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44%;
+  height: 44%;
+  transform: translate(-50%, -50%);
+}
+.pc-ace.is-spade { width: 52%; height: 52%; }
+.pc-ace-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--pc-gold) 70%, transparent);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--pc-gold) 18%, transparent);
 }
 
-/* גב הקלף — כחול עמוק עם סריג ומסגרת פנימית */
-.pc.is-back {
+/* קלפי תמונה: לוח מעוטר, כתר ואות, והחצי התחתון הפוך כמו בקלף אמיתי */
+.pc-court {
+  position: absolute;
+  inset: 11% 19%;
+  border-radius: calc(var(--cw) * .04);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--pc-gold) 75%, transparent);
   background:
-    repeating-linear-gradient(45deg, rgba(255, 255, 255, .1) 0 2px, transparent 2px 6px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, .07) 0 2px, transparent 2px 6px),
-    linear-gradient(140deg, var(--pc-back-1), var(--pc-back-2));
-  border-color: rgba(0, 0, 0, .25);
+    repeating-linear-gradient(45deg, color-mix(in srgb, currentColor 6%, transparent) 0 1px, transparent 1px 5px),
+    linear-gradient(180deg, color-mix(in srgb, currentColor 9%, var(--pc-face)), var(--pc-face) 50%, color-mix(in srgb, currentColor 9%, var(--pc-face)));
 }
-.pc.is-back::after {
+.pc-court svg { overflow: visible; }
+
+/* מרכז גדול לקלף קטן — שם צורות קטנות כבר לא נקראות */
+.pc .pc-mini {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 46%;
+  height: 46%;
+  transform: translate(-50%, -50%);
+}
+@container (max-width: 50px) {
+  .pc-pips, .pc-ace-ring, .pc-court { display: none; }
+  .pc .pc-mini { display: block; top: 60%; }
+  .pc-ace { width: 48%; height: 48%; top: 60%; }
+  .pc-corner .pc-suit { display: none; }
+  .pc-corner.is-end { display: none; }
+  .pc-corner { top: 4%; left: 8%; width: auto; }
+  .pc-rank { font-size: calc(var(--cw) * .36); }
+}
+
+/* ---- הגב: מסגרת לבנה, סריג מעוינים ומדליון במרכז ---- */
+.pc-back {
+  transform: rotateY(180deg);
+  background: #f7f3ea;
+  border: 1px solid rgba(0, 0, 0, .2);
+}
+.pc-back::before {
   content: "";
   position: absolute;
-  inset: 8%;
-  border-radius: calc(var(--cw) * .06);
-  border: 1.5px solid rgba(255, 255, 255, .3);
+  inset: 6.5%;
+  border-radius: calc(var(--cw) * .05);
+  background:
+    radial-gradient(circle at 50% 50%, transparent 0 17%, var(--pc-back-ink) 17.5% 19%, transparent 19.5% 23%, var(--pc-back-ink) 23.5% 24.5%, transparent 25%),
+    repeating-linear-gradient(45deg, transparent 0 calc(var(--cw) * .07), rgba(255, 255, 255, .16) calc(var(--cw) * .07) calc(var(--cw) * .08)),
+    repeating-linear-gradient(-45deg, transparent 0 calc(var(--cw) * .07), rgba(255, 255, 255, .16) calc(var(--cw) * .07) calc(var(--cw) * .08)),
+    radial-gradient(120% 90% at 50% 40%, var(--pc-back-1), var(--pc-back-2));
+  box-shadow: inset 0 0 0 1.5px var(--pc-back-ink), inset 0 0 0 3.5px rgba(0, 0, 0, .18);
+}
+.pc-back::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--pc-back-ink);
+  border-radius: 2px;
+  box-shadow: 0 0 0 calc(var(--cw) * .025) var(--pc-back-2), 0 0 0 calc(var(--cw) * .04) var(--pc-back-ink);
+}
+
+/* ערכת גב אדומה (פוקר) */
+.pc-backs-red {
+  --pc-back-1: #8a2032;
+  --pc-back-2: #561321;
 }
 
 /* מקום ריק לקלף */
@@ -171,87 +301,136 @@
   flex: 0 0 auto;
   width: var(--cw);
   height: calc(var(--cw) * 1.4);
-  border-radius: calc(var(--cw) * .1);
+  border-radius: calc(var(--cw) * .09);
   border: 1.5px dashed var(--felt-line);
   background: rgba(0, 0, 0, .1);
 }
 
-/* הנפשות: חלוקה (מחליק פנימה מלמעלה), היפוך, ודגשים */
+/* ---- הנפשות ---- */
+
+/* חלוקה: נוחת מלמעלה, מסתובב מעט ומתיישב (משמש כשאין יעד לעוף ממנו) */
 @keyframes pcDeal {
   from { opacity: 0; transform: translate(var(--from-x, 0), var(--from-y, -40px)) rotate(-8deg) scale(.9); }
   to { opacity: 1; transform: none; }
 }
-.pc.is-in { animation: pcDeal .32s var(--ease) both; animation-delay: var(--delay, 0ms); }
+.pc.is-in { animation: pcDeal .34s cubic-bezier(.2, .8, .3, 1) both; animation-delay: var(--delay, 0ms); }
 
-@keyframes pcFlip {
-  0% { transform: rotateY(90deg); }
-  100% { transform: rotateY(0); }
+/* חשיפה: הקלף מתרומם קצת, מסתובב, ונוחת — הרגע שהמתח נבנה אליו */
+@keyframes pcReveal {
+  0% { transform: rotateY(180deg); }
+  35% { transform: translateY(-7%) rotateY(120deg) scale(1.07); }
+  100% { transform: rotateY(0) scale(1); }
 }
-.pc.is-flip { animation: pcFlip .28s var(--ease) both; }
+.pc.is-revealing .pc-card { animation: pcReveal .56s cubic-bezier(.3, .7, .25, 1) both; }
 
-.pc.is-glow {
-  box-shadow: 0 0 0 3px var(--gold), 0 4px 14px rgba(0, 0, 0, .3);
+.pc.is-glow .pc-front {
+  box-shadow: 0 0 0 2.5px var(--gold), 0 0 16px rgba(242, 197, 92, .55), 0 4px 12px rgba(0, 0, 0, .3);
 }
-.pc.is-dim { filter: brightness(.62) saturate(.7); }
+@keyframes pcGlow {
+  0%, 100% { box-shadow: 0 0 0 2.5px var(--gold), 0 0 10px rgba(242, 197, 92, .35), 0 4px 12px rgba(0, 0, 0, .3); }
+  50% { box-shadow: 0 0 0 2.5px var(--gold), 0 0 22px rgba(242, 197, 92, .75), 0 4px 12px rgba(0, 0, 0, .3); }
+}
+.pc.is-glow.is-pulse .pc-front { animation: pcGlow 1.6s ease-in-out infinite; }
+.pc.is-dim .pc-face { filter: brightness(.6) saturate(.6); }
 
 /* --------------------------------- ז'יטון ------------------------------- */
 
 /*
- * עיגול עם שוליים מפוספסים (conic-gradient) ועיגול פנימי עם הערך.
- * הצבע לפי ערך, כמו בקזינו: 5 אדום, 25 ירוק, 100 שחור, 500 סגול, 1000 זהב
+ * פני הז'יטון: שיבוצים לבנים בשוליים (conic), טבעת פנימית, ועיגול מרכזי
+ * כהה עם הערך. העובי הוא צל בגוון כהה של אותו צבע — ערימה נראית כגליל.
+ *
+ * הגודל (--chip-size) לא מוצהר על הז'יטון עצמו אלא נקרא עם ברירת מחדל,
+ * כדי שערימה או מיכל שקובעים אותו יגיעו גם לז'יטונים שבתוכם
  */
 .chip {
   --chip: #c8323c;
   --chip-ink: #fff;
+  --chip-insert: #f4efe4;
+  --chip-edge: color-mix(in srgb, var(--chip) 62%, #000);
   position: relative;
   display: inline-grid;
   place-items: center;
+  flex: 0 0 auto;
   width: var(--chip-size, 46px);
   height: var(--chip-size, 46px);
   border-radius: 50%;
   border: 0;
   padding: 0;
   background:
-    radial-gradient(circle at 50% 50%, var(--chip) 0 52%, transparent 53%),
-    repeating-conic-gradient(var(--chip) 0 22.5deg, #fff 22.5deg 45deg);
+    radial-gradient(circle, var(--chip) 0 52%, var(--chip-insert) 52.5% 55%, var(--chip) 55.5% 64%, transparent 64.5%),
+    repeating-conic-gradient(from 11.25deg, var(--chip) 0 33.75deg, var(--chip-insert) 33.75deg 45deg);
   box-shadow:
-    inset 0 0 0 2px rgba(0, 0, 0, .18),
-    0 2px 0 rgba(0, 0, 0, .3),
-    0 3px 6px rgba(0, 0, 0, .3);
+    inset 0 0 0 1px rgba(0, 0, 0, .28),
+    inset 0 calc(var(--chip-size, 46px) * .05) calc(var(--chip-size, 46px) * .04) rgba(255, 255, 255, .28),
+    0 calc(var(--chip-size, 46px) * .045) 0 var(--chip-edge),
+    0 calc(var(--chip-size, 46px) * .07) calc(var(--chip-size, 46px) * .1) rgba(0, 0, 0, .35);
   color: var(--chip-ink);
   font: inherit;
-  font-size: calc(var(--chip-size, 46px) * .27);
+  font-size: calc(var(--chip-size, 46px) * .26);
   font-weight: 800;
+  letter-spacing: -.02em;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  transition: transform .12s var(--ease), filter .16s;
+  transition: transform .14s cubic-bezier(.2, .8, .3, 1), filter .16s;
 }
+/* טבעת מקווקוות סביב הערך */
 .chip::before {
   content: "";
   position: absolute;
-  inset: 22%;
+  inset: 25%;
   border-radius: 50%;
-  border: 1.5px dashed rgba(255, 255, 255, .55);
+  border: max(1px, calc(var(--chip-size, 46px) * .025)) dashed rgba(255, 255, 255, .5);
 }
-.chip span { position: relative; }
+.chip span { position: relative; text-shadow: 0 1px 1px rgba(0, 0, 0, .35); }
 .chip:active { transform: translateY(1px) scale(.95); }
-.chip[disabled] { filter: grayscale(.8) brightness(.7); opacity: .55; cursor: default; pointer-events: none; }
+.chip[disabled] { filter: grayscale(.85) brightness(.75); opacity: .5; cursor: default; pointer-events: none; }
 @media (hover: hover) {
-  .chip:not([disabled]):hover { transform: translateY(-2px); }
+  button.chip:not([disabled]):hover { transform: translateY(-3px); }
 }
 
 .chip-5 { --chip: #c8323c; }
-.chip-10 { --chip: #2f6bd8; }
-.chip-25 { --chip: #1f8a4c; }
+.chip-10 { --chip: #2d63c8; }
+.chip-25 { --chip: #1d8a4f; }
 .chip-50 { --chip: #e07b1a; }
-.chip-100 { --chip: #262a33; }
-.chip-500 { --chip: #7a3fc4; }
-.chip-1000 { --chip: #d9a92c; --chip-ink: #2a1d00; }
+.chip-100 { --chip: #23262e; --chip-insert: #d8c48a; }
+.chip-500 { --chip: #6f3cbf; }
+.chip-1000 { --chip: #d6a52a; --chip-ink: #2a1d00; --chip-insert: #3a2a06; }
+.chip-1000 span { text-shadow: none; }
+.chip-1000::before { border-color: rgba(42, 29, 0, .45); }
+
+/* ערימה: ז'יטונים זה מעל זה, מהגדול בתחתית. נבנית ב-TableFX.stack */
+.chip-stack {
+  --chip-size: 30px;
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--chip-size);
+  height: calc(var(--chip-size) + (var(--n, 1) - 1) * var(--chip-size) * .12);
+}
+.chip-stack .chip {
+  position: absolute;
+  left: 0;
+  bottom: calc(var(--i, 0) * var(--chip-size) * .12);
+  cursor: default;
+  pointer-events: none;
+}
+.chip-stack .chip::before,
+.chip-stack .chip span { display: none; }
+.chip-stack .chip:last-child::before,
+.chip-stack .chip:last-child span { display: revert; }
+
+/* ז'יטון "עף" (TableFX.toss) — מעל הכול, בלי לחסום מגע */
+.fx-ghost {
+  position: fixed;
+  z-index: 90;
+  margin: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
 
 /* ----------------------------- בורר אפשרויות ----------------------------- */
-/* אותו מראה כמו בחלון המשחק החדש של השחמט */
 
 .opt-label { margin: 12px 0 6px; font-size: .78rem; font-weight: 700; color: var(--muted); text-align: start; }
 .opt-seg {
@@ -263,7 +442,7 @@
 }
 .opt-seg button {
   flex: 1 1 0;
-  min-height: 38px;
+  min-height: 40px;
   padding: 0 6px;
   border: 0;
   border-radius: 9px;
@@ -286,4 +465,8 @@
   line-height: 1.45;
   color: var(--muted);
   text-align: start;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-card { transition: none; }
 }
