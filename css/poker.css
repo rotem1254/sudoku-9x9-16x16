@@ -1,15 +1,26 @@
 /* =============================================================================
  * poker.css — פוקר
  * -----------------------------------------------------------------------------
- * טוען אחרי theme.css ו-cards.css (שם הלבד, הקלפים והז'יטונים).
+ * טוען אחרי theme.css ו-cards.css (שם הלבד, הרייל, הקלפים והז'יטונים).
  *
- * השולחן הוא לבד עם פינות מעוגלות מאוד, היריבים ממוקמים עליו באחוזים
- * (המיקומים ב-JS לפי מספר היריבים), וקלפי השולחן במרכז. הקלפים שלך
- * "יושבים" על שפת השולחן — חופפים לרייל מלמטה — כמו יד שמונחת על השולחן.
+ * השולחן בנוי כמו שולחן שישה שחקנים אמיתי: את/ה למטה במרכז, ועד חמישה
+ * יריבים מסביב — שמאל-למטה, שמאל-למעלה, למעלה, ימין-למעלה, ימין-למטה.
+ * כל מושב הוא אווטאר עגול עם לוחית שם וערימה, ומולו, בדרך למרכז, מקום
+ * ההימור שלו. המיקומים באחוזים (ב-JS), כך שהשולחן מתכווץ ומתרחב שלם.
  *
- * מה שעל הלבד צבוע מתוך צבעי הלבד (לבן שקוף וזהב), ולא מערכת הנושא של
- * האתר: כך הוא נקרא באותה מידה באור ובחושך.
+ * מה שעל הלבד צבוע מצבעי הלבד (לבן שקוף וזהב), ולא ממערכת הנושא של
+ * האתר — כך הוא נקרא באותה מידה באור ובחושך.
+ *
+ * גדלים: --av (אווטאר), --seat-w (קלפי יריב), --board-w (קלפי שולחן) ו-
+ * --my-w (הקלפים שלך) נקבעים ב-JS לפי רוחב השולחן.
  * =========================================================================== */
+
+/* הטיימר סביב האווטאר מסתובב דרך משתנה מונפש — דורש @property */
+@property --sweep {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
 
 /* -------------------------------- פריסה --------------------------------- */
 
@@ -21,17 +32,18 @@
 
 .pk-info {
   display: flex;
-  justify-content: space-between;
-  gap: 6px;
+  align-items: center;
+  gap: 10px;
   font-size: .74rem;
   font-weight: 700;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
-.pk-info span { white-space: nowrap; }
-#infoLevel {
-  padding: 1px 8px;
-  border-radius: 6px;
+.pk-info-item { white-space: nowrap; }
+.pk-info-level {
+  margin-inline-start: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
 }
@@ -39,350 +51,552 @@
 /* --------------------------------- שולחן -------------------------------- */
 
 .pk-table {
-  height: clamp(300px, 47dvh, 370px);
-  margin: 6px 5px 0;
-  border-radius: 92px / 84px;
-  container-type: inline-size;
+  --av: 44px;
+  --seat-w: 26px;
+  --board-w: 48px;
+  --rail-w: 10px;
+  position: relative;
+  height: clamp(300px, calc(100dvh - 384px), 440px);
+  margin: 4px 2px 0;
+  border-radius: 50% / 38%;
 }
+.pk-table[data-shape="wide"] {
+  --av: 56px;
+  --seat-w: 34px;
+  --rail-w: 13px;
+  border-radius: 50% / 50%;
+}
+
+/* "מודפס על הלבד": שם המשחק, ומסגרת אליפטית דקה סביב אזור הקלפים */
+.pk-print {
+  position: absolute;
+  inset: 17% 15%;
+  border: 1.5px solid var(--felt-line);
+  border-radius: 50%;
+  display: grid;
+  place-items: start center;
+  pointer-events: none;
+  opacity: .9;
+}
+.pk-print .felt-print {
+  margin-top: 13%;
+  font-size: .62rem;
+  letter-spacing: .22em;
+}
+.pk-table[data-n="1"] .pk-print .felt-print,
+.pk-table[data-n="3"] .pk-print .felt-print,
+.pk-table[data-n="5"] .pk-print .felt-print { margin-top: 20%; }
+
+/* נקודת המוצא של החלוקה — מרכז השולחן, בלי ציור */
+.pk-deck {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+.pk-deck span { display: none; }
+
+.pk-seats { position: absolute; inset: 0; pointer-events: none; }
 
 /* ---------------------------------- מושב -------------------------------- */
 
+/*
+ * המושב הוא האווטאר עצמו, ממורכז על הנקודה. כל השאר (לוחית, קלפים,
+ * תגיות) ממוקם סביבו בלי להשפיע על המרכוז
+ */
 .pk-seat {
   position: absolute;
-  z-index: 1;
-  width: 78px;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: opacity .25s;
+  z-index: 2;
+  width: var(--av);
+  height: var(--av);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  transition: opacity .3s;
 }
-.pk-seat.is-folded { opacity: .5; }
-.pk-seat.is-out { opacity: .32; }
+.pk-seat.is-out { opacity: .35; }
 
-.pk-seat-cards {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  height: 44px;
-  direction: ltr;
-}
-.pk-seat-cards .pc { box-shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 2px 5px rgba(0, 0, 0, .18); }
-.pk-seat-cards .pc + .pc { margin-left: -9px; }
-.pk-seat-cards .pc:first-child { transform: rotate(-6deg); }
-.pk-seat-cards .pc:last-child:not(:first-child) { transform: rotate(6deg) translateY(1px); }
-/* בעימות הקלפים פתוחים וישרים, כדי שיהיה אפשר לקרוא אותם */
-.pk-seat-cards .pc:not(.is-back) { transform: none; }
-.pk-seat-cards .pc:not(.is-back) + .pc { margin-left: -4px; }
-.pk-seat-cards .pc.is-glow { box-shadow: 0 0 0 2px var(--gold), 0 2px 8px rgba(0, 0, 0, .3); }
-
-/* לוחית שם: כהה שקופה על הלבד */
-.pk-plate {
+.pk-avatar {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 70px;
-  margin-top: -4px;
-  padding: 3px 9px 4px;
-  border-radius: 10px;
-  background: rgba(8, 22, 18, .58);
-  border: 1px solid rgba(255, 255, 255, .1);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
-  color: var(--felt-text);
-  line-height: 1.2;
-  transition: box-shadow .2s, border-color .2s, background .2s;
+  display: grid;
+  place-items: center;
+  width: var(--av);
+  height: var(--av);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, .35), transparent 55%),
+    var(--av-bg, #4a6fa5);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, .9),
+    0 0 0 3.5px rgba(0, 0, 0, .25),
+    0 4px 10px rgba(0, 0, 0, .35);
+  color: #fff;
+  font-size: calc(var(--av) * .4);
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+  transition: filter .3s, transform .3s;
 }
-.pk-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  max-width: 100%;
-  font-size: .72rem;
-  font-weight: 700;
+.pk-avatar > span { position: relative; z-index: 1; }
+
+/* טבעת התור: זהב שמתמלא בזמן שהיריב "חושב" */
+.pk-avatar::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold) calc(var(--sweep) * 1%), rgba(255, 255, 255, .14) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3.5px), #000 calc(100% - 3px));
+  opacity: 0;
+  transition: opacity .2s;
+}
+@keyframes pkSweep { from { --sweep: 0; } to { --sweep: 100; } }
+.pk-seat.is-turn .pk-avatar::before {
+  opacity: 1;
+  animation: pkSweep var(--think, 750ms) linear both;
+}
+.pk-seat.is-turn .pk-avatar { transform: scale(1.06); }
+
+.pk-seat.is-folded .pk-avatar { filter: grayscale(.85) brightness(.65); }
+.pk-seat.is-winner .pk-avatar {
+  box-shadow: 0 0 0 2.5px var(--gold), 0 0 18px rgba(242, 197, 92, .65), 0 4px 10px rgba(0, 0, 0, .35);
+}
+
+/* לוחית: שם וערימה, חופפת קצת לתחתית האווטאר */
+.pk-plate {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--av) - 8px);
+  z-index: 2;
+  min-width: calc(var(--av) + 26px);
+  padding: 3px 9px 4px;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  background: rgba(8, 16, 13, .72);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .3), inset 0 0 0 1px rgba(255, 255, 255, .08);
+  text-align: center;
+  line-height: 1.15;
   white-space: nowrap;
 }
+.pk-name {
+  display: block;
+  font-size: .66rem;
+  font-weight: 700;
+  color: var(--felt-text);
+}
 .pk-stack {
+  display: block;
   font-size: .8rem;
   font-weight: 800;
   color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
+.pk-seat.is-folded .pk-plate { opacity: .6; }
+.pk-seat.is-turn .pk-plate { box-shadow: 0 0 0 1.5px var(--gold), 0 2px 8px rgba(0, 0, 0, .35); }
 
-/* תור השחקן — טבעת זהב נושמת */
-.pk-seat.is-turn .pk-plate {
-  border-color: var(--gold);
-  animation: pkTurn 1.4s ease-in-out infinite;
+/*
+ * פעולה: לרגע השם מתחלף בפעולה ("קול 40"), בצבע משלה, ואז חוזר. כך אין
+ * בועה שמתנגשת במושב השכן או יוצאת מהשולחן
+ */
+.pk-action {
+  display: none;
+  font-size: .7rem;
+  font-weight: 800;
 }
-@keyframes pkTurn {
-  0%, 100% { box-shadow: 0 0 0 1px var(--gold), 0 0 0 rgba(242, 197, 92, 0); }
-  50% { box-shadow: 0 0 0 1px var(--gold), 0 0 14px rgba(242, 197, 92, .55); }
-}
-.pk-seat.is-winner .pk-plate {
-  border-color: var(--gold);
-  background: rgba(120, 90, 20, .55);
-}
-
-/* כפתור הדילר */
-.pk-dealer {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #fbf7ec;
-  color: #1a2030;
-  font-size: .58rem;
-  font-weight: 900;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .4);
+.pk-seat.has-action .pk-name { display: none; }
+.pk-seat.has-action .pk-action { display: block; animation: pkPop .3s cubic-bezier(.2, .8, .3, 1.4) both; }
+.pk-action.is-fold { color: #c9c9c9; }
+.pk-action.is-check { color: #b9e6ff; }
+.pk-action.is-call { color: #9ff0c4; }
+.pk-action.is-bet, .pk-action.is-raise { color: #ffd479; }
+.pk-action.is-allin { color: #ff9f9f; }
+@keyframes pkPop {
+  from { opacity: 0; transform: scale(.6); }
+  to { opacity: 1; transform: none; }
 }
 
-/* תווית הפעולה האחרונה — מעל הקלפים */
-.pk-tag {
+/* תגיות מצב קבועות: פולד, הכל-אין, שם היד בעימות */
+.pk-badge {
   position: absolute;
-  top: -8px;
-  z-index: 2;
+  left: 50%;
+  bottom: calc(100% - 4px);
+  z-index: 3;
+  transform: translateX(-50%);
   padding: 1px 7px;
-  border-radius: 7px;
-  background: rgba(251, 247, 236, .94);
-  color: #1d2a26;
-  font-size: .62rem;
+  border-radius: 999px;
+  font-size: .6rem;
   font-weight: 800;
   white-space: nowrap;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
 }
-/* בלי קלפים התווית יורדת אל הלוחית, ולא מרחפת מעל מקום ריק */
-.pk-seat.is-folded .pk-tag { top: 26px; }
-.pk-tag.is-below { position: static; order: 3; margin-top: 3px; }
-.pk-tag.is-fold { background: rgba(0, 0, 0, .45); color: var(--felt-muted); }
-.pk-tag.is-raise, .pk-tag.is-bet { background: var(--gold); color: #2a1d00; }
-.pk-tag.is-allin { background: #d8434f; color: #fff; }
-.pk-tag.is-win { background: var(--gold); color: #2a1d00; }
-.pk-tag.is-thinking::after {
-  content: "";
-  display: inline-block;
-  width: 1.1em;
-  text-align: start;
-  animation: pkDots 1.2s steps(4) infinite;
-}
-@keyframes pkDots {
-  0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; }
-}
+.pk-badge.is-allin { background: #c8323c; color: #fff; }
+.pk-badge.is-fold { background: rgba(0, 0, 0, .55); color: var(--felt-muted); }
+.pk-badge.is-hand { background: rgba(255, 253, 247, .94); color: #1b1f2a; }
+.pk-badge.is-hand.is-win { background: var(--gold); color: #2a1d00; }
 
-/* הימור מול השחקן: ז'יטון וסכום */
-.pk-chip {
-  display: inline-flex;
+/* קלפי היריב: נשענים על האווטאר מהצד הפנימי, ובעימות נפתחים לכיוון המרכז */
+.pk-seat-cards {
+  --card-w: var(--seat-w);
+  position: absolute;
+  left: calc(50% + var(--cx, 0px));
+  top: calc(50% + var(--cy, 0px));
+  z-index: 1;
+  display: flex;
+  transform: translate(-50%, -50%);
+  transition: left .35s cubic-bezier(.2, .8, .3, 1), top .35s cubic-bezier(.2, .8, .3, 1);
+}
+.pk-seat-cards .pc + .pc { margin-left: calc(var(--card-w) * -.45); }
+.pk-seat-cards .pc:first-child { transform: rotate(-7deg); }
+.pk-seat-cards .pc:last-child:not(:first-child) { transform: rotate(7deg) translateY(1px); }
+.pk-seat-cards .pc-face { box-shadow: 0 1px 2px rgba(0, 0, 0, .35), 0 2px 5px rgba(0, 0, 0, .2); }
+.pk-seat-cards.is-show {
+  --card-w: calc(var(--seat-w) * 1.45);
+  left: calc(50% + var(--sx, 0px));
+  top: calc(50% + var(--sy, 0px));
+  z-index: 4;
+}
+.pk-seat-cards.is-show .pc + .pc { margin-left: calc(var(--card-w) * -.22); }
+.pk-seat-cards.is-show .pc:first-child { transform: rotate(-4deg); }
+.pk-seat-cards.is-show .pc:last-child:not(:first-child) { transform: rotate(4deg); }
+
+/* ------------------------------ מקום ההימור ----------------------------- */
+
+.pk-bet-spot {
+  position: absolute;
+  z-index: 3;
+  display: flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px 2px 3px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, .3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.pk-bet-spot:empty { display: none; }
+.pk-bet-spot .chip-stack { --chip-size: 22px; }
+.pk-table[data-shape="wide"] .pk-bet-spot .chip-stack { --chip-size: 26px; }
+.pk-bet-amt {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .42);
   color: var(--felt-text);
   font-size: .72rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  direction: ltr;
-  animation: pkChipIn .25s var(--ease);
 }
-.pk-chip .chip { --chip-size: 16px; cursor: default; pointer-events: none; }
-.pk-chip .chip::before { inset: 18%; border-width: 1px; }
-@keyframes pkChipIn { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: none; } }
-.pk-seat-bet { margin-top: 4px; }
+.pk-mybet { left: 50%; top: 79%; }
 
-/* -------------------------------- מרכז ---------------------------------- */
+/* ------------------------------- כפתור הדילר ---------------------------- */
+
+.pk-puck {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 40% 30%, #fff, #e9e4d8 70%);
+  box-shadow: 0 2px 0 #b8b09c, 0 3px 6px rgba(0, 0, 0, .4), inset 0 0 0 1.5px rgba(0, 0, 0, .12);
+  color: #1b1f2a;
+  font-size: .68rem;
+  font-weight: 900;
+  transition: left .6s cubic-bezier(.3, .7, .25, 1), top .6s cubic-bezier(.3, .7, .25, 1);
+}
+.pk-puck[hidden] { display: none; }
+.pk-table[data-shape="wide"] .pk-puck { width: 26px; height: 26px; font-size: .76rem; }
+
+/* --------------------------------- מרכז --------------------------------- */
 
 .pk-center {
   position: absolute;
-  left: 50%;
-  top: 70%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  inset: 0;
   pointer-events: none;
 }
-.pk-table[data-n="1"] .pk-center,
-.pk-table[data-n="2"] .pk-center { top: 62%; }
-
-.pk-pot {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 3px 12px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, .26);
-  transition: opacity .2s;
-}
-.pk-pot b {
-  color: var(--gold);
-  font-size: .95rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.pk-pot.is-empty { opacity: 0; }
 
 .pk-board {
-  display: flex;
-  gap: 5px;
-  justify-content: center;
-  direction: ltr;
-}
-
-.pk-msg {
-  margin: 0;
-  min-height: 1.3em;
-  max-width: 92%;
-  padding: 0 8px;
-  text-align: center;
-  font-size: .8rem;
-  font-weight: 700;
-  line-height: 1.3;
-  color: var(--felt-text);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
-}
-
-/* ההימור שלך — מעל הקלפים שלך, בתחתית הלבד */
-.pk-mybet {
   position: absolute;
   left: 50%;
-  bottom: 30px;
-  transform: translateX(-50%);
+  top: 46%;
+  z-index: 1;
+  display: flex;
+  gap: calc(var(--board-w) * .08);
+  --card-w: var(--board-w);
+  transform: translate(-50%, -50%);
+  direction: ltr;
 }
+.pk-board .pc-slot { border-color: rgba(255, 255, 255, .13); background: rgba(0, 0, 0, .08); }
 
-/* ------------------------------- היד שלך -------------------------------- */
-
-.pk-me {
-  position: relative;
+.pk-pot {
+  position: absolute;
+  left: 50%;
+  top: 66%;
   z-index: 2;
   display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 12px;
-  margin-top: -26px;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px 3px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .3);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  transition: opacity .3s;
 }
+.pk-pot.is-empty { opacity: 0; }
+.pk-pot-stack .chip-stack { --chip-size: 22px; }
+.pk-pot-text { display: flex; align-items: baseline; gap: 5px; }
+.pk-pot-label { font-size: .66rem; font-weight: 700; color: var(--felt-muted); }
+.pk-pot b {
+  font-size: 1rem;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* תוצאת היד — במקום הקופה, אחרי שהיא נלקחה */
+.pk-msg {
+  position: absolute;
+  left: 50%;
+  top: 66%;
+  z-index: 2;
+  max-width: 86%;
+  margin: 0;
+  padding: 5px 13px;
+  border-radius: 12px;
+  background: rgba(8, 16, 13, .72);
+  color: #fff;
+  font-size: .78rem;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+  animation: pkMsg .35s cubic-bezier(.2, .8, .3, 1) both;
+}
+.pk-msg:empty { display: none; }
+.pk-msg.is-me { color: var(--gold); }
+@keyframes pkMsg {
+  from { opacity: 0; transform: translate(-50%, -30%) scale(.9); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}
+
+/* --------------------------------- היד שלך ------------------------------- */
+
+.pk-me {
+  --my-w: 70px;
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin-top: calc(var(--my-w) * -.52);
+  min-height: calc(var(--my-w) * 1.4);
+  pointer-events: none;
+}
+.pk-me > * { pointer-events: auto; }
 
 .pk-hole {
   display: flex;
-  gap: 6px;
+  --card-w: var(--my-w);
   direction: ltr;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .25));
 }
-.pk-hole .pc:first-child { transform: rotate(-4deg); }
-.pk-hole .pc:last-child { transform: rotate(4deg) translateY(2px); }
-.pk-hole .pc.is-in { animation-name: pcDeal; }
-.pk-hole .pc.is-dim { filter: brightness(.7) saturate(.4); opacity: .75; }
+.pk-hole .pc + .pc, .pk-hole .pc-slot + .pc-slot { margin-left: calc(var(--my-w) * -.18); }
+.pk-hole .pc:first-child { transform: rotate(-5deg); }
+.pk-hole .pc:last-child:not(:first-child) { transform: rotate(5deg) translateY(3px); }
+.pk-hole .pc-slot { opacity: 0; }
+.pk-hole .pc.is-dim { opacity: .75; }
 
 .pk-myplate {
-  margin: 0 0 4px;
-  align-items: flex-start;
-  min-width: 112px;
-  padding: 6px 12px 7px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 3px;
+  min-width: 0;
+  max-width: 190px;
+  padding: 6px 10px 7px 8px;
+  border-radius: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-md);
-  color: var(--text);
-  gap: 1px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .14);
+  transition: box-shadow .25s, border-color .25s;
 }
-.pk-myplate .pk-name { font-size: .78rem; color: var(--text-2); }
-.pk-myplate .pk-stack { font-size: 1.05rem; color: var(--text); }
+.pk-myplate .pk-avatar {
+  --av: 34px;
+  --av-bg: #2f6bff;
+  font-size: .72rem;
+}
+.pk-mytext { display: grid; line-height: 1.15; min-width: 0; }
+.pk-myplate .pk-name { color: var(--text-2); font-size: .7rem; }
+.pk-myplate .pk-stack { color: var(--text); font-size: 1.02rem; }
+.pk-strength { grid-column: 1 / -1; display: grid; gap: 3px; }
 .pk-hand {
   font-size: .72rem;
   font-weight: 700;
   color: var(--accent);
-  max-width: 150px;
+  line-height: 1.25;
 }
 .pk-hand:empty { display: none; }
-.pk-myplate.is-turn {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-soft), var(--shadow-md);
+.pk-meter {
+  height: 5px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  overflow: hidden;
 }
-.pk-myplate.is-winner { border-color: var(--success); background: var(--success-soft); }
+.pk-meter i {
+  display: block;
+  height: 100%;
+  width: var(--p, 0%);
+  border-radius: inherit;
+  background: linear-gradient(90deg, #e0a03a, #f2c55c 40%, #3fbf7f);
+  background-size: 300px 100%;
+  transition: width .5s cubic-bezier(.2, .8, .3, 1);
+}
+.pk-meter.is-off { visibility: hidden; }
+
+@keyframes pkMyTurn {
+  0%, 100% { box-shadow: 0 0 0 2px var(--gold), 0 6px 18px rgba(0, 0, 0, .14); }
+  50% { box-shadow: 0 0 0 2px var(--gold), 0 0 0 6px rgba(242, 197, 92, .22), 0 6px 18px rgba(0, 0, 0, .14); }
+}
+.pk-myplate.is-turn { border-color: var(--gold); animation: pkMyTurn 1.6s ease-in-out infinite; }
+.pk-myplate.is-winner { border-color: var(--gold); box-shadow: 0 0 0 2px var(--gold), 0 0 22px rgba(242, 197, 92, .45); }
+.pk-myplate.is-allin .pk-name::after {
+  content: " · הכל-אין";
+  color: var(--error);
+  font-weight: 800;
+}
 
 /* -------------------------------- פעולות -------------------------------- */
 
 .pk-actions {
+  position: relative;
   display: grid;
-  gap: 8px;
+  gap: 6px;
   margin-top: 2px;
 }
 
-.pk-raise {
-  display: grid;
-  gap: 4px;
-  transition: opacity .2s;
-}
-.pk-raise.is-off { opacity: .4; }
-
-.pk-presets {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-.pk-pre {
-  min-height: 36px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--text-2);
-  font-size: .78rem;
-  font-weight: 700;
-  cursor: pointer;
-  -webkit-user-select: none;
-  user-select: none;
-  transition: transform .12s var(--ease), background .16s, color .16s, border-color .16s;
-}
-.pk-pre:active { transform: scale(.95); }
-.pk-pre[disabled] { cursor: default; }
-.pk-pre[aria-pressed="true"] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.pk-slider { display: block; padding: 2px 4px; }
-.pk-slider input {
-  width: 100%;
-  height: 28px;
+.pk-status {
+  min-height: 1.3em;
   margin: 0;
-  accent-color: var(--accent);
-  cursor: pointer;
+  font-size: .76rem;
+  font-weight: 700;
+  color: var(--text-2);
+  text-align: center;
 }
-.pk-slider input:disabled { cursor: default; }
+.pk-status b { color: var(--text); }
 
 .pk-buttons {
   display: grid;
-  grid-template-columns: 1fr 1.2fr 1.3fr;
-  gap: 8px;
+  grid-template-columns: 1fr 1.15fr 1.15fr;
+  gap: 9px;
 }
-.pk-buttons .btn {
-  min-height: 52px;
+.pk-buttons[hidden] { display: none; }
+
+.pk-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 54px;
   padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font: inherit;
   font-size: .95rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-touch-callout: none;
+  user-select: none;
+  transition: transform .12s cubic-bezier(.2, .8, .3, 1), opacity .2s, filter .2s, box-shadow .2s;
+}
+.pk-btn svg { width: 18px; height: 18px; flex: 0 0 auto; stroke-width: 2.6; }
+.pk-btn:active { transform: scale(.96); }
+.pk-btn[disabled] { opacity: .38; cursor: default; pointer-events: none; filter: saturate(.4); }
+.pk-btn-text { overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+
+.pk-fold { background: var(--error-soft); color: var(--error); }
+.pk-call { background: var(--surface); color: var(--text); border-color: var(--line-strong); box-shadow: var(--shadow-md); }
+.pk-raise { background: var(--accent); color: var(--accent-text); box-shadow: 0 4px 12px color-mix(in srgb, var(--accent) 35%, transparent); }
+.pk-raise[aria-expanded="true"] { filter: brightness(.92); }
+
+.pk-next { display: grid; }
+.pk-next[hidden] { display: none; }
+.pk-next .btn { min-height: 54px; font-size: 1rem; border-radius: 16px; }
+
+/* ---- גיליון ההעלאה: נפתח מעל הכפתורים ---- */
+.pk-sheet {
+  position: absolute;
+  inset-inline: 0;
+  bottom: calc(100% - 22px);
+  z-index: 20;
+  display: grid;
+  gap: 10px;
+  padding: 12px 12px 12px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 -6px 30px rgba(0, 0, 0, .22);
+  animation: pkSheet .24s cubic-bezier(.2, .8, .3, 1) both;
+}
+.pk-sheet[hidden] { display: none; }
+@keyframes pkSheet {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.pk-presets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+.pk-pre {
+  min-height: 38px;
+  padding: 0 2px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: inherit;
+  font-size: .74rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pk-pre[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.pk-pre[disabled] { opacity: .35; pointer-events: none; }
+
+.pk-amount-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.pk-step {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.pk-step svg { width: 18px; height: 18px; stroke-width: 2.6; }
+.pk-step:active { transform: scale(.94); }
+.pk-amount {
+  min-width: 110px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-align: center;
   font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
-.pk-fold {
-  background: var(--error-soft);
-  color: var(--error);
-}
-.pk-call { color: var(--text); }
 
-.pk-next .btn { width: 100%; min-height: 52px; font-size: 1rem; }
+.pk-slider { display: block; padding: 0 4px; }
+.pk-slider input { width: 100%; accent-color: var(--accent); height: 28px; }
 
-/* ז'יטונים שעפים מהקופה אל הזוכה */
-.pk-fly {
-  position: fixed;
-  z-index: 90;
-  --chip-size: 18px;
-  pointer-events: none;
-  transition: transform .7s var(--ease), opacity .7s ease-in;
-}
-.pk-fly::before { inset: 18%; border-width: 1px; }
+.pk-sheet-actions { display: grid; grid-template-columns: 1fr 1.6fr; gap: 8px; }
+.pk-sheet-actions .btn { min-height: 48px; border-radius: 14px; }
 
-/* ------------------------------ עזרה ------------------------------------ */
-
+/* ---- חלון העזרה ---- */
+.pk-options { text-align: start; }
 .pk-ranks { margin: 0 0 9px; padding-inline-start: 22px; }
 .pk-ranks li { margin-bottom: 2px; }
 .help-body kbd {
@@ -390,34 +604,47 @@
   min-width: 1.6em;
   padding: 0 5px;
   border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
   border-radius: 5px;
   background: var(--surface-2);
   font: inherit;
-  font-size: .76rem;
+  font-size: .78em;
   font-weight: 700;
   text-align: center;
 }
 
-/* --------------------------- מסכים נמוכים / גדולים ----------------------- */
+/* -------------------------------- מסכים --------------------------------- */
 
-@media (max-height: 700px) {
-  .pk-table { height: 290px; }
-  .pk-buttons .btn { min-height: 46px; }
-  .pk-pre { min-height: 32px; }
+@media (max-width: 370px) {
+  .pk-btn { font-size: .88rem; gap: 4px; }
+  .pk-btn svg { width: 16px; height: 16px; }
+  .pk-myplate { max-width: 172px; }
 }
 
-@media (min-width: 700px) {
-  .pk-table { height: 380px; border-radius: 130px / 110px; }
-  .pk-seat { width: 96px; }
-  .pk-seat-cards { height: 58px; }
-  .pk-seat.is-folded .pk-tag { top: 40px; }
-  .pk-plate { min-width: 84px; }
-  .pk-name { font-size: .78rem; }
-  .pk-stack { font-size: .86rem; }
-  .pk-msg { font-size: .86rem; }
+@media (max-height: 700px) {
+  .pk-btn, .pk-next .btn { min-height: 48px; }
+  .pk-status { display: none; }
+}
+
+/*
+ * מחשב: השולחן לא אמור להיות טלפון מתוח. האפליקציה מתרחבת, השולחן אובלי
+ * ורחב, והיד שלך עם הפעולות מתחתיו
+ */
+@media (min-width: 900px) {
+  .app { max-width: 1000px; }
+  .pk-table { height: clamp(380px, calc(100vh - 360px), 500px); margin-inline: 8px; }
+  .pk-me { --my-w: 90px; gap: 18px; }
+  .pk-myplate { max-width: 240px; padding: 9px 14px 10px 10px; }
+  .pk-myplate .pk-avatar { --av: 42px; font-size: .85rem; }
+  .pk-actions { width: min(620px, 100%); margin-inline: auto; }
+  .pk-name { font-size: .74rem; }
+  .pk-stack { font-size: .9rem; }
+  .pk-print .felt-print { font-size: .8rem; }
+  .pk-msg { font-size: .9rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pk-seat.is-turn .pk-plate { animation: none; box-shadow: 0 0 0 2px var(--gold); }
-  .pk-fly { display: none; }
+  .pk-seat.is-turn .pk-avatar::before { animation: none; --sweep: 100; }
+  .pk-myplate.is-turn { animation: none; box-shadow: 0 0 0 2px var(--gold); }
+  .pk-puck, .pk-seat-cards { transition: none; }
 }

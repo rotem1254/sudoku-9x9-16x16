@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="css/cards.css?v=98df4f2b">
   <link rel="stylesheet" href="css/blackjack.css?v=377fc827">
 </head>
-<body>
+<body class="bj-page">
 
 <a class="skip-link" href="#main">דילוג לתוכן</a>
 <p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -48,43 +48,74 @@
     </div>
   </header>
 
-  <div class="statusbar">
-    <div class="stat">
-      <span class="stat-label">קופה</span>
-      <span class="stat-value" id="statBank">1,000</span>
+  <div class="bj-hud">
+    <div class="bj-hud-item bj-hud-bank">
+      <span class="bj-hud-chip" aria-hidden="true"></span>
+      <span class="bj-hud-text">
+        <span class="bj-hud-label">קופה</span>
+        <span class="bj-hud-value" id="statBank">1,000</span>
+      </span>
     </div>
-    <div class="stat">
-      <span class="stat-label">הימור</span>
-      <span class="stat-value" id="statBet">0</span>
+    <div class="bj-hud-item">
+      <span class="bj-hud-text">
+        <span class="bj-hud-label">על השולחן</span>
+        <span class="bj-hud-value" id="statBet">0</span>
+      </span>
     </div>
-    <button type="button" class="stat bj-level-btn" id="btnLevel" aria-label="החלפת רמה">
-      <span class="stat-label">רמה</span>
-      <span class="stat-value" id="statLevel">מתחיל</span>
+    <button type="button" class="bj-hud-item bj-level-btn" id="btnLevel" aria-label="החלפת רמה">
+      <span class="bj-hud-text">
+        <span class="bj-hud-label">רמה</span>
+        <span class="bj-hud-value" id="statLevel">מתחיל</span>
+      </span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
     </button>
   </div>
 
   <main class="bj-stage" id="main" tabindex="-1">
+    <!--
+      השולחן בצורת חצי ירח: הדילר לאורך הצלע הישרה למעלה, השחקן על הקשת.
+      משמאל לדילר (מימין על המסך) החפיסה, מולה מגש הקלפים שנזרקו, ובאמצע
+      מגש הז'יטונים של הבית. הכיתוב מודפס על הלבד לאורך קשתות.
+    -->
     <section class="bj-table felt" id="table" aria-label="שולחן הבלאקג'ק">
 
-      <div class="bj-zone bj-dealer">
-        <div class="bj-zone-head">
-          <span class="felt-label">דילר</span>
-          <span class="bj-total" id="dealerTotal" hidden></span>
+      <div class="bj-rail-top" aria-hidden="true">
+        <div class="bj-discard" id="discard"><span class="bj-discard-pile"></span></div>
+        <div class="bj-tray" id="tray"></div>
+        <div class="bj-shoe" id="shoe">
+          <span class="bj-shoe-body"></span>
+          <span class="bj-shoe-card"></span>
         </div>
-        <div class="bj-cards" id="dealerCards" dir="ltr"></div>
       </div>
 
-      <!-- הודעת סוף הסיבוב מופיעה במקום הכיתוב, ומוכרזת לקורא המסך בנפרד -->
-      <div class="bj-rules" id="rules" aria-hidden="true">
-        <span class="bj-rules-main" id="rulesMain">בלאקג'ק משלם 3:2</span>
-        <span class="bj-rules-sub" id="rulesSub">הדילר עומד על 17 רך · ביטוח משלם 2:1</span>
-        <p class="bj-banner" id="banner" hidden></p>
+      <div class="bj-zone bj-dealer">
+        <div class="bj-cards" id="dealerCards" dir="ltr"></div>
+        <div class="bj-zone-head">
+          <span class="bj-total" id="dealerTotal" hidden></span>
+        </div>
       </div>
+
+      <!-- הדפס הלבד — קשתות עם טקסט, מאחורי הכול -->
+      <svg class="bj-print" id="print" viewBox="0 0 400 150" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <path id="arcMain" d="M 34 30 Q 200 112 366 30"/>
+          <path id="arcSub" d="M 62 58 Q 200 128 338 58"/>
+          <path id="arcIns" d="M 22 92 Q 200 176 378 92"/>
+        </defs>
+        <use href="#arcIns" class="bj-print-band"/>
+        <use href="#arcIns" class="bj-print-band-in" transform="translate(0 14)"/>
+        <text class="bj-print-main"><textPath href="#arcMain" startOffset="50%" text-anchor="middle" id="rulesMain">בלאקג'ק משלם 3:2</textPath></text>
+        <text class="bj-print-sub"><textPath href="#arcSub" startOffset="50%" text-anchor="middle" id="rulesSub">הדילר עומד על 17 רך</textPath></text>
+        <text class="bj-print-ins"><textPath href="#arcIns" startOffset="50%" text-anchor="middle" dy="11">ביטוח משלם 2:1</textPath></text>
+      </svg>
+
+      <p class="bj-banner" id="banner" hidden></p>
+      <div class="bj-confetti" id="confetti" aria-hidden="true"></div>
 
       <div class="bj-zone bj-player">
         <div class="bj-hands" id="hands" dir="ltr"></div>
 
-        <!-- עיגול ההימור בשלב ההימור — נגיעה בו מורידה את הז'יטון האחרון -->
+        <!-- עיגול ההימור המודפס — נגיעה בו מורידה את הז'יטון האחרון -->
         <button type="button" class="bj-spot" id="betSpot" aria-label="ההימור — נגיעה מורידה ז'יטון">
           <span class="bj-spot-stack" id="betStack"></span>
           <span class="bj-spot-amount" id="betAmount">הניחו הימור</span>
@@ -95,37 +126,38 @@
     <p class="bj-advice" id="advice" aria-live="polite" hidden></p>
 
     <!-- ==================== שלב ההימור ==================== -->
-    <div class="bj-controls" id="betControls">
-      <div class="bj-chips" id="chipRack" role="group" aria-label="ז'יטונים"></div>
+    <div class="bj-dock" id="betControls">
+      <div class="bj-rack" id="chipRack" role="group" aria-label="ז'יטונים"></div>
       <div class="bj-row">
-        <button type="button" class="btn btn-ghost" id="btnClear">נקה</button>
-        <button type="button" class="btn btn-ghost" id="btnRebet">כמו קודם</button>
-        <button type="button" class="btn btn-primary bj-deal" id="btnDeal">חלק קלפים</button>
+        <button type="button" class="btn btn-ghost bj-btn" id="btnClear">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>
+          <span>נקה</span>
+        </button>
+        <button type="button" class="btn btn-ghost bj-btn" id="btnRebet">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>
+          <span>כמו קודם</span>
+        </button>
+        <button type="button" class="btn btn-primary bj-btn bj-deal" id="btnDeal">
+          <span>חלק קלפים</span>
+        </button>
       </div>
     </div>
 
     <!-- ==================== ביטוח ==================== -->
-    <div class="bj-controls" id="insControls" hidden>
+    <div class="bj-dock" id="insControls" hidden>
       <p class="bj-prompt">לדילר אס גלוי. לקנות ביטוח?</p>
       <div class="bj-row">
-        <button type="button" class="btn btn-ghost" id="btnInsYes">ביטוח</button>
-        <button type="button" class="btn btn-primary" id="btnInsNo">בלי ביטוח</button>
+        <button type="button" class="btn btn-ghost bj-btn" id="btnInsYes">ביטוח</button>
+        <button type="button" class="btn btn-primary bj-btn" id="btnInsNo">בלי ביטוח</button>
       </div>
     </div>
 
     <!-- ==================== תור השחקן ==================== -->
-    <div class="bj-controls" id="playControls" hidden>
-      <div class="bj-actions">
-        <button type="button" class="bj-act bj-act-hit" data-act="hit" aria-keyshortcuts="H">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          <span>קלף</span>
-        </button>
-        <button type="button" class="bj-act bj-act-stand" data-act="stand" aria-keyshortcuts="S">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
-          <span>עומד</span>
-        </button>
+    <!-- שתי הפעולות הנפוצות גדולות בשורה התחתונה, באזור האגודל; השאר מעליהן -->
+    <div class="bj-dock" id="playControls" hidden>
+      <div class="bj-actions-sub">
         <button type="button" class="bj-act" data-act="double" aria-keyshortcuts="D">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          <span class="bj-act-ico" aria-hidden="true">×2</span>
           <span>הכפלה</span>
         </button>
         <button type="button" class="bj-act" data-act="split" aria-keyshortcuts="P">
@@ -136,15 +168,30 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>
           <span>כניעה</span>
         </button>
+        <button type="button" class="bj-act bj-act-hint" id="btnHint">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.1 1 1.7h5.2c.1-.6.4-1.2 1-1.7A6 6 0 0 0 12 3z"/></svg>
+          <span>רמז</span>
+        </button>
       </div>
-      <button type="button" class="link-btn bj-hint" id="btnHint">רמז</button>
+      <div class="bj-actions-main">
+        <button type="button" class="bj-act bj-act-stand" data-act="stand" aria-keyshortcuts="S">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12"/></svg>
+          <span>עומד</span>
+        </button>
+        <button type="button" class="bj-act bj-act-hit" data-act="hit" aria-keyshortcuts="H">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>
+          <span>קלף</span>
+        </button>
+      </div>
     </div>
 
     <!-- ==================== סוף סיבוב ==================== -->
-    <div class="bj-controls" id="doneControls" hidden>
+    <div class="bj-dock" id="doneControls" hidden>
       <div class="bj-row">
-        <button type="button" class="btn btn-ghost" id="btnChangeBet">שינוי הימור</button>
-        <button type="button" class="btn btn-primary bj-deal" id="btnAgain">שוב · <span id="againAmount">0</span></button>
+        <button type="button" class="btn btn-ghost bj-btn" id="btnChangeBet">שינוי הימור</button>
+        <button type="button" class="btn btn-primary bj-btn bj-deal" id="btnAgain">
+          <span>שוב · <span id="againAmount">0</span></span>
+        </button>
       </div>
     </div>
   </main>
@@ -200,6 +247,13 @@
           <span class="setting-desc" id="hapticsNote">משוב מישושי על קלף, ניצחון והפסד</span>
         </span>
         <input type="checkbox" class="switch" id="optHaptics" data-pref="haptics">
+      </label>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">צלילים</span>
+          <span class="setting-desc" id="soundNote">קלפים, ז'יטונים וסוף סיבוב — בעוצמה נמוכה</span>
+        </span>
+        <input type="checkbox" class="switch" id="optSound" data-pref="sound">
       </label>
       <label class="setting">
         <span class="setting-text">
@@ -261,6 +315,7 @@
         <li><b>קשה</b> — שמונה חפיסות, 6:5, בלי הכפלה אחרי פיצול ובלי כניעה,
           והסכום לא מוצג.</li>
       </ul>
+      <p><b>צלילים</b> — אפשר לכבות בהגדרות.</p>
       <p><b>מקלדת:</b> H קלף · S עומד · D הכפלה · P פיצול · R כניעה · Enter
         חלוקה.</p>
     </div>
@@ -289,7 +344,9 @@
 <script src="js/modal.js?v=66375e94"></script>
 <script src="js/howto.js?v=1ebd845d"></script>
 <script src="js/haptics.js?v=88d431f4"></script>
-<script src="js/playing-cards.js?v=9b55a862"></script>
+<script src="js/playing-cards.js?v=00000000"></script>
+<script src="js/table-fx.js?v=00000000"></script>
+<script src="js/sound.js?v=00000000"></script>
 <script src="js/blackjack/engine.js?v=599fe742"></script>
 <script src="js/blackjack/ui.js?v=fe25cf97"></script>
 </body>
