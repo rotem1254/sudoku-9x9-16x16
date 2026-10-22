@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס, מהג'ונג, טטריס, סנייק ושחמט. הכול בדפדפן, בלי התקנה ובלי חשבון.">
+  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס, מהג'ונג, טטריס, סנייק, שחמט, בלאקג'ק ופוקר. הכול בדפדפן, בלי התקנה ובלי חשבון.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -14,8 +14,8 @@
   <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
-  <link rel="stylesheet" href="css/theme.css?v=ca789140">
-  <link rel="stylesheet" href="css/hub.css?v=2fc92e30">
+  <link rel="stylesheet" href="css/theme.css?v=35714093">
+  <link rel="stylesheet" href="css/hub.css?v=32e25b0a">
 </head>
 <body>
 
@@ -239,6 +239,45 @@
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
     </a>
 
+    <!-- ==================== בלאקג'ק ==================== -->
+    <a class="game-card" href="blackjack.html">
+      <div class="game-art game-art-blackjack" aria-hidden="true">
+        <span class="mini-bj">
+          <i class="mbj mbj-1">A<b>&#x2660;&#xFE0E;</b></i>
+          <i class="mbj mbj-2">K<b>&#x2665;&#xFE0E;</b></i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">בלאקג'ק</h2>
+        <p class="game-desc">21 מול הדילר, עם פיצול, הכפלה וביטוח. ברמה הראשונה יש המלצה לכל מהלך.</p>
+        <div class="game-tags">
+          <span class="tag">4 רמות</span>
+          <span class="tag" id="tagBlackjack">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
+    <!-- ==================== פוקר ==================== -->
+    <a class="game-card" href="poker.html">
+      <div class="game-art game-art-poker" aria-hidden="true">
+        <span class="mini-poker">
+          <i class="mpk mpk-1">A<b>&#x2663;&#xFE0E;</b></i>
+          <i class="mpk mpk-2">A<b>&#x2666;&#xFE0E;</b></i>
+          <i class="mpk-chip"></i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">פוקר</h2>
+        <p class="game-desc">טקסס הולדם מול יריבים ממוחשבים, עד שנשאר אחד עם כל הז'יטונים. בליינדים עולים.</p>
+        <div class="game-tags">
+          <span class="tag">4 רמות</span>
+          <span class="tag" id="tagPoker">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
   </nav>
 
   <footer class="footer hub-footer">
@@ -430,6 +469,30 @@
       tagCh.classList.add('is-live');
     } else {
       tagCh.textContent = 'מול מחשב או חבר';
+    }
+  }
+
+  var bj = read('blackjack.v1.save', null);
+  var tagBj = document.getElementById('tagBlackjack');
+  if (tagBj) {
+    var bank = bj && bj.table ? bj.table.bankroll : null;
+    if (bj && bj.rounds > 0 && typeof bank === 'number') {
+      tagBj.textContent = 'קופה · ' + bank.toLocaleString('en-US');
+      tagBj.classList.add('is-live');
+    } else {
+      tagBj.textContent = 'חפיסה אחת עד שמונה';
+    }
+  }
+
+  var pk = read('poker.v1.save', null);
+  var tagPk = document.getElementById('tagPoker');
+  if (tagPk) {
+    if (pk && !pk.over && pk.hand > 0) {
+      tagPk.textContent = 'ממשיכים · יד ' + pk.hand +
+        (typeof pk.chips === 'number' ? ' · ' + pk.chips.toLocaleString('en-US') : '');
+      tagPk.classList.add('is-live');
+    } else {
+      tagPk.textContent = 'טקסס הולדם';
     }
   }
 

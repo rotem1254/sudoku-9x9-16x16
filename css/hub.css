@@ -360,3 +360,55 @@
 }
 .mc4-k { left: 0; color: #fff; -webkit-text-stroke: 1.3px #1b1b1b; paint-order: stroke fill; }
 .mc4-n { right: 0; top: 6px; color: #1f1f1f; text-shadow: 0 0 2px rgba(255, 255, 255, .5); }
+
+/* --- בלאקג'ק: אס ומלך על לבד ירוק-טורקיז --- */
+.game-art-blackjack {
+  background: radial-gradient(120% 120% at 50% 40%, #2b8268, #1e6a54 55%, #12453a);
+}
+
+.mini-bj { position: relative; width: 52px; height: 46px; }
+.mbj,
+.mpk {
+  position: absolute;
+  top: 4px;
+  width: 26px;
+  height: 36px;
+  padding: 3px 0 0 4px;
+  border-radius: 4px;
+  background: #fffdf7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .35);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  direction: ltr;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: .8rem;
+  font-style: normal;
+  font-weight: 800;
+  line-height: .95;
+}
+.mbj b,
+.mpk b { font-size: .68rem; }
+.mbj-1 { left: 4px; color: #1a2030; transform: rotate(-9deg); }
+.mbj-2 { left: 22px; top: 7px; color: #c8253a; transform: rotate(8deg); }
+
+/* --- פוקר: זוג אסים וז'יטון על לבד יין --- */
+.game-art-poker {
+  background: radial-gradient(120% 120% at 50% 40%, #9a3a4a, #7a2a38 55%, #4e1823);
+}
+
+.mini-poker { position: relative; width: 56px; height: 48px; }
+.mpk-1 { left: 2px; color: #1a2030; transform: rotate(-10deg); }
+.mpk-2 { left: 18px; top: 2px; color: #c8253a; transform: rotate(6deg); }
+.mpk-chip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #262a33 0 50%, transparent 51%),
+    repeating-conic-gradient(#262a33 0 30deg, #fff 30deg 60deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
