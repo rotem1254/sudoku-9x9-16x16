@@ -104,6 +104,7 @@
     betStack: $('#betStack'),
     betAmount: $('#betAmount'),
     advice: $('#advice'),
+    waitLine: $('#waitLine'),
     statBank: $('#statBank'),
     bankItem: $('.bj-hud-bank'),
     statBet: $('#statBet'),
@@ -276,8 +277,9 @@
   function layout() {
     const t = state.table;
     const W = Math.max(240, el.table.clientWidth - 28);
-    const byHeight = (window.innerHeight - 410) / 2.9;
-    const base = Math.round(Math.max(48, Math.min(100, W / 5.1, byHeight)));
+    // כל מה שאינו קלפים תופס בערך 540px; שתי שורות קלפים חולקות את השאר
+    const byHeight = (window.innerHeight - 540) / 2.8;
+    const base = Math.round(Math.max(52, Math.min(94, W / 4.7, byHeight)));
     el.table.style.setProperty('--card-w', base + 'px');
 
     const fit = (container, count, avail, cw, maxStep) => {
@@ -298,7 +300,7 @@
     const n = handEls.length;
     if (!n) return;
     // הקשת בתחתית מצמצמת את הרוחב השימושי — לידיים הקיצוניות יש פחות מקום
-    const usable = n > 2 ? W * 0.94 : W * 0.86;
+    const usable = n > 2 ? W * 0.9 : W * 0.84;
     const avail = (usable - (n - 1) * 10) / n - 10;
     const cw = n === 1 ? base : Math.min(base * 0.86, avail * 0.78);
     handEls.forEach((h, i) => {
@@ -317,7 +319,7 @@
   function buildTray() {
     el.tray.innerHTML = '';
     [10, 50, 100, 500, 1000].forEach((v, i) => {
-      el.tray.appendChild(FX.stack(v * (5 + (i % 3)), { denoms: [v], max: 7, size: 18 }));
+      el.tray.appendChild(FX.stack(v * (3 + (i % 2)), { denoms: [v], max: 4, size: 17 }));
     });
   }
 
@@ -381,6 +383,11 @@
       el.btnHint.disabled = busy;
       el.actSub.classList.toggle('no-hint', !hasHint);
     }
+
+    // בזמן שהקלפים עפים או שהדילר משחק — שורה שמסבירה למה אין כפתורים
+    const waiting = busy && (t.phase === 'done' || t.phase === 'insurance');
+    el.waitLine.hidden = !waiting;
+    if (waiting) el.waitLine.textContent = state.holeOpen || t.dealer.length > 2 ? 'הדילר משחק…' : 'מחלק…';
 
     if (t.phase === 'done') {
       el.againAmount.textContent = fmt(state.lastBet);
@@ -702,8 +709,11 @@
 
     // הקופה מתעדכנת כשהז'יטונים מגיעים אליה
     const landAt = animatePayouts(handNodes);
-    state.shownBank = t.bankroll;
-    later(() => paintBank(t.bankroll, true), Math.max(0, landAt - 250));
+    const settle = () => {
+      state.shownBank = t.bankroll;
+      paintBank(t.bankroll, true);
+    };
+    if (landAt) later(settle, Math.max(0, landAt - 200)); else settle();
 
     record(net, natural);
     saveGame();

@@ -20,6 +20,7 @@
 @media (min-width: 900px) {
   .bj-page .app { max-width: 860px; }
 }
+.bj-page .app { --gap: 8px; }
 
 .bj-stage {
   display: flex;
@@ -83,9 +84,9 @@
   --rail-w: 10px;
   display: grid;
   grid-template-areas: "rail" "dealer" "mid" "player";
-  grid-template-rows: auto auto minmax(64px, 1fr) auto;
-  min-height: clamp(380px, 56dvh, 560px);
-  padding: 0 12px 30px;
+  grid-template-rows: auto auto minmax(56px, 1fr) auto;
+  min-height: clamp(350px, 52dvh, 540px);
+  padding: 0 12px 26px;
   /* חצי ירח: פינות עליונות עגולות מעט, והתחתית קשת רחבה */
   border-radius: 20px 20px 50% 50% / 20px 20px 24% 24%;
   overflow: hidden;
@@ -95,6 +96,8 @@
 
 .bj-rail-top {
   grid-area: rail;
+  /* החפיסה משמאל לדילר — כלומר מימין למי שמולו. השורה LTR כמו השולחן עצמו */
+  direction: ltr;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: start;
@@ -108,13 +111,19 @@
   display: flex;
   align-items: flex-end;
   gap: 3px;
-  height: 32px;
+  height: 30px;
+  overflow: hidden;
   padding: 3px 7px 4px;
   border-radius: 0 0 10px 10px;
   background: linear-gradient(180deg, rgba(0, 0, 0, .45), rgba(0, 0, 0, .25));
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, .08), inset 0 2px 5px rgba(0, 0, 0, .5);
 }
-.bj-tray .chip-stack { --chip-size: 18px; }
+.bj-tray .chip-stack { --chip-size: 17px; }
+/*
+ * cards.css מצהיר על --chip-size גם על הז'יטון עצמו, ולכן גודל הערימה לא
+ * היה עובר אליו בירושה. כאן הז'יטון בערימה יורש במפורש
+ */
+.chip-stack .chip { --chip-size: inherit; }
 
 /* החפיסה: קופסה כהה בזווית, עם קלף שבולט ממנה */
 .bj-shoe {
@@ -204,8 +213,9 @@
   grid-area: mid;
   align-self: center;
   justify-self: center;
-  width: min(100%, 520px);
+  width: min(100%, 440px);
   height: auto;
+  max-height: 124px;
   overflow: visible;
   pointer-events: none;
   fill: none;
@@ -227,6 +237,9 @@
   opacity: .7;
 }
 .bj-table.has-banner .bj-print { opacity: .35; transition: opacity .25s; }
+
+/* קלף שהפסיד — מעומעם מעט, לא אפור: עדיין צריך לקרוא אותו */
+.bj-cards .pc.is-dim .pc-face { filter: brightness(.84) saturate(.7); }
 
 /* ---- הודעת סוף סיבוב ---- */
 .bj-banner {
@@ -313,6 +326,7 @@
 .bj-hands.is-multi .bj-hand.is-waiting { opacity: .62; }
 
 .bj-hand-foot {
+  margin-top: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -321,7 +335,10 @@
 }
 .bj-hand-meta { display: flex; align-items: center; gap: 6px; }
 .bj-hands.is-multi .bj-hand-foot { flex-direction: column; gap: 4px; }
-.bj-hands.is-multi .bj-hand-meta { gap: 4px; }
+.bj-hands.is-multi .bj-hand-meta { gap: 4px; flex-direction: column-reverse; }
+.bj-hands.is-multi .bj-bet { font-size: .7rem; gap: 3px; }
+.bj-hands.is-multi .bj-bet .chip-stack { --chip-size: 16px; }
+.bj-hands.is-multi .bj-res { font-size: .68rem; padding: 2px 6px; }
 
 /* סכום היד */
 .bj-total {
@@ -429,6 +446,33 @@
   display: grid;
   gap: 10px;
 }
+/* אזור הפקדים שומר על גובהו גם כשהדילר משחק — שהמסך לא יקפוץ */
+.bj-docks {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 124px;
+}
+.bj-wait {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 52px;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 700;
+}
+.bj-wait::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: bjDot 1s ease-in-out infinite;
+}
+@keyframes bjDot { 0%, 100% { opacity: .25; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.1); } }
 
 /* מתלה הז'יטונים: מגש כהה שהז'יטונים יושבים בו */
 .bj-rack {
@@ -570,10 +614,24 @@
   .bj-rack .chip { --chip-size: 48px; }
 }
 
+/* בטלפון נמוך: שורת המידע בתחתית מוותרת על מקומה — החפיסה שנגמרת כבר
+   נראית במגש הזריקה, והמינימום כתוב בעיגול ההימור */
+@media (max-height: 760px) and (max-width: 699px) {
+  .bj-page .footer { display: none; }
+  .bj-act { min-height: 44px; }
+  .bj-actions-main .bj-act { min-height: 54px; }
+}
+
 @media (min-width: 700px) {
-  .bj-table { padding: 0 22px 40px; --rail-w: 12px; }
-  .bj-rail-top { height: 46px; }
-  .bj-tray { height: 38px; }
-  .bj-tray .chip-stack { --chip-size: 22px; }
-  .bj-print-main { font-size: 15px; }
+  .bj-table { padding: 0 26px 34px; --rail-w: 12px; }
+  .bj-rail-top { height: 48px; }
+  .bj-tray { height: 42px; padding: 4px 10px 5px; gap: 5px; }
+  .bj-tray .chip-stack { --chip-size: 24px; }
+  .bj-shoe { width: 84px; height: 46px; }
+  .bj-shoe-card { width: 30px; height: 34px; left: -8px; top: 6px; }
+  .bj-discard { width: 58px; height: 46px; }
+  .bj-discard-pile { height: calc(5px + var(--used, 0) * 30px); }
+  .bj-print { width: min(100%, 560px); max-height: 130px; margin: -10px 0; }
+  .bj-docks { width: min(100%, 600px); justify-self: center; margin: 0 auto; }
+  .bj-advice { font-size: .9rem; }
 }

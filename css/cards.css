@@ -337,20 +337,22 @@
 
 /*
  * פני הז'יטון: שיבוצים לבנים בשוליים (conic), טבעת פנימית, ועיגול מרכזי
- * כהה עם הערך. העובי הוא צל בגוון כהה של אותו צבע — ערימה נראית כגליל
+ * כהה עם הערך. העובי הוא צל בגוון כהה של אותו צבע — ערימה נראית כגליל.
+ *
+ * הגודל (--chip-size) לא מוצהר על הז'יטון עצמו אלא נקרא עם ברירת מחדל,
+ * כדי שערימה או מיכל שקובעים אותו יגיעו גם לז'יטונים שבתוכם
  */
 .chip {
   --chip: #c8323c;
   --chip-ink: #fff;
   --chip-insert: #f4efe4;
-  --chip-size: 46px;
   --chip-edge: color-mix(in srgb, var(--chip) 62%, #000);
   position: relative;
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
-  width: var(--chip-size);
-  height: var(--chip-size);
+  width: var(--chip-size, 46px);
+  height: var(--chip-size, 46px);
   border-radius: 50%;
   border: 0;
   padding: 0;
@@ -359,12 +361,12 @@
     repeating-conic-gradient(from 11.25deg, var(--chip) 0 33.75deg, var(--chip-insert) 33.75deg 45deg);
   box-shadow:
     inset 0 0 0 1px rgba(0, 0, 0, .28),
-    inset 0 calc(var(--chip-size) * .05) calc(var(--chip-size) * .04) rgba(255, 255, 255, .28),
-    0 calc(var(--chip-size) * .045) 0 var(--chip-edge),
-    0 calc(var(--chip-size) * .07) calc(var(--chip-size) * .1) rgba(0, 0, 0, .35);
+    inset 0 calc(var(--chip-size, 46px) * .05) calc(var(--chip-size, 46px) * .04) rgba(255, 255, 255, .28),
+    0 calc(var(--chip-size, 46px) * .045) 0 var(--chip-edge),
+    0 calc(var(--chip-size, 46px) * .07) calc(var(--chip-size, 46px) * .1) rgba(0, 0, 0, .35);
   color: var(--chip-ink);
   font: inherit;
-  font-size: calc(var(--chip-size) * .26);
+  font-size: calc(var(--chip-size, 46px) * .26);
   font-weight: 800;
   letter-spacing: -.02em;
   cursor: pointer;
@@ -379,7 +381,7 @@
   position: absolute;
   inset: 25%;
   border-radius: 50%;
-  border: max(1px, calc(var(--chip-size) * .025)) dashed rgba(255, 255, 255, .5);
+  border: max(1px, calc(var(--chip-size, 46px) * .025)) dashed rgba(255, 255, 255, .5);
 }
 .chip span { position: relative; text-shadow: 0 1px 1px rgba(0, 0, 0, .35); }
 .chip:active { transform: translateY(1px) scale(.95); }

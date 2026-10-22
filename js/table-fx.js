@@ -76,7 +76,8 @@
    * מהחפיסה לידו של השחקן. ה-DOM לא משתנה; רק ההנפשה.
    * @param {HTMLElement} node
    * @param {HTMLElement|DOMRect} from
-   * @param {object} [o] { duration, delay, rotate, scale, easing }
+   * @param {object} [o] { duration, delay, rotate, scale, easing, fade }
+   *   fade — להתחיל שקוף: קלף שעוד מחכה בתור נשאר בלתי נראה ליד החפיסה
    */
   function flyIn(node, from, o) {
     o = o || {};
