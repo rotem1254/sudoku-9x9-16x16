@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="פוקר טקסס הולדם בדפדפן — טורניר מול 1 עד 5 יריבים ממוחשבים בארבע רמות קושי. בליינדים עולים, קופות צד, ובלי כסף אמיתי.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="פוקר">
+  <title>פוקר · מרכז המשחקים</title>
+  <link rel="icon" href="icon.svg?v=eb3fe95c" type="image/svg+xml">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
+  <link rel="manifest" href="manifest.webmanifest?v=8c006993">
+  <link rel="stylesheet" href="css/theme.css?v=35714093">
+  <link rel="stylesheet" href="css/cards.css?v=98df4f2b">
+  <link rel="stylesheet" href="css/poker.css?v=c354a59f">
+</head>
+<body>
+
+<a class="skip-link" href="#main">דילוג לתוכן</a>
+<p class="sr-only" id="live" role="status" aria-live="polite" aria-atomic="true"></p>
+
+<div class="app">
+
+  <header class="topbar">
+    <a class="logo" href="index.html" title="חזרה למרכז המשחקים">
+      <svg class="logo-back" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      <span class="logo-mark" aria-hidden="true"></span>
+      <span class="logo-text">פוקר</span>
+    </a>
+    <div class="topbar-actions">
+      <button type="button" class="icon-btn" id="btnSettings" aria-label="הגדרות" title="הגדרות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnStats" aria-label="סטטיסטיקות" title="סטטיסטיקות">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnHelp" aria-label="איך משחקים" title="איך משחקים">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.3M12 17v.01"/></svg>
+      </button>
+      <button type="button" class="icon-btn" id="btnTheme" aria-label="החלפת ערכת נושא" title="ערכת נושא">
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="pk-stage" id="main" tabindex="-1">
+    <div class="pk-info" id="info">
+      <span id="infoHand">יד 1</span>
+      <span id="infoBlinds">בליינדים 10/20</span>
+      <span id="infoLevel">מתחיל</span>
+    </div>
+
+    <!-- השולחן: יריבים מסביב למעלה, קלפי השולחן במרכז -->
+    <div class="felt pk-table" id="table" data-n="3">
+      <div id="seats"></div>
+      <div class="pk-center">
+        <div class="pk-pot" id="pot" aria-live="off"><span class="felt-label">קופה</span> <b id="potAmount">0</b></div>
+        <div class="pk-board" id="board" aria-label="קלפי השולחן"></div>
+        <p class="pk-msg" id="tableMsg"></p>
+      </div>
+      <div class="pk-mybet" id="myBet"></div>
+    </div>
+
+    <!-- היד שלך -->
+    <section class="pk-me" id="me" aria-label="היד שלך">
+      <div class="pk-hole" id="myCards"></div>
+      <div class="pk-plate pk-myplate" id="myPlate">
+        <span class="pk-name">את/ה <span class="pk-dealer" id="myDealer" hidden>D</span></span>
+        <span class="pk-stack" id="myStack">1000</span>
+        <span class="pk-hand" id="myHand"></span>
+      </div>
+    </section>
+
+    <!-- פעולות -->
+    <section class="pk-actions" id="actions" aria-label="פעולות">
+      <div class="pk-raise" id="raiseRow">
+        <div class="pk-presets" id="presets">
+          <button type="button" class="pk-pre" data-pre="min">מינימום</button>
+          <button type="button" class="pk-pre" data-pre="half">½ קופה</button>
+          <button type="button" class="pk-pre" data-pre="pot">קופה</button>
+          <button type="button" class="pk-pre" data-pre="all">הכל</button>
+        </div>
+        <label class="pk-slider">
+          <span class="sr-only">סכום ההעלאה</span>
+          <input type="range" id="raiseRange" min="0" max="100" step="5" value="0">
+        </label>
+      </div>
+      <div class="pk-buttons" id="buttons">
+        <button type="button" class="btn pk-fold" id="btnFold" title="פולד (F)">פולד</button>
+        <button type="button" class="btn btn-ghost pk-call" id="btnCall" title="צ'ק / קול (C)">צ'ק</button>
+        <button type="button" class="btn btn-primary pk-bet" id="btnRaise" title="העלאה (R)">העלאה</button>
+      </div>
+      <div class="pk-next" id="nextRow" hidden>
+        <button type="button" class="btn btn-primary" id="btnNext">יד הבאה</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span id="footerInfo">—</span>
+    <button type="button" class="link-btn" id="btnNew">טורניר חדש</button>
+  </footer>
+</div>
+
+<!-- ==================== טורניר חדש ==================== -->
+<div class="modal" id="newModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="newTitle">
+    <h2 class="modal-title" id="newTitle">טורניר חדש</h2>
+    <p class="modal-sub">כולם מתחילים עם 1,000 ז'יטונים. משחקים עד שנשאר אחד.</p>
+    <div class="pk-options">
+      <p class="opt-label">יריבים</p>
+      <div class="opt-seg" data-opt="opponents">
+        <button type="button" data-val="1">1</button>
+        <button type="button" data-val="2">2</button>
+        <button type="button" data-val="3">3</button>
+        <button type="button" data-val="4">4</button>
+        <button type="button" data-val="5">5</button>
+      </div>
+      <p class="opt-label">רמה</p>
+      <div class="opt-seg" data-opt="level">
+        <button type="button" data-val="1">מתחיל</button>
+        <button type="button" data-val="2">קל</button>
+        <button type="button" data-val="3">בינוני</button>
+        <button type="button" data-val="4">קשה</button>
+      </div>
+      <p class="opt-desc" id="levelDesc"></p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
+      <button type="button" class="btn btn-primary" id="btnStart">מתחילים</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== סוף טורניר ==================== -->
+<div class="modal" id="overModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="overTitle">
+    <div class="confetti" id="confetti" aria-hidden="true"></div>
+    <div class="win-badge" id="overBadge" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M5 12.5l4.2 4.2L19 7"/></svg>
+    </div>
+    <h2 class="modal-title" id="overTitle">ניצחת בטורניר!</h2>
+    <p class="modal-sub" id="overSub"></p>
+    <div class="win-stats" id="overStats"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>לשולחן</button>
+      <button type="button" class="btn btn-primary" id="btnOverNew">טורניר חדש</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== הגדרות ==================== -->
+<div class="modal" id="settingsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <h2 class="modal-title" id="settingsTitle">הגדרות</h2>
+    <div class="settings-list">
+      <p class="settings-head">משחק</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">הצגת היד שלך</span>
+          <span class="setting-desc">שם היד הטובה ביותר שיש לך כרגע, למשל "זוג מלכים"</span>
+        </span>
+        <input type="checkbox" class="switch" id="optHand" data-pref="showHand">
+      </label>
+      <p class="settings-head">קצב היריבים</p>
+      <div class="opt-seg" data-pref-seg="speed">
+        <button type="button" data-val="slow">איטי</button>
+        <button type="button" data-val="normal">רגיל</button>
+        <button type="button" data-val="fast">מהיר</button>
+      </div>
+      <p class="settings-head">משוב</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">רטט</span>
+          <span class="setting-desc" id="hapticsNote">משוב מישושי על פעולה, חלוקה וזכייה</span>
+        </span>
+        <input type="checkbox" class="switch" id="optHaptics" data-pref="haptics">
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== סטטיסטיקות ==================== -->
+<div class="modal" id="statsModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statsTitle">
+    <h2 class="modal-title" id="statsTitle">סטטיסטיקות</h2>
+    <div class="stats-table" id="statsTable"></div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="btnClearStats">איפוס נתונים</button>
+      <button type="button" class="btn btn-primary" data-close-modal>סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== איך משחקים ==================== -->
+<div class="modal" id="helpModal" hidden>
+  <div class="modal-card modal-wide" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <h2 class="modal-title" id="helpTitle">איך משחקים</h2>
+    <div class="help-body">
+      <p><b>המטרה</b> — לזכות בכל הז'יטונים. כל השחקנים מתחילים עם 1,000, ומי
+        שנגמרים לו הז'יטונים יוצא. אין כאן כסף אמיתי.</p>
+      <p><b>יד</b> — כל שחקן מקבל שני קלפים סגורים. על השולחן נפתחים חמישה קלפים
+        משותפים בשלבים: שלושה (פלופ), עוד אחד (טרן) ועוד אחד (ריבר). היד שלך היא
+        חמשת הקלפים הטובים ביותר מתוך השבעה.</p>
+      <p><b>הימורים</b> — לפני כל שלב יש סיבוב הימורים. בתורך:</p>
+      <ul>
+        <li><b>צ'ק</b> — להמשיך בלי להמר, אם אף אחד לא המר.</li>
+        <li><b>קול</b> — להשוות להימור הגבוה.</li>
+        <li><b>העלאה</b> — להמר יותר. ההעלאה המינימלית היא לפחות כמו ההעלאה
+          הקודמת. בכפתורים: מינימום, חצי קופה, קופה, או הכל (הכל-אין). אפשר גם
+          לכוון את הסכום בסרגל.</li>
+        <li><b>פולד</b> — לוותר על היד ועל מה שכבר הימרת.</li>
+      </ul>
+      <p><b>בליינדים</b> — שני השחקנים משמאל לכפתור (D) שמים הימור חובה, קטן
+        וגדול. הכפתור עובר בכל יד, והבליינדים עולים כל 10 ידיים, כך שהטורניר
+        תמיד מתקדם לסיום.</p>
+      <p><b>קופות צד</b> — מי שהולך הכל-אין יכול לזכות רק במה שהוא השווה מכל
+        שחקן. השאר נכנס לקופת צד בין מי שהמשיכו.</p>
+      <p><b>דירוג הידיים</b>, מהגבוה לנמוך:</p>
+      <ol class="pk-ranks">
+        <li><b>רויאל פלאש</b> <span dir="ltr">A K Q J 10</span> באותה צורה</li>
+        <li><b>סטרייט פלאש</b> — חמישה ברצף באותה צורה</li>
+        <li><b>רביעייה</b> — ארבעה קלפים מאותו ערך</li>
+        <li><b>פול האוס</b> — שלישייה ועוד זוג</li>
+        <li><b>פלאש</b> — חמישה באותה צורה</li>
+        <li><b>סטרייט</b> — חמישה ברצף (גם <span dir="ltr">A 2 3 4 5</span>)</li>
+        <li><b>שלישייה</b> — שלושה מאותו ערך</li>
+        <li><b>שני זוגות</b></li>
+        <li><b>זוג</b></li>
+        <li><b>קלף גבוה</b> — כשאין שום צירוף</li>
+      </ol>
+      <p>בשוויון מכריעים הקלפים הנותרים בחמישייה (קיקר). אם גם הם שווים — הקופה
+        מתחלקת.</p>
+      <p><b>הרמות</b> — מתחיל משווה כמעט הכול ונדיר שמעלה. קל משחק לפי חוזק היד
+        ומבלף מעט. בינוני מחשב סיכויים מול יחס הקופה ומבלף לפעמים. קשה מחשב
+        יותר, משנה גודל הימורים, מבצע צ'ק-רייז ולומד את הסגנון שלך.</p>
+      <p><b>מקלדת</b> — <kbd>F</kbd> פולד, <kbd>C</kbd> צ'ק או קול, <kbd>R</kbd>
+        העלאה, חיצים לשינוי הסכום, <kbd>Enter</kbd> ליד הבאה.</p>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-primary" data-close-modal>הבנתי</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== אישור ==================== -->
+<div class="modal" id="confirmModal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="confirmText">
+    <h2 class="modal-title" id="confirmTitle">רגע</h2>
+    <p class="modal-sub" id="confirmText"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" data-close-modal>ביטול</button>
+      <button type="button" class="btn btn-primary" id="btnConfirmOk">אישור</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="js/announce.js?v=b637ed5a"></script>
+<script src="js/sw-register.js?v=89122463"></script>
+<script src="js/modal.js?v=66375e94"></script>
+<script src="js/howto.js?v=1ebd845d"></script>
+<script src="js/haptics.js?v=88d431f4"></script>
+<script src="js/playing-cards.js?v=9b55a862"></script>
+<script src="js/poker/engine.js?v=7f031ddc"></script>
+<script src="js/poker/ai.js?v=806a8418"></script>
+<script src="js/poker/ui.js?v=aab8a897"></script>
+</body>
+</html>

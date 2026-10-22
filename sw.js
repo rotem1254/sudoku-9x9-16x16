@@ -18,29 +18,34 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = 'c894135c';
+const VERSION = '8c3ca419';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
 const PRECACHE = [
   './',
   '2048.html',
+  'blackjack.html',
   'blockblast.html',
   'bubbles.html',
   'chess.html',
   'index.html',
   'mahjong.html',
+  'poker.html',
   'rummikub.html',
   'snake.html',
   'solitaire.html',
   'sudoku.html',
   'tetris.html',
   'css/2048.css',
+  'css/blackjack.css',
   'css/blockblast.css',
   'css/bubbles.css',
+  'css/cards.css',
   'css/chess.css',
   'css/hub.css',
   'css/mahjong.css',
+  'css/poker.css',
   'css/rummikub.css',
   'css/snake.css',
   'css/solitaire.css',
@@ -54,6 +59,8 @@ const PRECACHE = [
   'js/2048/engine.js',
   'js/2048/ui.js',
   'js/announce.js',
+  'js/blackjack/engine.js',
+  'js/blackjack/ui.js',
   'js/blockblast/deal.js',
   'js/blockblast/engine.js',
   'js/blockblast/game.js',
@@ -71,6 +78,10 @@ const PRECACHE = [
   'js/mahjong/faces.js',
   'js/mahjong/ui.js',
   'js/modal.js',
+  'js/playing-cards.js',
+  'js/poker/ai.js',
+  'js/poker/engine.js',
+  'js/poker/ui.js',
   'js/rummikub/ai.js',
   'js/rummikub/engine.js',
   'js/rummikub/ui.js',

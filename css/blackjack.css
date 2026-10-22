@@ -1,0 +1,390 @@
+/* =============================================================================
+ * blackjack.css — בלאקג'ק
+ * -----------------------------------------------------------------------------
+ * טוען אחרי theme.css ו-cards.css (שם השולחן, הקלפים והז'יטונים).
+ *
+ * גודל הקלפים מגיע מה-JS לפי רוחב השולחן ומספר הידיים: --card-w לרוחב הקלף,
+ * --step למרחק בין קלפים חופפים. כך יד של שבעה קלפים, או ארבע ידיים
+ * אחרי פיצול, עדיין נכנסות ברוחב טלפון בלי גלילה.
+ * =========================================================================== */
+
+/* -------------------------------- פריסה --------------------------------- */
+
+.bj-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* כפתור הרמה בשורת הסטטוס — נראה כמו שאר הנתונים, עם חץ קטן */
+.bj-level-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.bj-level-btn .stat-value { color: var(--accent); }
+.bj-level-btn .stat-value::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-inline-start: 6px;
+  border-bottom: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  transform: translateY(-3px) rotate(-45deg);
+}
+
+/* -------------------------------- שולחן --------------------------------- */
+
+.bj-table {
+  --card-w: 64px;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 6px;
+  min-height: clamp(360px, 54dvh, 470px);
+  padding: 14px 10px 16px;
+  overflow: hidden;
+}
+
+.bj-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+.bj-zone-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 24px;
+}
+
+.bj-cards {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(var(--card-w) * 1.4);
+}
+/* קלפים חופפים: כל קלף אחרי הראשון נכנס מתחת לקודם עד --step */
+.bj-cards .pc + .pc { margin-left: calc(var(--step, var(--card-w)) - var(--card-w)); }
+
+/* כיתוב החוקים באמצע השולחן, עם קשת עדינה מעליו — כמו מודפס על הלבד */
+.bj-rules {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding-top: 14px;
+  text-align: center;
+  pointer-events: none;
+}
+.bj-rules::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 34px;
+  border-top: 1.5px solid var(--felt-line);
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+}
+.bj-rules-main {
+  font-size: .82rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  color: var(--gold);
+  opacity: .85;
+}
+.bj-rules-sub {
+  font-size: .68rem;
+  font-weight: 600;
+  color: var(--felt-muted);
+}
+
+/* הודעת סוף סיבוב — במקום הכיתוב, שמתעמעם מתחתיה */
+.bj-rules.has-banner .bj-rules-main,
+.bj-rules.has-banner .bj-rules-sub { opacity: 0; transition: opacity .2s; }
+.bj-banner {
+  position: absolute;
+  top: calc(50% + 7px);
+  left: 50%;
+  z-index: 5;
+  margin: 0;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(8, 20, 16, .78);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 1.02rem;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+  transform: translate(-50%, -50%);
+  animation: bjBanner .34s var(--ease) both;
+  pointer-events: none;
+}
+.bj-banner.is-win { color: var(--win); }
+.bj-banner.is-lose { color: var(--lose); }
+.bj-banner.is-bj { color: var(--gold); }
+@keyframes bjBanner {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(.7); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* --------------------------------- ידיים -------------------------------- */
+
+.bj-player { justify-content: flex-end; }
+
+.bj-hands {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+.bj-hands:empty { display: none; }
+
+.bj-hand {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px 4px;
+  border-radius: 12px;
+  transition: background .2s, opacity .2s;
+}
+/* היד הפעילה כשיש כמה — רקע בהיר וקו זהב מתחת */
+.bj-hands.is-multi .bj-hand.is-active {
+  background: rgba(255, 255, 255, .08);
+  box-shadow: inset 0 -3px 0 var(--gold);
+}
+.bj-hands.is-multi .bj-hand.is-waiting { opacity: .72; }
+
+.bj-hand-foot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 24px;
+}
+.bj-hand-meta { display: flex; align-items: center; gap: 6px; }
+/* בכמה ידיים אין רוחב לשורה אחת — התוצאה יורדת מתחת לסכום ולהימור */
+.bj-hands.is-multi .bj-hand-foot { flex-direction: column; gap: 4px; }
+.bj-hands.is-multi .bj-hand-meta { gap: 4px; }
+
+/* סכום היד — גלולה כהה שקופה */
+.bj-total {
+  min-width: 30px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .34);
+  color: #fff;
+  font-size: .8rem;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+.bj-total.is-bust { background: rgba(190, 40, 50, .82); }
+.bj-total.is-bj { background: var(--gold); color: #2a1d00; }
+.bj-total.is-21 { background: rgba(40, 150, 95, .85); }
+
+/* ההימור על היד: ז'יטון קטן + סכום */
+.bj-bet {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .76rem;
+  font-weight: 800;
+  color: var(--felt-text);
+  font-variant-numeric: tabular-nums;
+}
+.bj-bet .chip { --chip-size: 18px; cursor: default; pointer-events: none; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+.bj-bet .chip::before { display: none; }
+
+/* תוצאת היד */
+.bj-res {
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: .72rem;
+  font-weight: 800;
+  background: rgba(0, 0, 0, .3);
+  animation: pop .36s var(--ease) both;
+}
+.bj-res.is-win { color: var(--win); }
+.bj-res.is-lose { color: var(--lose); }
+.bj-res.is-push { color: var(--felt-text); }
+.bj-res.is-bj { color: var(--gold); }
+
+/* ----------------------------- עיגול ההימור ----------------------------- */
+
+.bj-spot {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 6px;
+  width: 128px;
+  height: 128px;
+  margin-top: 4px;
+  border: 2px dashed var(--felt-line);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .1);
+  color: var(--felt-text);
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  user-select: none;
+  transition: border-color .2s, background .2s;
+}
+.bj-spot.has-bet { border-style: solid; border-color: rgba(242, 197, 92, .55); }
+@media (hover: hover) {
+  .bj-spot.has-bet:hover { background: rgba(0, 0, 0, .18); }
+}
+
+.bj-spot-stack {
+  position: relative;
+  width: 50px;
+  height: 50px;
+}
+.bj-spot-stack:empty { display: none; }
+/* ערימה: כל ז'יטון מורם מעט מעל הקודם */
+.bj-spot-stack .chip {
+  --chip-size: 50px;
+  position: absolute;
+  left: 0;
+  top: calc(var(--i, 0) * -4px);
+  pointer-events: none;
+  animation: chipDrop .22s var(--ease) both;
+}
+@keyframes chipDrop {
+  from { opacity: 0; transform: translateY(-26px) scale(1.1); }
+  to { opacity: 1; transform: none; }
+}
+
+.bj-spot-amount {
+  font-size: .82rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--felt-muted);
+}
+.bj-spot.has-bet .bj-spot-amount { color: var(--felt-text); }
+
+/* -------------------------------- בקרות --------------------------------- */
+
+.bj-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.bj-chips {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0;
+}
+.bj-chips .chip { --chip-size: 54px; }
+
+.bj-row { display: flex; gap: 8px; }
+.bj-row .btn { flex: 1 1 0; min-height: 48px; padding: 0 10px; font-size: .95rem; white-space: nowrap; }
+.bj-row .bj-deal { flex: 1.6 1 0; }
+
+.bj-prompt {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  color: var(--text-2);
+  font-size: .9rem;
+}
+
+.bj-actions {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+
+.bj-act {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 62px;
+  padding: 6px 2px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: .8rem;
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-touch-callout: none;
+  user-select: none;
+  transition: transform .12s var(--ease), opacity .16s, box-shadow .2s, background .16s;
+}
+.bj-act svg { width: 20px; height: 20px; color: var(--text-2); }
+.bj-act:active { transform: scale(.95); }
+.bj-act[disabled] { opacity: .32; pointer-events: none; }
+
+/* קלף ועומד — שתי הפעולות הנפוצות — מודגשות, כל אחת בגוון שלה */
+.bj-act-hit { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.bj-act-hit svg { color: var(--accent); }
+.bj-act-stand { background: var(--success-soft); border-color: transparent; color: var(--success); }
+.bj-act-stand svg { color: var(--success); }
+
+/* הפעולה המומלצת (רמת מתחיל, או אחרי רמז) */
+.bj-act.is-advised {
+  box-shadow: 0 0 0 3px var(--hint);
+}
+.bj-act.is-advised::after {
+  content: "מומלץ";
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--hint);
+  color: #fff;
+  font-size: .6rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.bj-hint { justify-self: center; }
+
+.bj-advice {
+  margin: 0;
+  text-align: center;
+  font-size: .82rem;
+  color: var(--text-2);
+}
+.bj-advice b { color: var(--hint); }
+
+/* -------------------------------- מסכים --------------------------------- */
+
+@media (max-width: 380px) {
+  .bj-chips { gap: 7px; }
+  .bj-chips .chip { --chip-size: 48px; }
+  .bj-act { min-height: 56px; font-size: .74rem; }
+  .bj-spot { width: 112px; height: 112px; }
+}
+
+@media (max-height: 720px) {
+  .bj-table { min-height: 330px; padding-top: 10px; }
+  .bj-act { min-height: 52px; }
+  .bj-spot { width: 108px; height: 108px; }
+}
+
+@media (min-width: 700px) {
+  .bj-table { padding: 20px 16px 22px; }
+  .bj-rules-main { font-size: .92rem; }
+}

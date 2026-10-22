@@ -1,0 +1,289 @@
+/* =============================================================================
+ * cards.css — קלפים, שולחן לבד וז'יטונים, משותף לבלאקג'ק ולפוקר
+ * -----------------------------------------------------------------------------
+ * נטען אחרי theme.css ולפני הגיליון של המשחק.
+ *
+ * גודל הקלף נקבע במשתנה אחד, --card-w (רוחב), וכל השאר נגזר ממנו: הגובה
+ * ביחס 1.4 של קלף אמיתי, והגופנים כחלק מהרוחב. כל משחק קובע --card-w על
+ * המיכל (או על הקלף עצמו) לפי המקום הפנוי, והקלף נשאר פרופורציוני.
+ *
+ * בתוך הקלף הערך מועתק ל---cw המקומי. אילו הקלף היה מצהיר על --cw ישירות
+ * עם ברירת מחדל, ההצהרה הייתה דורסת את מה שהמיכל ירש לו.
+ *
+ * "נוח לעין": הלבד ירוק-טורקיז מעומעם ולא ירוק רווי, הקלפים בגוון שמנת
+ * ולא לבן בוהק, והאדום והשחור בניגודיות גבוהה מספיק לקריאה מהירה גם
+ * בקלף קטן. במצב כהה הכול מעומעם עוד, בלי לאבד ניגודיות על הקלף עצמו.
+ * =========================================================================== */
+
+:root {
+  --pc-face: #fffdf7;
+  --pc-edge: rgba(20, 28, 40, .16);
+  --pc-red: #c8253a;
+  --pc-black: #1a2030;
+  --pc-back-1: #24407a;
+  --pc-back-2: #3a5fae;
+
+  --felt-hi: #2b8268;
+  --felt: #1e6a54;
+  --felt-lo: #12453a;
+  --rail: #0d3329;
+  --felt-text: rgba(255, 255, 255, .92);
+  --felt-muted: rgba(255, 255, 255, .62);
+  --felt-line: rgba(255, 255, 255, .22);
+  --gold: #f2c55c;
+  --win: #7fe0a8;
+  --lose: #ff9a9a;
+}
+
+:root[data-theme="dark"] {
+  --pc-face: #f1eee6;
+  --pc-edge: rgba(0, 0, 0, .4);
+  --pc-red: #c0233a;
+  --pc-black: #161b28;
+  --pc-back-1: #1c3264;
+  --pc-back-2: #2d4a8c;
+
+  --felt-hi: #1f604f;
+  --felt: #164d40;
+  --felt-lo: #0b2e26;
+  --rail: #061a15;
+  --felt-text: rgba(255, 255, 255, .9);
+  --felt-muted: rgba(255, 255, 255, .56);
+  --felt-line: rgba(255, 255, 255, .18);
+  --gold: #e9bb4f;
+}
+
+/* --------------------------------- שולחן -------------------------------- */
+
+/*
+ * אותו מבנה שכבות כמו בסוליטר: אריג דקיק, הילת מנורה מלמעלה, ומרכז מואר
+ * עם שוליים כהים. המסגרת היא box-shadow כדי לצייר גם רייל וגם עומק
+ */
+.felt {
+  position: relative;
+  border-radius: 22px;
+  color: var(--felt-text);
+  background-color: var(--felt);
+  background-image:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .022) 0 2px, transparent 2px 4px),
+    repeating-linear-gradient(-45deg, rgba(0, 0, 0, .035) 0 2px, transparent 2px 4px),
+    radial-gradient(120% 70% at 50% -10%, rgba(255, 255, 255, .13), transparent 60%),
+    radial-gradient(120% 120% at 50% 45%, var(--felt-hi), var(--felt) 55%, var(--felt-lo));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 0 40px rgba(0, 0, 0, .32),
+    0 0 0 5px var(--rail),
+    0 10px 28px rgba(0, 0, 0, .32);
+}
+
+/* כיתוב על הלבד — לבן שקוף, נקרא על ירוק בהיר וכהה */
+.felt-label {
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  color: var(--felt-muted);
+}
+
+/* ---------------------------------- קלף --------------------------------- */
+
+.pc {
+  --cw: var(--card-w, 64px);
+  position: relative;
+  flex: 0 0 auto;
+  width: var(--cw);
+  height: calc(var(--cw) * 1.4);
+  border-radius: calc(var(--cw) * .1);
+  background: var(--pc-face);
+  border: 1px solid var(--pc-edge);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .25), 0 4px 10px rgba(0, 0, 0, .2);
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  font-family: "Segoe UI", "Rubik", system-ui, -apple-system, Arial, sans-serif;
+}
+.pc.is-red { color: var(--pc-red); }
+.pc.is-black { color: var(--pc-black); }
+
+/* פינה: ערך מעל צורה. השנייה הפוכה בפינה הנגדית, כמו בקלף אמיתי */
+.pc-corner {
+  position: absolute;
+  top: calc(var(--cw) * .05);
+  left: calc(var(--cw) * .07);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: .92;
+  font-weight: 800;
+}
+.pc-corner.is-end {
+  top: auto;
+  left: auto;
+  bottom: calc(var(--cw) * .05);
+  right: calc(var(--cw) * .07);
+  transform: rotate(180deg);
+}
+.pc-rank { font-size: calc(var(--cw) * .3); letter-spacing: -.05em; }
+.pc-suit { font-size: calc(var(--cw) * .22); }
+
+/* צורה גדולה במרכז — זיהוי מהיר בלי לקרוא */
+.pc-center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: calc(var(--cw) * .52);
+  line-height: 1;
+  pointer-events: none;
+}
+/* בקלפי תמונה: מסגרת עדינה סביב האות, שלא ייראו כמו קלפי מספר */
+.pc.is-face .pc-center span {
+  display: grid;
+  place-items: center;
+  width: 52%;
+  height: 50%;
+  border: 1.5px solid currentColor;
+  border-radius: calc(var(--cw) * .06);
+  font-size: calc(var(--cw) * .36);
+  font-weight: 800;
+  opacity: .9;
+  background: color-mix(in srgb, currentColor 7%, transparent);
+}
+
+/* גב הקלף — כחול עמוק עם סריג ומסגרת פנימית */
+.pc.is-back {
+  background:
+    repeating-linear-gradient(45deg, rgba(255, 255, 255, .1) 0 2px, transparent 2px 6px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, .07) 0 2px, transparent 2px 6px),
+    linear-gradient(140deg, var(--pc-back-1), var(--pc-back-2));
+  border-color: rgba(0, 0, 0, .25);
+}
+.pc.is-back::after {
+  content: "";
+  position: absolute;
+  inset: 8%;
+  border-radius: calc(var(--cw) * .06);
+  border: 1.5px solid rgba(255, 255, 255, .3);
+}
+
+/* מקום ריק לקלף */
+.pc-slot {
+  --cw: var(--card-w, 64px);
+  flex: 0 0 auto;
+  width: var(--cw);
+  height: calc(var(--cw) * 1.4);
+  border-radius: calc(var(--cw) * .1);
+  border: 1.5px dashed var(--felt-line);
+  background: rgba(0, 0, 0, .1);
+}
+
+/* הנפשות: חלוקה (מחליק פנימה מלמעלה), היפוך, ודגשים */
+@keyframes pcDeal {
+  from { opacity: 0; transform: translate(var(--from-x, 0), var(--from-y, -40px)) rotate(-8deg) scale(.9); }
+  to { opacity: 1; transform: none; }
+}
+.pc.is-in { animation: pcDeal .32s var(--ease) both; animation-delay: var(--delay, 0ms); }
+
+@keyframes pcFlip {
+  0% { transform: rotateY(90deg); }
+  100% { transform: rotateY(0); }
+}
+.pc.is-flip { animation: pcFlip .28s var(--ease) both; }
+
+.pc.is-glow {
+  box-shadow: 0 0 0 3px var(--gold), 0 4px 14px rgba(0, 0, 0, .3);
+}
+.pc.is-dim { filter: brightness(.62) saturate(.7); }
+
+/* --------------------------------- ז'יטון ------------------------------- */
+
+/*
+ * עיגול עם שוליים מפוספסים (conic-gradient) ועיגול פנימי עם הערך.
+ * הצבע לפי ערך, כמו בקזינו: 5 אדום, 25 ירוק, 100 שחור, 500 סגול, 1000 זהב
+ */
+.chip {
+  --chip: #c8323c;
+  --chip-ink: #fff;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--chip-size, 46px);
+  height: var(--chip-size, 46px);
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  background:
+    radial-gradient(circle at 50% 50%, var(--chip) 0 52%, transparent 53%),
+    repeating-conic-gradient(var(--chip) 0 22.5deg, #fff 22.5deg 45deg);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, .18),
+    0 2px 0 rgba(0, 0, 0, .3),
+    0 3px 6px rgba(0, 0, 0, .3);
+  color: var(--chip-ink);
+  font: inherit;
+  font-size: calc(var(--chip-size, 46px) * .27);
+  font-weight: 800;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transition: transform .12s var(--ease), filter .16s;
+}
+.chip::before {
+  content: "";
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255, 255, 255, .55);
+}
+.chip span { position: relative; }
+.chip:active { transform: translateY(1px) scale(.95); }
+.chip[disabled] { filter: grayscale(.8) brightness(.7); opacity: .55; cursor: default; pointer-events: none; }
+@media (hover: hover) {
+  .chip:not([disabled]):hover { transform: translateY(-2px); }
+}
+
+.chip-5 { --chip: #c8323c; }
+.chip-10 { --chip: #2f6bd8; }
+.chip-25 { --chip: #1f8a4c; }
+.chip-50 { --chip: #e07b1a; }
+.chip-100 { --chip: #262a33; }
+.chip-500 { --chip: #7a3fc4; }
+.chip-1000 { --chip: #d9a92c; --chip-ink: #2a1d00; }
+
+/* ----------------------------- בורר אפשרויות ----------------------------- */
+/* אותו מראה כמו בחלון המשחק החדש של השחמט */
+
+.opt-label { margin: 12px 0 6px; font-size: .78rem; font-weight: 700; color: var(--muted); text-align: start; }
+.opt-seg {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.opt-seg button {
+  flex: 1 1 0;
+  min-height: 38px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: .84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.opt-seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+.opt-desc {
+  margin: 8px 2px 0;
+  min-height: 2.6em;
+  font-size: .74rem;
+  line-height: 1.45;
+  color: var(--muted);
+  text-align: start;
+}
