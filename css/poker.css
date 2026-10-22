@@ -68,24 +68,24 @@
 }
 
 /* "מודפס על הלבד": שם המשחק, ומסגרת אליפטית דקה סביב אזור הקלפים */
+/* "מודפס על הלבד": מסגרת אליפטית דקה, ושם המשחק במרכז — כמו לוגו של
+   שולחן אמיתי, שקלפי השולחן מכסים כשהם נפתחים */
 .pk-print {
   position: absolute;
   inset: 17% 15%;
   border: 1.5px solid var(--felt-line);
   border-radius: 50%;
-  display: grid;
-  place-items: start center;
   pointer-events: none;
-  opacity: .9;
 }
 .pk-print .felt-print {
-  margin-top: 13%;
+  position: absolute;
+  left: 50%;
+  top: 48.5%;
+  transform: translate(-50%, -50%);
   font-size: .62rem;
   letter-spacing: .22em;
+  white-space: nowrap;
 }
-.pk-table[data-n="1"] .pk-print .felt-print,
-.pk-table[data-n="3"] .pk-print .felt-print,
-.pk-table[data-n="5"] .pk-print .felt-print { margin-top: 20%; }
 
 /* נקודת המוצא של החלוקה — מרכז השולחן, בלי ציור */
 .pk-deck {
@@ -119,6 +119,7 @@
 
 .pk-avatar {
   position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: var(--av);
@@ -231,6 +232,8 @@
   white-space: nowrap;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
 }
+/* בעימות בטלפון הקלפים נפתחים על האווטאר — התגית עולה מעליהם */
+.pk-table[data-shape="tall"] .pk-seat.is-showing .pk-badge { bottom: calc(100% + 16px); z-index: 5; }
 .pk-badge.is-allin { background: #c8323c; color: #fff; }
 .pk-badge.is-fold { background: rgba(0, 0, 0, .55); color: var(--felt-muted); }
 .pk-badge.is-hand { background: rgba(255, 253, 247, .94); color: #1b1f2a; }
@@ -242,7 +245,7 @@
   position: absolute;
   left: calc(50% + var(--cx, 0px));
   top: calc(50% + var(--cy, 0px));
-  z-index: 1;
+  z-index: 0;
   display: flex;
   transform: translate(-50%, -50%);
   transition: left .35s cubic-bezier(.2, .8, .3, 1), top .35s cubic-bezier(.2, .8, .3, 1);
@@ -319,7 +322,7 @@
 .pk-board {
   position: absolute;
   left: 50%;
-  top: 46%;
+  top: 49%;
   z-index: 1;
   display: flex;
   gap: calc(var(--board-w) * .08);
@@ -359,15 +362,16 @@
 .pk-msg {
   position: absolute;
   left: 50%;
-  top: 66%;
+  top: 68.5%;
   z-index: 2;
-  max-width: 86%;
+  width: max-content;
+  max-width: 94%;
   margin: 0;
   padding: 5px 13px;
   border-radius: 12px;
   background: rgba(8, 16, 13, .72);
   color: #fff;
-  font-size: .78rem;
+  font-size: .74rem;
   font-weight: 800;
   line-height: 1.35;
   text-align: center;
