@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#f4f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#101216" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס, מהג'ונג, טטריס, סנייק, שחמט, בלאקג'ק ופוקר. הכול בדפדפן, בלי התקנה ובלי חשבון.">
+  <meta name="description" content="מרכז משחקים — סודוקו, סוליטר, רמי קוב, בלוק בלאסט, 2048, באבלס, מהג'ונג, טטריס, סנייק, שחמט, בלאקג'ק, פוקר ושש-בש. הכול בדפדפן, בלי התקנה ובלי חשבון.">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=35714093">
-  <link rel="stylesheet" href="css/hub.css?v=32e25b0a">
+  <link rel="stylesheet" href="css/hub.css?v=6dd0fa80">
 </head>
 <body>
 
@@ -239,6 +239,26 @@
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
     </a>
 
+    <!-- ==================== שש-בש ==================== -->
+    <a class="game-card" href="backgammon.html">
+      <div class="game-art game-art-backgammon" aria-hidden="true">
+        <span class="mini-bg">
+          <i class="mbg-pt mbg-pt-1"></i><i class="mbg-pt mbg-pt-2"></i><i class="mbg-pt mbg-pt-3"></i>
+          <i class="mbg-ck mbg-ck-1"></i><i class="mbg-ck mbg-ck-2"></i><i class="mbg-ck mbg-ck-3"></i>
+          <i class="mbg-die"></i>
+        </span>
+      </div>
+      <div class="game-body">
+        <h2 class="game-title">שש-בש</h2>
+        <p class="game-desc">בקגמון מול מחשב שלמד לשחק לבד — רשת נוירונים בחמש רמות. קוביית הכפלה, משחקונים ורמזים.</p>
+        <div class="game-tags">
+          <span class="tag">5 רמות</span>
+          <span class="tag" id="tagBackgammon">—</span>
+        </div>
+      </div>
+      <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+    </a>
+
     <!-- ==================== בלאקג'ק ==================== -->
     <a class="game-card" href="blackjack.html">
       <div class="game-art game-art-blackjack" aria-hidden="true">
@@ -277,6 +297,7 @@
       </div>
       <svg class="game-go" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
     </a>
+
 
   </nav>
 
@@ -493,6 +514,19 @@
       tagPk.classList.add('is-live');
     } else {
       tagPk.textContent = 'טקסס הולדם';
+    }
+  }
+
+  var bgm = read('backgammon.v1.save', null);
+  var tagBgm = document.getElementById('tagBackgammon');
+  if (tagBgm) {
+    if (bgm && bgm.phase && !(bgm.result && bgm.result.matchOver)) {
+      tagBgm.textContent = bgm.matchTo
+        ? 'ממשיכים · ' + bgm.score[0] + '–' + bgm.score[1] + ' עד ' + bgm.matchTo
+        : 'ממשיכים · משחק ' + (bgm.gameNo || 1);
+      tagBgm.classList.add('is-live');
+    } else {
+      tagBgm.textContent = 'מול מחשב או חבר';
     }
   }
 
