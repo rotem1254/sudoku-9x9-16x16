@@ -123,6 +123,34 @@
     lose(t) { tone(t, 392, 0.26, 0.05); tone(t + 0.16, 311.1, 0.4, 0.045); },
     push(t) { tone(t, 587.3, 0.2, 0.045, 'triangle'); },
     fold(t) { burst(t, 0.09, 700, 0.8, 0.3, 'lowpass'); },
+
+    /* --- שש-בש: עץ ועצם --- */
+    dice(t) {
+      // קוביות מתגלגלות: נקישות לא סדירות שמתרווחות ונחלשות, ועוד "רעש" רך של גלגול
+      const f = burst(t, 0.32, 1200, 0.7, 0.12);
+      f.frequency.exponentialRampToValueAtTime(500, t + 0.3);
+      let at = t;
+      for (let i = 0; i < 7; i++) {
+        at += 0.03 + i * 0.012 + Math.random() * 0.02;
+        burst(at, 0.012, 2600 + Math.random() * 1800, 4, 0.5 * (1 - i / 9));
+      }
+    },
+    checker(t) {
+      // אבן עץ על עץ — "טוק" נמוך ועמום
+      burst(t, 0.03, 950 + Math.random() * 120, 2.2, 0.75);
+      tone(t, 190 + Math.random() * 25, 0.07, 0.11, 'sine');
+    },
+    hit(t) {
+      SOUNDS.checker(t);
+      burst(t + 0.05, 0.025, 1500, 2, 0.6);
+      tone(t + 0.05, 260, 0.08, 0.08, 'triangle');
+    },
+    bearoff(t) {
+      const f = burst(t, 0.1, 700, 1, 0.35);
+      f.frequency.exponentialRampToValueAtTime(1700, t + 0.09);
+      burst(t + 0.09, 0.02, 1100, 2, 0.4);
+    },
+    cube(t) { burst(t, 0.02, 1800, 3, 0.6); tone(t, 520, 0.12, 0.06, 'triangle'); tone(t + 0.07, 780, 0.16, 0.05, 'triangle'); },
   };
 
   /** משמיע צליל בשם נתון. שקט אם השמע כבוי, לא נתמך או עוד לא נפתח. */

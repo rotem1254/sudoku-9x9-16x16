@@ -18,13 +18,14 @@
 
 /* נוצר אוטומטית ע"י tools/bump-version.js — לא לערוך ידנית.
    ה-hash מחושב מתוכן כל הנכסים, ולכן הוא משתנה בדיוק כשמשהו משתנה. */
-const VERSION = '17f2f422';
+const VERSION = 'e2a72d44';
 const CACHE = 'games-' + VERSION;
 
 /** נוצר אוטומטית מהקבצים שקיימים בפועל — לא לערוך ידנית. */
 const PRECACHE = [
   './',
   '2048.html',
+  'backgammon.html',
   'blackjack.html',
   'blockblast.html',
   'bubbles.html',
@@ -38,6 +39,7 @@ const PRECACHE = [
   'sudoku.html',
   'tetris.html',
   'css/2048.css',
+  'css/backgammon.css',
   'css/blackjack.css',
   'css/blockblast.css',
   'css/bubbles.css',
@@ -59,6 +61,10 @@ const PRECACHE = [
   'js/2048/engine.js',
   'js/2048/ui.js',
   'js/announce.js',
+  'js/backgammon/ai.js',
+  'js/backgammon/engine.js',
+  'js/backgammon/ui.js',
+  'js/backgammon/weights.js',
   'js/blackjack/engine.js',
   'js/blackjack/ui.js',
   'js/blockblast/deal.js',
