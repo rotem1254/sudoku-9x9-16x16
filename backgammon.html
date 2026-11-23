@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png?v=33891005">
   <link rel="manifest" href="manifest.webmanifest?v=8c006993">
   <link rel="stylesheet" href="css/theme.css?v=35714093">
-  <link rel="stylesheet" href="css/backgammon.css?v=6dafcb22">
+  <link rel="stylesheet" href="css/backgammon.css?v=cce6c4a4">
 </head>
 <body>
 
@@ -193,6 +193,7 @@
     <div class="settings-list bg-settings">
       <p class="settings-head">לוח</p>
       <div class="bg-seg bg-skins" data-pref-seg="skin" role="group" aria-label="עיצוב הלוח">
+        <button type="button" data-val="soft">רך</button>
         <button type="button" data-val="wood">עץ</button>
         <button type="button" data-val="felt">לבד ירוק</button>
         <button type="button" data-val="night">לילה</button>
@@ -227,6 +228,13 @@
       </label>
 
       <p class="settings-head">משחק</p>
+      <label class="setting">
+        <span class="setting-text">
+          <span class="setting-name">קוביית הכפלה</span>
+          <span class="setting-desc">כבוי = משחקים רגיל, בלי הצעות להכפיל את הנקודות</span>
+        </span>
+        <input type="checkbox" class="switch" id="optCube">
+      </label>
       <label class="setting">
         <span class="setting-text">
           <span class="setting-name">הצגת יעדים</span>
@@ -321,7 +329,7 @@
         הרחוקה ביותר.</p>
       <p><b>גמון ובקגמון</b> — מי שמנצח לפני שהיריב הוציא אבן אחת מקבל 2 נקודות.
         אם ליריב עוד יש אבן על הבר או בבית שלך — 3.</p>
-      <p><b>קוביית ההכפלה</b> — לפני ההטלה אפשר להציע להכפיל את ערך המשחק. היריב
+      <p><b>קוביית ההכפלה</b> (לא חובה — כבויה כברירת מחדל, ומדליקים בהגדרות) — לפני ההטלה אפשר להציע להכפיל את ערך המשחק. היריב
         מקבל (והקובייה עוברת אליו) או מוותר ומפסיד את הערך הנוכחי. במשחקון, במשחק
         שאחרי שמישהו הגיע לנקודה אחת מהניצחון (חוק קרופורד), אין הכפלות.</p>
       <p><b>רמז</b> מראה את המהלך שהמחשב היה משחק; לחיצה שנייה משחקת אותו.
@@ -356,6 +364,6 @@
 <script src="js/backgammon/engine.js?v=7beee2ea"></script>
 <script src="js/backgammon/weights.js?v=de5b6701"></script>
 <script src="js/backgammon/ai.js?v=175a186e"></script>
-<script src="js/backgammon/ui.js?v=66ce1ce0"></script>
+<script src="js/backgammon/ui.js?v=da278489"></script>
 </body>
 </html>

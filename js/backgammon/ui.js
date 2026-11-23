@@ -62,7 +62,7 @@
     theme: 'auto',
     haptics: true,
     sound: true,
-    skin: 'wood',
+    skin: 'soft',
     mirror: false,
     numbers: true,
     pips: true,
@@ -77,7 +77,7 @@
     mode: 'ai',
     level: '3',
     match: '0',
-    cube: '1',
+    cube: '0',
   };
 
   const state = {
@@ -112,8 +112,22 @@
     hints: 0,
   };
 
+  /*
+   * גרסה 2 של ההעדפות: לוח "רך" וקוביית הכפלה כבויה כברירת מחדל. מי ששמר
+   * העדפות לפני כן קיבל את ברירות המחדל הישנות בלי שבחר בהן — ולכן הן
+   * מוחלפות פעם אחת. אחר כך כל בחירה שלו נשמרת כרגיל
+   */
+  if (!state.prefs.v2) {
+    state.prefs.skin = 'soft';
+    state.prefs.cube = '0';
+    state.prefs.v2 = true;
+    store.write(PREFS_KEY, state.prefs);
+  }
+
   const el = {
     stage: $('.bg-stage'),
+    actions: $('.bg-actions'),
+    optCube: $('#optCube'),
     board: $('#board'),
     frame: $('#frame'),
     points: $('#points'),
@@ -768,8 +782,7 @@
     el.btnHint.disabled = !moving;
     const canDbl = pre && AI.canDouble(cubeState(), state.turn);
     el.btnDouble.disabled = !canDbl;
-    el.btnDouble.hidden = false;
-    el.btnDouble.style.visibility = state.cubeOn ? '' : 'hidden';
+    el.actions.classList.toggle('no-cube', !state.cubeOn);
 
     let label = 'הטלה', done = false, enabled = false;
     if (pre) { enabled = true; }
@@ -1570,6 +1583,7 @@
 
   function syncSettings() {
     el.settingsModal.querySelectorAll('[data-pref]').forEach((i) => { i.checked = !!state.prefs[i.dataset.pref]; });
+    el.optCube.checked = state.cubeOn;
     el.settingsModal.querySelectorAll('[data-pref-seg]').forEach((seg) => {
       seg.querySelectorAll('button').forEach((b) => {
         b.setAttribute('aria-pressed', b.dataset.val === state.prefs[seg.dataset.prefSeg] ? 'true' : 'false');
@@ -1588,6 +1602,20 @@
     const sw = document.getElementById('optHaptics');
     if (sw) sw.disabled = mode === 'none';
     openModal(el.settingsModal);
+  });
+
+  /*
+   * הקובייה — חלה מיד על המשחק הנוכחי, ונשמרת למשחקים הבאים. אם כבר
+   * הוכפל, הערך שנקבע נשאר (כך הוסכם), רק שאין יותר הכפלות
+   */
+  el.optCube.addEventListener('change', () => {
+    const on = el.optCube.checked;
+    state.prefs.cube = on ? '1' : '0';
+    savePrefs();
+    if (state.phase !== 'cube') state.cubeOn = on;
+    renderAll();
+    saveGame();
+    toast(on ? 'קוביית ההכפלה פעילה' : 'בלי הכפלות — משחקים רגיל');
   });
 
   el.settingsModal.addEventListener('change', (e) => {
@@ -1695,6 +1723,8 @@
     state.hints = saved.hints || 0;
     state.result = saved.result || null;
     state.offer = typeof saved.offer === 'number' ? saved.offer : -1;
+    // ההגדרה כבויה ועוד לא הוכפל במשחק הזה — מכבים גם בו
+    if (state.prefs.cube === '0' && state.cube.value === 1 && state.offer < 0) state.cubeOn = false;
     state.pos = pos;
     state.phase = saved.phase;
     logLine();
